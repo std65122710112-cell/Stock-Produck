@@ -73,7 +73,7 @@ export default function ExecutiveDashboardPage() {
         fetchDashboardData();
     }, []);
 
-    // --- Advanced Data Processing ---
+
     const stats = useMemo(() => {
         const totalValue = balances.reduce((sum, item) => sum + Number(item.totalValue || 0), 0);
         const totalItems = balances.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
@@ -156,14 +156,14 @@ export default function ExecutiveDashboardPage() {
 
     return (
         <AuthGate>
-            <div className="max-w-[1600px] mx-auto space-y-8 pb-10">
+            <div className="max-w-400 mx-auto space-y-8 pb-10">
 
                 {/* HEADER SECTION */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b-2 border-slate-200 pb-6 gap-4">
                     <div className="space-y-1">
                         <p className="text-[11px] font-black uppercase tracking-[0.4em] text-indigo-600">Enterprise Command Center</p>
                         <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-4">
-                            Global Analytics
+                            สรุปภาพรวมคลังสินค้า
                             <span className="not-italic bg-indigo-600 text-white text-[10px] px-4 py-1.5 rounded-full tracking-[0.25em] font-black border border-indigo-700 shadow-xl uppercase">Live Dashboard</span>
                         </h1>
                         <p className="text-slate-500 text-sm font-bold uppercase tracking-widest flex items-center gap-2 mt-2">
@@ -171,18 +171,7 @@ export default function ExecutiveDashboardPage() {
                             ศูนย์ประมวลผลสถิติและภาพรวมการลงทุนทรัพยากร
                         </p>
                     </div>
-                    <div className="flex gap-3">
-                        <div className="bg-white px-6 py-3 rounded-[1.5rem] border border-slate-200 shadow-sm flex items-center gap-3">
-                            <div className="relative flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Database Status</p>
-                                <p className="text-xs font-black text-slate-700 uppercase tracking-widest mt-1">Sync OK</p>
-                            </div>
-                        </div>
-                    </div>
+                   
                 </div>
 
                 {/* TIER 1: MACRO KPIs */}
