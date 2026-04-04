@@ -17,7 +17,9 @@ import {
     ShieldCheck,
     ChevronRight,
     History,
-    Package
+    FileText,
+    ListOrdered
+
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -55,24 +57,44 @@ export default function PRListPage() {
 
                 {/* HEADER SECTION */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4">
-                    <div className="space-y-2">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-black uppercase tracking-wider w-fit">
-                            <ShieldCheck className="w-4 h-4" /> ระบบงานบริหารการจัดซื้อ (Procurement Management)
+                    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
+                    <div className="w-full px-6 md:px-10 flex flex-col md:flex-row items-start md:items-center gap-6">
+
+                        {/* 💡 ไอคอนหลัก: FileText (สื่อถึงเอกสารใบขอซื้อ PR) */}
+                        <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                            <FileText className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
                         </div>
-                        <h1 className="text-5xl font-black text-slate-950 tracking-tight flex items-center gap-3">
-                            รายการใบขอซื้อ (PR)
-                        </h1>
-                        <p className="text-slate-600 text-base font-bold flex items-center gap-2 mt-2">
-                            <Database className="w-5 h-5 text-slate-400" />
-                            รายการประวัติใบขอซื้อพัสดุ (Purchase Requisition Queue)
-                        </p>
+
+                        {/* กลุ่มข้อความเรียงซ้อนกัน */}
+                        <div className="flex flex-col">
+                            {/* ภาษาอังกฤษด้านบน */}
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <Database className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                    Procurement Management System
+                                </p>
+                            </div>
+
+                            {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ) */}
+                            <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                รายการใบขอซื้อ (PR)
+                            </h1>
+
+                            {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
+                            <div className="flex items-center gap-2 pt-1 opacity-90">
+                                <ListOrdered className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                    รายการประวัติใบขอซื้อพัสดุ (Purchase Requisition Queue)
+                                </p>
+                            </div>
+                        </div>
                     </div>
                     <Link
                         href="/purchase/pr/create"
-                        className="group flex items-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-slate-200 transition-colors"
+                        className="group flex items-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-slate-200 transition-all active:scale-95 whitespace-nowrap"
                     >
-                        <Plus className="w-5 h-5" />
-                        สร้างใบขอซื้อใหม่
+                        <Plus className="w-5 h-5 shrink-0" />
+                        <span>สร้างใบขอซื้อใหม่</span>
                     </Link>
                 </div>
 

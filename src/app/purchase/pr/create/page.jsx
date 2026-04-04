@@ -22,7 +22,8 @@ import {
     LayoutGrid,
     Truck,
     AlertTriangle,
-    CheckCircle2
+    CheckCircle2,
+    FilePlus2, 
 } from "lucide-react";
 
 export default function CreatePurchaseRequisitionPage() {
@@ -255,27 +256,54 @@ export default function CreatePurchaseRequisitionPage() {
 
             <div className="max-w-5xl mx-auto space-y-8 pb-10 py-8 px-4 md:px-0 animate-in fade-in duration-500">
 
-                {/* --- HEADER SECTION --- */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4">
-                    <div className="space-y-2">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-black uppercase tracking-wider w-fit">
-                            <ShieldCheck className="w-4 h-4" /> กระบวนการจัดการจัดซื้อ (Procurement Initiation)
+                {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย ไม่เอาเส้นกั้น และเว้นระยะ pt-10 ตามมาตรฐานระบบ */}
+                <div className="w-full pt-10 mb-6 print:hidden">
+
+                    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
+                    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+
+                        {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า --- */}
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                            {/* 💡 ไอคอนหลัก: FilePlus2 (สื่อถึงการเริ่มต้นสร้างเอกสาร PR ใหม่) */}
+                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                <FilePlus2 className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                            </div>
+
+                            {/* กลุ่มข้อความเรียงซ้อนกัน */}
+                            <div className="flex flex-col">
+                                {/* ภาษาอังกฤษด้านบน */}
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <ShieldCheck className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                        Procurement Initiation Process
+                                    </p>
+                                </div>
+
+                                {/* หัวข้อหลัก พร้อม Badge เอกสารภายใน */}
+                                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2 flex flex-wrap items-center gap-3">
+                                    สร้างใบขอซื้อ (PR)
+                                    <span className="bg-slate-950 text-white text-[10px] px-3 py-1 rounded-full tracking-[0.2em] font-black border border-slate-800 shadow-sm uppercase">
+                                        เอกสารภายใน
+                                    </span>
+                                </h1>
+
+                                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
+                                <div className="flex items-center gap-2 pt-1 opacity-90">
+                                    <FileSignature className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                        ระบบบันทึกคำขออนุมัติจัดซื้อ (Purchase Requisition)
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <h1 className="text-5xl font-black text-slate-950 tracking-tight flex items-center gap-3">
-                            สร้างใบขอซื้อ (PR)
-                            <span className="bg-slate-950 text-white text-xs px-4 py-1.5 rounded-full tracking-widest font-black border border-slate-800 shadow-lg align-middle">เอกสารภายใน</span>
-                        </h1>
-                        <p className="text-slate-600 text-base font-bold flex items-center gap-2 mt-2">
-                            <FileSignature className="w-5 h-5 text-slate-400" />
-                            ระบบบันทึกคำขออนุมัติจัดซื้อ (Purchase Requisition)
-                        </p>
-                    </div>
-                    <div className="hidden md:flex items-center gap-2 text-emerald-700 text-xs font-black uppercase tracking-wider bg-emerald-50 px-5 py-2.5 rounded-full border border-emerald-200 shadow-sm">
-                        <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                        ระบบเข้ารหัสความปลอดภัยสูง
+
+                        {/* --- ส่วนขวา: Badge ความปลอดภัย --- */}
+                        <div className="hidden xl:flex items-center gap-3 text-emerald-700 text-[10px] font-black uppercase tracking-[0.2em] bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 shadow-sm">
+                            <ShieldCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                            ระบบเข้ารหัสความปลอดภัยสูง
+                        </div>
                     </div>
                 </div>
-
                 <form onSubmit={triggerSubmitPR} className="space-y-8">
 
                     {/* --- THE MASTER DOCUMENT CONTAINER --- */}

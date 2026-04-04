@@ -8,7 +8,9 @@ import toast, { Toaster } from "react-hot-toast";
 import {
     Database, Search, MapPin, Clock, X,
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    Loader2, Wallet, Tag, Package, Eye, Download
+    Loader2, Wallet, Tag, Package, Eye, Download, Boxes,
+
+
 } from "lucide-react";
 
 export default function BalancesPage() {
@@ -101,17 +103,47 @@ export default function BalancesPage() {
 
                 {/* HEADER SECTION */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4 print:hidden">
-                    <div className="space-y-2">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-black uppercase tracking-wider w-fit">
-                            <Database className="w-4 h-4" /> ระบบคลังสินค้า (Inventory Balances)
+                    {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย เส้นกั้นยาว Edge-to-Edge (print:hidden) */}
+                    {/* pt-10 คือดันลงมาจากด้านบน / mb-4 คือขยับเนื้อหาด้านล่างให้ใกล้ขึ้น */}
+                    <div className="w-full pt-18 mb-2 print:hidden">
+
+                        {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
+                        <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between pb-6 gap-6">
+
+                            {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า --- */}
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                                {/* 💡 ไอคอนหลัก: Boxes (สื่อถึงยอดสต๊อกพัสดุทั้งหมดในคลัง) */}
+                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                    <Boxes className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                                </div>
+
+                                {/* กลุ่มข้อความเรียงซ้อนกัน */}
+                                <div className="flex flex-col">
+                                    {/* ภาษาอังกฤษด้านบน */}
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <Database className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                            Inventory Balance Management
+                                        </p>
+                                    </div>
+
+                                    {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ) */}
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                        ยอดคงเหลือสินค้า
+                                    </h1>
+
+                                    {/* คำอธิบายด้านล่าง พร้อมแสดงจำนวนรายการ (ห้ามลบตัวแปร) */}
+                                    <div className="flex items-center gap-2 pt-1 opacity-90">
+                                        <Package className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                            จำนวนรายการในระบบทั้งหมด: <span className="text-emerald-600 font-black">{totalCount.toLocaleString()}</span> รายการ
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* --- ส่วนขวา: (ถ้ามีปุ่มพิมพ์รายงานหรือปุ่มอื่นๆ สามารถใส่ตรงนี้ได้) --- */}
                         </div>
-                        <h1 className="text-5xl font-black text-slate-950 tracking-tight flex items-center gap-3">
-                            ยอดคงเหลือสินค้า
-                        </h1>
-                        <p className="text-slate-600 text-base font-bold flex items-center gap-2">
-                            <Package className="w-5 h-5 text-slate-400" />
-                            จำนวนรายการในระบบทั้งหมด: {totalCount.toLocaleString()} รายการ
-                        </p>
                     </div>
 
                     {/* STATUS SUMMARY BAR */}

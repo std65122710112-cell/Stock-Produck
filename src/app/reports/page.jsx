@@ -8,7 +8,8 @@ import toast, { Toaster } from "react-hot-toast";
 import {
     FileSpreadsheet, Download, Database, BarChart3,
     ShieldCheck, FileText, History, PieChart,
-    CheckCircle2, X, CalendarRange, MapPin, Activity, Boxes
+    CheckCircle2, X, CalendarRange, MapPin, Activity, Boxes,FileChartLine, 
+    TrendingUp
 } from "lucide-react";
 
 export default function ReportsPage() {
@@ -99,23 +100,49 @@ export default function ReportsPage() {
             <Toaster position="top-right" />
             <div className="max-w-7xl mx-auto space-y-10 pb-20 px-4">
 
-                {/* HEADER SECTION - ปรับตามธีม SR (หัวข้อเข้ม/Description เอียง) */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b-2 border-slate-100 pb-8 gap-6">
-                    <div className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-[10px] font-black uppercase tracking-widest w-fit shadow-sm">
-                            <Activity className="w-3.5 h-3.5" /> ระบบจัดการข้อมูลและสถิติ (INVENTORY ANALYTICS)
-                        </div>
-                        <h1 className="text-5xl font-black text-slate-950 tracking-tighter uppercase flex items-center gap-4">
-                            รายงานสรุปผล
+                {/* 1. กล่องนอกสุด: ขีดเส้นยาวพาดทั้งหน้าจอ (Edge-to-Edge) */}
+                <div className="w-full border-b-2 border-slate-100 mb-10">
 
-                        </h1>
-                        <p className="text-slate-500 text-lg font-bold flex items-center gap-2 italic">
-                            <Database className="w-5 h-5 text-slate-300" />
-                            ศูนย์รวมรายงานและการวิเคราะห์ข้อมูลพัสดุในคลัง
-                        </p>
+                    {/* 2. กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) ตามคอนเซปต์ */}
+                    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between pb-6 gap-6">
+
+                        {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า (ปรับไอคอนให้ตรงหัวเรื่อง) --- */}
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                            {/* 💡 เปลี่ยนไอคอนหลักเป็น FileChartLine (สัญลักษณ์รายงาน/กราฟวิเคราะห์) */}
+                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                <FileChartLine className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                            </div>
+
+                            {/* กลุ่มข้อความเรียงซ้อนกัน */}
+                            <div className="flex flex-col">
+                                {/* ภาษาอังกฤษด้านบน */}
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    {/* 💡 ไอคอน Database สื่อถึงแหล่งข้อมูลหลัก */}
+                                    <Database className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                        Inventory Analytics
+                                    </p>
+                                </div>
+
+                                {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ) */}
+                                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                    รายงานสรุปผล
+                                </h1>
+
+                                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
+                                <div className="flex items-center gap-2 pt-1 opacity-90">
+                                    {/* 💡 ไอคอน TrendingUp สื่อถึงการวิเคราะห์แนวโน้มข้อมูล */}
+                                    <TrendingUp className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                        ศูนย์รวมรายงานและการวิเคราะห์ข้อมูลพัสดุในคลัง
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* --- ส่วนขวา: (ถ้ามีปุ่ม Filter หรือ Export สามารถใส่ตรงนี้ได้) --- */}
                     </div>
                 </div>
-
                 {/* REPORTS GRID - ใช้ความโค้งมนระดับสูงและเงาพาสเทล */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 

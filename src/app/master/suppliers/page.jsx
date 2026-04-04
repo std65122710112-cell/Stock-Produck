@@ -26,7 +26,7 @@ import {
     Info,
     User,
     FileText,
-    CalendarClock
+    CalendarClock, Briefcase, 
 } from "lucide-react";
 import Link from "next/link";
 
@@ -356,15 +356,41 @@ export default function SupplierManagementPage() {
             <div className="max-w-6xl mx-auto space-y-8">
 
                 {/* HEADER SECTION */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4">
-                    <div className="space-y-2">
-                        <h1 className="text-5xl font-black text-slate-950 tracking-tight flex items-center gap-3 uppercase">
-                            ศูนย์บริหารคู่ค้า
-                        </h1>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b-2 border-slate-100 pb-8 gap-6">
+
+                    {/* ส่วนซ้าย: กล่องชื่อหน้าและไอคอน (ปรับตามแบบ) */}
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                        {/* กล่องไอคอนพื้นขาว ขอบเทาอ่อน */}
+                        <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                            <Briefcase className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                        </div>
+
+                        {/* ข้อมูลเรียงซ้อนกัน */}
+                        <div className="flex flex-col">
+                            {/* ภาษาอังกฤษด้านบน */}
+                            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B] mb-1.5">
+                                Supplier Management
+                            </p>
+
+                            {/* หัวข้อหลัก (คงคำเดิม) */}
+                            <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                ศูนย์บริหารคู่ค้า
+                            </h1>
+
+                            {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวแบบในรูป */}
+                            <div className="flex items-center gap-2">
+                                <Database className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                    จัดการข้อมูลทะเบียนคู่ค้าและผู้จัดจำหน่าย
+                                </p>
+                            </div>
+                        </div>
                     </div>
+
+                    {/* ส่วนขวา: ปุ่มลงทะเบียน (โครงสร้างเดิม) */}
                     <Link
                         href="/master/suppliers/create"
-                        className="group flex items-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-slate-200 transition-colors"
+                        className="group flex items-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-slate-200 transition-colors shrink-0"
                     >
                         <Plus className="w-5 h-5" />
                         ลงทะเบียนคู่ค้าใหม่

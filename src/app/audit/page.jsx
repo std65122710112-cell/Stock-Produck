@@ -120,37 +120,62 @@ export default function AuditPage() {
 
                 {/* 1. Header & Live Toggle - ปรับสีดำเข้มและดีไซน์พรีเมียม */}
                 <section className="rounded-[2.5rem] border-2 border-slate-100 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-                    <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <ShieldCheck className="w-4 h-4 text-indigo-600" />
-                                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500">Security Management</p>
-                                {refreshing && <span className="h-2 w-2 animate-ping rounded-full bg-indigo-500" />}
+                    {/* 1. กล่องนอกสุด: ขีดเส้นยาวพาดทั้งหน้าจอ และเอาการบีบกลางออกเพื่อให้ชิดซ้าย */}
+                    <div className="w-full border-b-2 border-slate-100 mb-10">
+
+                        {/* 2. กล่องใน: เปลี่ยนจาก mx-auto เป็นการระบุ Padding (px-8) แทนเพื่อให้ชิดซ้ายสุด */}
+                        <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between pb-6 gap-6">
+
+                            {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า (ตอนนี้จะอยู่ชิดซ้ายสุดแล้ว) --- */}
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                                {/* กล่องไอคอน */}
+                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                    <Activity className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                                </div>
+
+                                {/* กลุ่มข้อความ */}
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <ShieldCheck className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                            Security Management
+                                        </p>
+                                    </div>
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                        ประวัติการใช้งานระบบ
+                                    </h1>
+                                    <div className="flex items-center gap-2 pt-1 opacity-90">
+                                        <Terminal className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                            ตรวจสอบประวัติกิจกรรมและเหตุการณ์ความปลอดภัยย้อนหลังในระบบ
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                            <h1 className="text-5xl font-black tracking-tighter text-slate-950 uppercase italic">ประวัติการใช้งานระบบ</h1>
-                            <p className="text-slate-500 text-sm font-bold flex items-center gap-2">
-                                <Terminal className="w-4 h-4 text-slate-300" />
-                                ตรวจสอบประวัติกิจกรรมและเหตุการณ์ความปลอดภัยย้อนหลังในระบบ
-                            </p>
-                        </div>
 
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setLiveRefresh(!liveRefresh)}
-                                className={`flex items-center gap-2.5 rounded-2xl px-5 py-3 text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${liveRefresh ? "bg-emerald-50 text-emerald-700 border-2 border-emerald-100" : "bg-slate-50 text-slate-500 border-2 border-slate-100"}`}
-                            >
-                                <span className={`h-2 w-2 rounded-full ${liveRefresh ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />
-                                {liveRefresh ? "ซิงค์อัตโนมัติ: เปิด" : "ซิงค์อัตโนมัติ: ปิด"}
-                            </button>
-                            <button
-                                onClick={() => fetchLogs()}
-                                disabled={loading}
+                            {/* --- ส่วนขวา: กลุ่มปุ่มคำสั่ง (คงเดิม ไม่ปรับเปลี่ยนลอจิก) --- */}
+                            <div className="flex flex-wrap items-center gap-3">
+                                <button
+                                    onClick={() => setLiveRefresh(!liveRefresh)}
+                                    className={`flex items-center gap-2.5 rounded-2xl px-5 py-3.5 text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${liveRefresh
+                                            ? "bg-emerald-50 text-emerald-700 border-2 border-emerald-100 shadow-sm shadow-emerald-200/50"
+                                            : "bg-slate-50 text-slate-500 border-2 border-slate-100"
+                                        }`}
+                                >
+                                    <span className={`h-2 w-2 rounded-full ${liveRefresh ? "bg-emerald-500 animate-pulse" : "bg-slate-300"}`} />
+                                    {liveRefresh ? "ซิงค์อัตโนมัติ: เปิด" : "ซิงค์อัตโนมัติ: ปิด"}
+                                </button>
 
-                                className="flex items-center gap-2.5 rounded-full bg-[#1F3B8B] px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-md shadow-[#1F3B8B]/30 transition-all hover:bg-[#152968] active:scale-95 disabled:opacity-50"
-                            >
-                                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                                {loading ? "กำลังซิงค์..." : "ดึงข้อมูลล่าสุด"}
-                            </button>
+                                <button
+                                    onClick={() => fetchLogs()}
+                                    disabled={loading}
+                                    className="flex items-center gap-2.5 rounded-full bg-[#1F3B8B] px-6 py-3.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-[#1F3B8B]/30 transition-all hover:bg-[#152968] active:scale-95 disabled:opacity-50"
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                                    {loading ? "กำลังซิงค์..." : "ดึงข้อมูลล่าสุด"}
+                                </button>
+                            </div>
+
                         </div>
                     </div>
 

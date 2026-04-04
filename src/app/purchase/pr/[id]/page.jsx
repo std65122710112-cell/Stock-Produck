@@ -7,7 +7,7 @@ import { apiFetch } from "@/lib/api";
 import toast, { Toaster } from "react-hot-toast";
 import {
     ArrowLeft, Hash, User, Calendar, ShieldCheck, Info, Package,
-    Building2, CheckCircle2, XCircle, Clock, Database, ClipboardCheck, Truck, Briefcase, ShoppingBag
+    Building2, CheckCircle2, XCircle, Clock, Database, ClipboardCheck, Truck, Briefcase, ShoppingBagm, FileSearch
 } from "lucide-react";
 
 export default function PRDetailPage() {
@@ -62,27 +62,45 @@ export default function PRDetailPage() {
 
                 {/* --- HEADER SECTION --- */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-6">
-                    <div className="space-y-2">
-                        <div className="w-fit flex items-center gap-3 rounded-full border border-blue-100 bg-blue-50/70 px-5 py-2.5 shadow-sm mb-4 ml-1 active:scale-95 transition-all">
-                            <Package className="w-4 h-4 text-indigo-600" />
-                            <p className="text-xs font-black text-indigo-600 whitespace-nowrap">
-                                ระบบงานบริหารการจัดซื้อ (Procurement Management)
-                            </p>
+                    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
+                    <div className="w-full px-6 md:px-10 flex flex-col md:flex-row items-start md:items-center gap-6">
+
+                        {/* 💡 ไอคอนหลัก: FileSearch (สื่อถึงการดูรายละเอียด/ตรวจสอบเอกสาร) */}
+                        <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                            <FileSearch className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
                         </div>
-                        <h1 className="text-5xl font-black text-slate-950 tracking-tight flex items-center gap-3">
-                            รายละเอียดใบขอซื้อ (PR)
-                            <span className="bg-slate-950 text-white text-xs px-4 py-1.5 rounded-full tracking-widest font-black border border-slate-800 shadow-lg align-middle">ฉบับสมบูรณ์</span>
-                        </h1>
-                        <p className="text-slate-600 text-base font-bold flex items-center gap-2 mt-2">
-                            <ShieldCheck className="w-5 h-5 text-slate-400" />
-                            ตรวจสอบรายละเอียดใบขอซื้อพัสดุ
-                        </p>
+
+                        {/* กลุ่มข้อความเรียงซ้อนกัน */}
+                        <div className="flex flex-col">
+                            {/* ภาษาอังกฤษด้านบน */}
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <ClipboardCheck className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                    Procurement Management System
+                                </p>
+                            </div>
+
+                            {/* หัวข้อหลัก พร้อม Badge ฉบับสมบูรณ์ */}
+                            <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2 flex flex-wrap items-center gap-3">
+                                รายละเอียดใบขอซื้อ (PR)
+
+                            </h1>
+
+                            {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
+                            <div className="flex items-center gap-2 pt-1 opacity-90">
+                                <ShieldCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                    ตรวจสอบรายละเอียดและสถานะใบขอซื้อพัสดุในระบบ
+                                </p>
+                            </div>
+                        </div>
                     </div>
                     <button
                         onClick={() => router.back()}
-                        className="group flex items-center gap-2 bg-slate-100 text-slate-700 px-6 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-colors shadow-sm"
+                        className="group flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm whitespace-nowrap"
                     >
-                        <ArrowLeft className="w-5 h-5" /> ย้อนกลับไปหน้ารายการ
+                        <ArrowLeft className="w-4 h-4 text-slate-400 group-hover:text-[#1F3B8B] transition-colors" />
+                        ย้อนกลับ
                     </button>
                 </div>
 

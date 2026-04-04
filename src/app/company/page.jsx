@@ -122,12 +122,15 @@ export default function CompanySettingsPage() {
                 {/* HEADER SECTION */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-2 border-slate-100 pb-8">
                     <div className="flex items-center gap-5">
-                        <div className="p-4 bg-slate-950 text-white rounded-[1.5rem] shadow-xl border-2 border-slate-800">
-                            <Building2 className="w-8 h-8 text-sky-400" />
+                        {/* 💡 เปลี่ยน bg-slate-950 เป็น bg-[#1F3B8B] และเปลี่ยนสีไอคอนเป็น text-white */}
+                        <div className="p-4 bg-[#1F3B8B] text-white rounded-[1.5rem] shadow-xl shadow-[#1F3B8B]/20 border-2 border-[#1F3B8B]">
+                            <Building2 className="w-8 h-8 text-white" />
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600 mb-1">Company Profile Settings</p>
-                            <h1 className="text-4xl font-black text-slate-950 tracking-tighter uppercase italic">ตั้งค่าข้อมูลบริษัท</h1>
+                            <h1 className="text-4xl font-black text-slate-950 tracking-tighter uppercase">
+                                ตั้งค่าข้อมูลบริษัท
+                            </h1>
                             <p className="text-slate-500 font-bold text-xs uppercase tracking-widest flex items-center gap-2 mt-2">
                                 <Info className="w-4 h-4 text-sky-500" /> ข้อมูลที่แสดงในหัวเอกสาร PDF (PR/PO/GR)
                             </p>

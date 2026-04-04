@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
     Building2, Layers, MapPin, Database, RefreshCw, Plus,
-    ArrowRight, Loader2, LayoutGrid, Trash2, AlertTriangle
+    ArrowRight, Loader2, LayoutGrid, Trash2, AlertTriangle, ShieldCheck, ChevronRight
 } from "lucide-react";
 
 export default function UnifiedInfrastructurePage() {
@@ -92,7 +92,7 @@ export default function UnifiedInfrastructurePage() {
                         </div>
                         <h3 className="text-xl font-black text-slate-950 uppercase tracking-tight mb-2">ยืนยันการลบ?</h3>
                         <p className="text-sm font-bold text-slate-500 mb-8">คุณต้องการลบ {confirmDelete.typeLabel} ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
-                        
+
                         <div className="flex w-full gap-3">
                             <button onClick={() => setConfirmDelete(null)} className="flex-1 bg-slate-100 text-slate-600 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">ยกเลิก</button>
                             <button onClick={executeDelete} className="flex-1 bg-rose-600 text-white py-3.5 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/30 active:scale-95 flex items-center justify-center gap-2"><Trash2 className="w-4 h-4" /> ยืนยันลบ</button>
@@ -104,16 +104,41 @@ export default function UnifiedInfrastructurePage() {
 
             <div className="max-w-[1600px] mx-auto p-6 space-y-6 pb-20">
 
-                {/* HEADER */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b-2 border-slate-100 pb-8">
-                    <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1F3B8B] mb-1">โครงสร้างระบบโลจิสติกส์</p>
-                        <h1 className="text-4xl font-black text-slate-950 tracking-tighter uppercase flex items-center gap-3">
-                            จัดการคลังและพื้นที่
-                            <span className="bg-[#1F3B8B] text-white text-[10px] px-3 py-1 rounded-lg font-black uppercase tracking-wider shadow-sm">มาตรฐาน</span>
-                        </h1>
+                {/* HEADER: เส้นกั้นยาวเส้นเดียว และระยะชิดหัวข้อ */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b-2 border-slate-100 pb-6 gap-6 mb-10">
+
+                    {/* กลุ่มเนื้อหาซ้าย: ไอคอน + ข้อความ */}
+                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                        {/* ด้านซ้าย: กล่องไอคอน */}
+                        <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                            <Building2 className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                        </div>
+
+                        {/* ด้านขวา: ข้อมูลเรียงซ้อนกัน */}
+                        <div className="flex flex-col">
+                            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B] mb-1.5">
+                                Logistics Infrastructure
+                            </p>
+
+                            <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                จัดการคลังและพื้นที่
+                            </h1>
+
+                            <div className="flex items-center gap-2 pt-1 opacity-90">
+                                <Database className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                    บริหารจัดการตำแหน่งจัดเก็บและโครงสร้างคลังสินค้าอย่างเป็นระบบ
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <button onClick={loadData} disabled={loading} className="flex items-center gap-2 bg-white border-2 border-slate-100 hover:border-[#1F3B8B]/30 hover:bg-[#1F3B8B]/5 text-slate-600 hover:text-[#1F3B8B] px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-sm active:scale-95">
+
+                    {/* ปุ่มซิงค์ข้อมูล: อยู่ขวาสุดของเส้นยาว */}
+                    <button
+                        onClick={loadData}
+                        disabled={loading}
+                        className="flex items-center gap-2 bg-white border-2 border-slate-100 hover:border-[#1F3B8B]/30 hover:bg-[#1F3B8B]/5 text-slate-600 hover:text-[#1F3B8B] px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-sm active:scale-95 shrink-0"
+                    >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin text-[#1F3B8B]" /> : <RefreshCw className="w-4 h-4 text-[#1F3B8B]" />}
                         ซิงค์ข้อมูล
                     </button>
@@ -125,7 +150,7 @@ export default function UnifiedInfrastructurePage() {
                     <div className="flex flex-col bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden hover:shadow-lg transition-all">
                         <header className="p-6 bg-slate-50 border-b-2 border-slate-100">
                             <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-slate-950">
-                                <div className="p-2 bg-[#1F3B8B]/10 rounded-xl"><Building2 className="w-5 h-5 text-[#1F3B8B]" /></div> 
+                                <div className="p-2 bg-[#1F3B8B]/10 rounded-xl"><Building2 className="w-5 h-5 text-[#1F3B8B]" /></div>
                                 1. คลังสินค้า
                             </h3>
                         </header>
@@ -156,7 +181,7 @@ export default function UnifiedInfrastructurePage() {
                     <div className={`flex flex-col bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg ${!selWhId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
                         <header className="p-6 bg-slate-50 border-b-2 border-slate-100">
                             <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-slate-950">
-                                <div className="p-2 bg-amber-100 rounded-xl"><Layers className="w-5 h-5 text-amber-500" /></div> 
+                                <div className="p-2 bg-amber-100 rounded-xl"><Layers className="w-5 h-5 text-amber-500" /></div>
                                 2. โซนจัดเก็บ
                             </h3>
                         </header>
@@ -188,7 +213,7 @@ export default function UnifiedInfrastructurePage() {
                     <div className={`flex flex-col bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg ${!selZoneId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
                         <header className="p-6 bg-slate-50 border-b-2 border-slate-100">
                             <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-slate-950">
-                                <div className="p-2 bg-emerald-100 rounded-xl"><MapPin className="w-5 h-5 text-emerald-500" /></div> 
+                                <div className="p-2 bg-emerald-100 rounded-xl"><MapPin className="w-5 h-5 text-emerald-500" /></div>
                                 3. ตำแหน่ง (Locations)
                             </h3>
                         </header>
@@ -272,7 +297,7 @@ function SelectCard({ active, onClick, onDelete, title, subtitle, badge, theme }
 
     return (
         <div onClick={onClick} className={`p-5 rounded-[1.8rem] cursor-pointer transition-all duration-300 border-2 flex justify-between items-center group relative overflow-hidden outline-none ${active ? `${activeBg} ${activeText} shadow-lg ${activeShadow} scale-[1.02] z-10` : "bg-white border-slate-100 hover:border-slate-300 text-slate-600 hover:shadow-md hover:bg-slate-50/80"}`}>
-            
+
             {active && (
                 <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl pointer-events-none ${theme === 'blue' ? 'bg-[#1F3B8B]/10' : 'bg-amber-200/40'}`} />
             )}
@@ -281,7 +306,7 @@ function SelectCard({ active, onClick, onDelete, title, subtitle, badge, theme }
                 <p className={`font-mono font-black uppercase text-sm tracking-wide transition-colors ${active ? activeText : 'text-slate-950 group-hover:text-slate-900'}`}>{title}</p>
                 <p className={`text-[10px] font-bold uppercase truncate max-w-[140px] mt-0.5 transition-colors ${active ? activeSubText : 'text-slate-500'}`}>{subtitle}</p>
             </div>
-            
+
             <div className="flex flex-col items-end gap-2 z-10">
                 <div className="flex items-center gap-3">
                     <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className={`p-2 rounded-xl transition-all active:scale-95 ${active ? 'text-slate-400 hover:text-rose-500 hover:bg-white/60' : 'bg-slate-50 text-slate-300 hover:text-rose-500 hover:bg-rose-50 opacity-0 group-hover:opacity-100'}`}>

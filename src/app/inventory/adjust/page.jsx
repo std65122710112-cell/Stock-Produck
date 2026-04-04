@@ -184,25 +184,46 @@ export default function StockAdjustmentPage() {
 
             <div className="max-w-[1200px] mx-auto space-y-6 p-4 md:p-6 min-h-screen pb-24 bg-white">
 
-                {/* HEADER SECTION */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4">
-                    <div className="space-y-1">
-                        <div className="w-fit flex items-center gap-3 rounded-full border border-blue-100 bg-blue-50/70 px-5 py-2.5 shadow-sm mb-4 ml-1">
-                            <Database className="w-5 h-5 text-indigo-600" />
-                            <p className="text-sm font-black text-indigo-600 whitespace-nowrap">
-                                ระบบปรับปรุงยอดสินค้าคงคลัง (Inventory Reconciliation)
-                            </p>
+                {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย เส้นกั้นยาว Edge-to-Edge */}
+                <div className="w-full border-b-2 border-slate-100 mb-10">
+
+                    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
+                    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between pb-6 gap-6">
+
+                        {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า --- */}
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                            {/* 💡 ไอคอนหลัก: Scale (สื่อถึงการปรับสมดุล/Reconcile ยอดสต๊อก) */}
+                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                <Scale className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                            </div>
+
+                            {/* กลุ่มข้อความเรียงซ้อนกัน */}
+                            <div className="flex flex-col">
+                                {/* ภาษาอังกฤษด้านบน */}
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <Database className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                        Inventory Reconciliation
+                                    </p>
+                                </div>
+
+                                {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ) */}
+                                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                    ปรับปรุงยอดสต๊อก
+                                </h1>
+
+                                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
+                                <div className="flex items-center gap-2 pt-1 opacity-90">
+                                    <ShieldCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                        เอกสารตรวจนับและปรับปรุงยอดสินค้าคงคลัง
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
-                        <h1 className="text-5xl font-black text-slate-950 tracking-tight flex items-center gap-4">
-                            ปรับปรุงยอดสต๊อก
-                        </h1>
-                        <p className="text-slate-600 text-base font-bold flex items-center gap-2 mt-2">
-                            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                            เอกสารตรวจนับและปรับปรุงยอดสินค้าคงคลัง
-                        </p>
+                        {/* --- ส่วนขวา: (ถ้ามีปุ่มจัดการอื่นๆ สามารถใส่ตรงนี้ได้) --- */}
                     </div>
-
                 </div>
 
                 {/* ✅ เพิ่ม noValidate เพื่อปิด Alert เดิมของเบราว์เซอร์ */}

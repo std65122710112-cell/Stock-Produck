@@ -20,7 +20,9 @@ import {
     ChevronRight,
     Search,
     Package,
-    Database
+    Database,
+    ArrowUpRight, 
+   
 } from "lucide-react";
 
 export default function StockRequisitionListPage() {
@@ -70,29 +72,55 @@ export default function StockRequisitionListPage() {
             <Toaster position="top-right" />
             <div className="max-w-6xl mx-auto space-y-8">
 
-                {/* HEADER SECTION */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4">
-                    <div className="space-y-2">
-                        {/* ปรับฟอนต์ให้ใหญ่ขึ้นและแปลเป็นไทย */}
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-black uppercase tracking-wider w-fit">
-                            <Truck className="w-4 h-4" /> ระบบคลังสินค้าขาออก (Inventory Outbound)
+                {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย ไม่เอาเส้นกั้น และเว้นระยะ pt-10 */}
+                <div className="w-full pt-10 mb-6 print:hidden">
+
+                    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
+                    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+
+                        {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า --- */}
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                            {/* 💡 ไอคอนหลัก: Truck (สื่อถึงคลังสินค้าขาออก/การนำจ่าย) */}
+                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                <Truck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                            </div>
+
+                            {/* กลุ่มข้อความเรียงซ้อนกัน */}
+                            <div className="flex flex-col">
+                                {/* ภาษาอังกฤษด้านบน */}
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <ArrowUpRight className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                        Inventory Outbound Management
+                                    </p>
+                                </div>
+
+                                {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ) */}
+                                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                    รายการใบขอเบิก (SR)
+                                </h1>
+
+                                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
+                                <div className="flex items-center gap-2 pt-1 opacity-90">
+                                    <History className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                        รายการประวัติใบขอเบิกพัสดุ (Requisition Queue)
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        {/* ปรับขนาดหัวข้อเป็น text-5xl และสีเป็น text-slate-950 (สีเข้มสุด) */}
-                        <h1 className="text-5xl font-black text-slate-950 tracking-tight flex items-center gap-3">
-                            รายการใบขอเบิก (SR)
-                        </h1>
-                        <p className="text-slate-600 text-base font-bold flex items-center gap-2">
-                            <Database className="w-5 h-5 text-slate-400" />
-                            รายการประวัติใบขอเบิกพัสดุ (Requisition Queue)
-                        </p>
+
+                        {/* --- ส่วนขวา: ปุ่มสร้างใบขอเบิกใหม่ (เพิ่ม whitespace-nowrap กันตัวหนังสือตก) --- */}
+                        <div className="flex items-center">
+                            <Link
+                                href="/inventory/requisition/create"
+                                className="group flex items-center gap-2 bg-emerald-600 text-white px-7 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-emerald-900/10 transition-all active:scale-95 whitespace-nowrap"
+                            >
+                                <Plus className="w-5 h-5 shrink-0" strokeWidth={3} />
+                                สร้างใบขอเบิกใหม่
+                            </Link>
+                        </div>
                     </div>
-                    <Link
-                        href="/inventory/requisition/create"
-                        className="group flex items-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-slate-200 transition-colors"
-                    >
-                        <Plus className="w-5 h-5" />
-                        สร้างใบขอเบิกใหม่
-                    </Link>
                 </div>
 
                 {/* STATUS SUMMARY BAR (Static) */}

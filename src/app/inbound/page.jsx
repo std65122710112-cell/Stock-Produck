@@ -8,7 +8,8 @@ import { getAccessToken } from "@/lib/auth";
 import {
     ArrowLeft, Database, FileText, CheckCircle2,
     Package, ClipboardCheck, User, Info, Hash,
-    LayoutDashboard, Clock, ShieldCheck, FileCheck, X, Truck
+    LayoutDashboard, Clock, ShieldCheck, FileCheck, X, Truck, PackagePlus, 
+    ArrowDownLeft, 
 } from "lucide-react";
 
 function createDefaultItem() {
@@ -234,48 +235,83 @@ export default function CreateGoodsReceiptPage() {
             <Toaster position="top-right" />
 
             <div className="max-w-6xl mx-auto space-y-8 py-8 px-4 md:px-0 animate-in fade-in duration-500">
-                {/* --- HEADER --- */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4">
-                    <div className="space-y-2">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-black uppercase tracking-wider mb-2">
-                            <LayoutDashboard className="w-4 h-4" /> กระบวนการตรวจรับสินค้า (Inbound Process)
-                        </div>
-                        <h1 className="text-5xl font-black text-slate-950 tracking-tight flex items-center gap-3">
-                            {viewMode === 'LIST' ? "การตรวจรับสินค้าเข้าคลัง" : "บันทึกใบรับสินค้า (GR)"}
-                        </h1>
-                        <p className="text-slate-600 text-base font-bold flex items-center gap-2 mt-2">
-                            <Database className="w-5 h-5 text-slate-400" />
-                            ระบบตรวจรับสินค้าเข้าคลังและตรวจสอบประวัติพัสดุ
-                        </p>
-                    </div>
+               {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย ไม่เอาเส้นกั้น และเว้นระยะ pt-10 */}
+<div className="w-full pt-10 mb-6 print:hidden">
+    
+    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
+    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+        
+        {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า (ปรับตามสถานะ viewMode) --- */}
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            {/* 💡 ไอคอนหลัก: PackagePlus (สื่อถึงการตรวจรับสินค้าใหม่เข้าคลัง) */}
+            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                <PackagePlus className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+            </div>
 
-                    {viewMode === 'FORM' ? (
-                        <button onClick={handleCancel} className="flex items-center gap-2 bg-slate-100 text-slate-700 px-6 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-colors shadow-sm">
-                            <ArrowLeft className="w-5 h-5" /> ยกเลิกและย้อนกลับ
-                        </button>
-                    ) : (
-                        <div className="flex bg-white p-1.5 rounded-3xl shadow-sm border border-slate-200 overflow-x-auto w-full md:w-auto">
-                            <button
-                                onClick={() => setFilterTab("PENDING")}
-                                className={`px-6 py-3.5 rounded-[1.5rem] font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border ${filterTab === 'PENDING'
-                                    ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
-                                    : 'border-transparent text-slate-500 hover:bg-slate-50'
-                                    }`}
-                            >
-                                <Clock className="w-4 h-4" /> รอรับเข้าคลัง ({pendingPOs.length})
-                            </button>
-                            <button
-                                onClick={() => setFilterTab("COMPLETED")}
-                                className={`px-6 py-3.5 rounded-[1.5rem] font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border ${filterTab === 'COMPLETED'
-                                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
-                                    : 'border-transparent text-slate-500 hover:bg-slate-50'
-                                    }`}
-                            >
-                                <ShieldCheck className="w-4 h-4" /> ประวัติรับของ (GR) ({completedGRs.length})
-                            </button>
-                        </div>
-                    )}
+            {/* กลุ่มข้อความเรียงซ้อนกัน */}
+            <div className="flex flex-col">
+                {/* ภาษาอังกฤษด้านบน */}
+                <div className="flex items-center gap-2 mb-1.5">
+                    <ArrowDownLeft className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                        Inbound Supply Chain Process
+                    </p>
                 </div>
+
+                {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ เปลี่ยนตาม viewMode) */}
+                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                    {viewMode === 'LIST' ? "การตรวจรับสินค้าเข้าคลัง" : "บันทึกใบรับสินค้า (GR)"}
+                </h1>
+
+                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
+                <div className="flex items-center gap-2 pt-1 opacity-90">
+                    <Database className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                        ระบบตรวจรับสินค้าเข้าคลังและตรวจสอบประวัติพัสดุ
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {/* --- ส่วนขวา: ปุ่มย้อนกลับ หรือ Tab Switcher --- */}
+        <div className="flex items-center">
+            {viewMode === 'FORM' ? (
+                /* ปุ่มย้อนกลับในโหมด FORM */
+                <button 
+                    onClick={handleCancel} 
+                    className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm"
+                >
+                    <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" /> 
+                    ยกเลิกและย้อนกลับ
+                </button>
+            ) : (
+                /* Tab Switcher ในโหมด LIST */
+                <div className="flex bg-white p-1.5 rounded-[2rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
+                    <button
+                        onClick={() => setFilterTab("PENDING")}
+                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${
+                            filterTab === 'PENDING'
+                            ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
+                            : 'border-transparent text-slate-400 hover:bg-slate-50'
+                        }`}
+                    >
+                        <Clock className="w-4 h-4" /> รอรับเข้าคลัง ({pendingPOs.length})
+                    </button>
+                    <button
+                        onClick={() => setFilterTab("COMPLETED")}
+                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${
+                            filterTab === 'COMPLETED'
+                            ? 'bg-[#1F3B8B]/5 text-[#1F3B8B] border-[#1F3B8B]/20 shadow-sm'
+                            : 'border-transparent text-slate-400 hover:bg-slate-50'
+                        }`}
+                    >
+                        <ShieldCheck className="w-4 h-4" /> ประวัติรับของ (GR) ({completedGRs.length})
+                    </button>
+                </div>
+            )}
+        </div>
+    </div>
+</div>
 
                 {/* --- VIEW 1: LIST --- */}
                 {viewMode === 'LIST' && (
