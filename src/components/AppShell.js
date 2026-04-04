@@ -190,14 +190,11 @@ export default function AppShell({ children }) {
 
                                     <div className="space-y-1.5">
                                         {group.items.map((n) => {
-                                            // ✅ แก้ไขเงื่อนไขตรงนี้ เพื่อแยกเมนูแม่ออกจากเมนูลูกชัดเจน
                                             const isActive =
                                                 path === n.href ||
                                                 (n.href !== "/dashboard" &&
                                                     path.startsWith(n.href + "/") &&
-                                                    // ยกเว้นกรณีของระบบใบเบิก
                                                     !(n.href === "/inventory/requisition" && path.startsWith("/inventory/requisition/approval")) &&
-                                                    // ยกเว้นกรณีของระบบ PR
                                                     !(n.href === "/purchase/pr" && path.startsWith("/purchase/pr/approval"))
                                                 );
 

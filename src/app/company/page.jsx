@@ -59,7 +59,7 @@ export default function CompanySettingsPage() {
                 method: "POST",
                 body: JSON.stringify(formData)
             });
-            toast.success("บันทึกข้อมูลบริษัทเรียบร้อยแล้ว");
+            toast.success("บันทึกข้อมูลบริษัทเรียบร้อยแล้ว00");
         } catch (error) {
             toast.error("เกิดข้อผิดพลาดในการบันทึก");
         } finally {

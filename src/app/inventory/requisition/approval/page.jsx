@@ -139,7 +139,7 @@ export default function RequisitionApprovalPage() {
                                                 </td>
                                                 <td className="p-5">
                                                     <span className="text-[10px] font-black text-slate-500 border border-slate-200 px-2 py-1 rounded bg-slate-50 uppercase tracking-tighter">
-                                                        {req.department?.name || 'GEN-DEPT'}
+                                                        {req.department?.name || 'ไม่ได้ระบุแผนก'}
                                                     </span>
                                                 </td>
                                                 <td className="p-5 text-xs font-bold text-slate-400">
