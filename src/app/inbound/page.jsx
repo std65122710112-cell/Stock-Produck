@@ -8,8 +8,8 @@ import { getAccessToken } from "@/lib/auth";
 import {
     ArrowLeft, Database, FileText, CheckCircle2,
     Package, ClipboardCheck, User, Info, Hash,
-    LayoutDashboard, Clock, ShieldCheck, FileCheck, X, Truck, PackagePlus, 
-    ArrowDownLeft, 
+    LayoutDashboard, Clock, ShieldCheck, FileCheck, X, Truck, PackagePlus,
+    ArrowDownLeft,
 } from "lucide-react";
 
 function createDefaultItem() {
@@ -235,83 +235,81 @@ export default function CreateGoodsReceiptPage() {
             <Toaster position="top-right" />
 
             <div className="max-w-6xl mx-auto space-y-8 py-8 px-4 md:px-0 animate-in fade-in duration-500">
-               {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย ไม่เอาเส้นกั้น และเว้นระยะ pt-10 */}
-<div className="w-full pt-10 mb-6 print:hidden">
-    
-    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
-    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-        
-        {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า (ปรับตามสถานะ viewMode) --- */}
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            {/* 💡 ไอคอนหลัก: PackagePlus (สื่อถึงการตรวจรับสินค้าใหม่เข้าคลัง) */}
-            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                <PackagePlus className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
-            </div>
+                {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย ไม่เอาเส้นกั้น และเว้นระยะ pt-10 */}
+                <div className="w-full pt-10 mb-6 print:hidden">
 
-            {/* กลุ่มข้อความเรียงซ้อนกัน */}
-            <div className="flex flex-col">
-                {/* ภาษาอังกฤษด้านบน */}
-                <div className="flex items-center gap-2 mb-1.5">
-                    <ArrowDownLeft className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                        Inbound Supply Chain Process
-                    </p>
+                    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
+                    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+
+                        {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า (ปรับตามสถานะ viewMode) --- */}
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                            {/* 💡 ไอคอนหลัก: PackagePlus (สื่อถึงการตรวจรับสินค้าใหม่เข้าคลัง) */}
+                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                <PackagePlus className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                            </div>
+
+                            {/* กลุ่มข้อความเรียงซ้อนกัน */}
+                            <div className="flex flex-col">
+                                {/* ภาษาอังกฤษด้านบน */}
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <ArrowDownLeft className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                        Inbound Supply Chain Process
+                                    </p>
+                                </div>
+
+                                {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ เปลี่ยนตาม viewMode) */}
+                                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                    {viewMode === 'LIST' ? "การตรวจรับสินค้าเข้าคลัง" : "บันทึกใบรับสินค้า (GR)"}
+                                </h1>
+
+                                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
+                                <div className="flex items-center gap-2 pt-1 opacity-90">
+                                    <Database className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                        ระบบตรวจรับสินค้าเข้าคลังและตรวจสอบประวัติพัสดุ
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* --- ส่วนขวา: ปุ่มย้อนกลับ หรือ Tab Switcher --- */}
+                        <div className="flex items-center">
+                            {viewMode === 'FORM' ? (
+                                /* ปุ่มย้อนกลับในโหมด FORM */
+                                <button
+                                    onClick={handleCancel}
+                                    className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm"
+                                >
+                                    <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" />
+                                    ยกเลิกและย้อนกลับ
+                                </button>
+                            ) : (
+                                /* Tab Switcher ในโหมด LIST */
+                                <div className="flex bg-white p-1.5 rounded-[2rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
+                                    <button
+                                        onClick={() => setFilterTab("PENDING")}
+                                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'PENDING'
+                                            ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
+                                            : 'border-transparent text-slate-400 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        <Clock className="w-4 h-4" /> รอรับเข้าคลัง ({pendingPOs.length})
+                                    </button>
+                                    <button
+                                        onClick={() => setFilterTab("COMPLETED")}
+                                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'COMPLETED'
+                                            ? 'bg-[#1F3B8B]/5 text-[#1F3B8B] border-[#1F3B8B]/20 shadow-sm'
+                                            : 'border-transparent text-slate-400 hover:bg-slate-50'
+                                            }`}
+                                    >
+                                        <ShieldCheck className="w-4 h-4" /> ประวัติรับของ (GR) ({completedGRs.length})
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
-
-                {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ เปลี่ยนตาม viewMode) */}
-                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                    {viewMode === 'LIST' ? "การตรวจรับสินค้าเข้าคลัง" : "บันทึกใบรับสินค้า (GR)"}
-                </h1>
-
-                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
-                <div className="flex items-center gap-2 pt-1 opacity-90">
-                    <Database className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                        ระบบตรวจรับสินค้าเข้าคลังและตรวจสอบประวัติพัสดุ
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        {/* --- ส่วนขวา: ปุ่มย้อนกลับ หรือ Tab Switcher --- */}
-        <div className="flex items-center">
-            {viewMode === 'FORM' ? (
-                /* ปุ่มย้อนกลับในโหมด FORM */
-                <button 
-                    onClick={handleCancel} 
-                    className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm"
-                >
-                    <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" /> 
-                    ยกเลิกและย้อนกลับ
-                </button>
-            ) : (
-                /* Tab Switcher ในโหมด LIST */
-                <div className="flex bg-white p-1.5 rounded-[2rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
-                    <button
-                        onClick={() => setFilterTab("PENDING")}
-                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${
-                            filterTab === 'PENDING'
-                            ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
-                            : 'border-transparent text-slate-400 hover:bg-slate-50'
-                        }`}
-                    >
-                        <Clock className="w-4 h-4" /> รอรับเข้าคลัง ({pendingPOs.length})
-                    </button>
-                    <button
-                        onClick={() => setFilterTab("COMPLETED")}
-                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${
-                            filterTab === 'COMPLETED'
-                            ? 'bg-[#1F3B8B]/5 text-[#1F3B8B] border-[#1F3B8B]/20 shadow-sm'
-                            : 'border-transparent text-slate-400 hover:bg-slate-50'
-                        }`}
-                    >
-                        <ShieldCheck className="w-4 h-4" /> ประวัติรับของ (GR) ({completedGRs.length})
-                    </button>
-                </div>
-            )}
-        </div>
-    </div>
-</div>
 
                 {/* --- VIEW 1: LIST --- */}
                 {viewMode === 'LIST' && (
@@ -431,12 +429,12 @@ export default function CreateGoodsReceiptPage() {
                                 ตรวจสอบและระบุตำแหน่งจัดเก็บพัสดุ
                             </h2>
                             <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
-                                <table className="w-full text-left border-collapse">
+                                <table className="w-full text-left border-collapse min-w-[800px]">
                                     <thead className="bg-slate-50 text-xs font-black text-slate-500 uppercase border-b border-slate-200">
                                         <tr>
                                             <th className="p-5">พัสดุ / SKU</th>
-                                            <th className="p-5">คลัง / โซนจัดเก็บ</th>
-                                            <th className="p-5">ตำแหน่งที่วาง (Location) *</th>
+                                            <th className="p-5 w-[30%]">คลัง / โซนจัดเก็บ</th>
+                                            <th className="p-5 w-[25%]">ตำแหน่งที่วาง (Location) *</th>
                                             <th className="p-5 text-center">ค้างรับ</th>
                                             <th className="p-5 text-center text-emerald-600">จำนวนที่รับจริง</th>
                                         </tr>
@@ -446,29 +444,56 @@ export default function CreateGoodsReceiptPage() {
                                             <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                                                 <td className="p-5">
                                                     <p className="font-black text-slate-800 text-sm uppercase">[{item.sku}]</p>
-                                                    <p className="text-xs font-bold text-slate-400 mt-1">{item.name}</p>
+                                                    <p className="text-xs font-bold text-slate-500 mt-1">{item.name}</p>
                                                 </td>
                                                 <td className="p-5">
-                                                    <div className="flex gap-2">
-                                                        <select value={item.warehouseId} onChange={(e) => updateItem(item.id, "warehouseId", e.target.value)} className="border-2 border-slate-100 rounded-xl px-2 py-2 text-xs font-black outline-none focus:border-emerald-400 bg-white">
-                                                            <option value="">WH</option>
-                                                            {warehouses.map(w => <option key={w.id} value={w.id}>{w.code}</option>)}
+                                                    <div className="flex flex-col gap-2">
+                                                        {/* 💡 แก้ไข: ให้แสดงชื่อคลังสินค้า (name) แทนรหัส (code) */}
+                                                        <select
+                                                            value={item.warehouseId}
+                                                            onChange={(e) => updateItem(item.id, "warehouseId", e.target.value)}
+                                                            className="border-2 border-slate-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-emerald-400 bg-white text-slate-700 w-full truncate"
+                                                        >
+                                                            <option value="">-- เลือกคลังสินค้า --</option>
+                                                            {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                                                         </select>
-                                                        <select value={item.zoneId} onChange={(e) => updateItem(item.id, "zoneId", e.target.value)} disabled={!item.warehouseId} className="border-2 border-slate-100 rounded-xl px-2 py-2 text-xs font-black outline-none disabled:bg-slate-50 bg-white">
-                                                            <option value="">Zone</option>
-                                                            {getAvailableZones(item.warehouseId).map(z => <option key={z.id} value={z.id}>{z.code}</option>)}
+
+                                                        {/* 💡 แก้ไข: ให้แสดงชื่อโซน (name) แทนรหัส (code) */}
+                                                        <select
+                                                            value={item.zoneId}
+                                                            onChange={(e) => updateItem(item.id, "zoneId", e.target.value)}
+                                                            disabled={!item.warehouseId}
+                                                            className="border-2 border-slate-100 rounded-xl px-3 py-2 text-xs font-bold outline-none disabled:bg-slate-50 disabled:text-slate-400 bg-white text-slate-700 w-full truncate"
+                                                        >
+                                                            <option value="">-- เลือกโซน (ถ้ามี) --</option>
+                                                            {getAvailableZones(item.warehouseId).map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
                                                         </select>
                                                     </div>
                                                 </td>
                                                 <td className="p-5">
-                                                    <select value={item.locationId} onChange={(e) => updateItem(item.id, "locationId", e.target.value)} disabled={!item.warehouseId} required className="w-full border-2 border-emerald-100 bg-emerald-50/30 rounded-xl px-3 py-2.5 text-xs font-black text-emerald-700 outline-none focus:border-emerald-500">
-                                                        <option value="">-- เลือกตำแหน่งวางของ --</option>
-                                                        {getAvailableLocations(item).map(l => <option key={l.id} value={l.id}>{l.code}</option>)}
+                                                    {/* 💡 แก้ไข: ให้แสดงชื่อตำแหน่ง (name) แทนรหัส (code) และถ้าไม่มีชื่อให้ดึง Code มาโชว์สำรอง */}
+                                                    <select
+                                                        value={item.locationId}
+                                                        onChange={(e) => updateItem(item.id, "locationId", e.target.value)}
+                                                        disabled={!item.warehouseId}
+                                                        required
+                                                        className="w-full border-2 border-emerald-100 bg-emerald-50/30 rounded-xl px-3 py-3 text-xs font-black text-emerald-700 outline-none focus:border-emerald-500 focus:bg-emerald-50 disabled:bg-slate-50 disabled:border-slate-100 disabled:text-slate-400 transition-colors"
+                                                    >
+                                                        <option value="">-- ระบุชั้นวาง / จุดเก็บ --</option>
+                                                        {getAvailableLocations(item).map(l => <option key={l.id} value={l.id}>{l.name || l.code}</option>)}
                                                     </select>
                                                 </td>
-                                                <td className="p-5 text-center font-black text-slate-400 text-lg">{item.remainingQuantity}</td>
+                                                <td className="p-5 text-center font-black text-slate-400 text-lg tabular-nums">
+                                                    {item.remainingQuantity}
+                                                </td>
                                                 <td className="p-5">
-                                                    <input type="number" value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", e.target.value)} className="w-full border-2 border-emerald-500 bg-emerald-50 text-emerald-900 rounded-xl py-3 text-center font-mono font-black text-xl outline-none" />
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={item.quantity}
+                                                        onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
+                                                        className="w-full border-2 border-emerald-500 bg-emerald-50 text-emerald-900 rounded-xl py-3 text-center font-mono font-black text-xl outline-none focus:ring-4 focus:ring-emerald-100 transition-all"
+                                                    />
                                                 </td>
                                             </tr>
                                         ))}

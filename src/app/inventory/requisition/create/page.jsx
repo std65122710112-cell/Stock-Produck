@@ -292,20 +292,20 @@ export default function CreateStockRequisitionPage() {
                                             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                                         </select>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                
                                         <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-600 uppercase tracking-wide flex items-center gap-2 ml-1">
                                                 <Tag className="w-4 h-4 text-amber-500" /> เลขอ้างอิงโครงการ
                                             </label>
                                             <input type="text" name="referenceNo" value={formData.referenceNo} onChange={handleFormChange} className="w-full border-2 border-slate-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-50 transition-all text-slate-800" placeholder="Job No. / Project ID" />
                                         </div>
-                                        <div className="space-y-2">
+                                        {/* <div className="space-y-2">
                                             <label className="text-xs font-black text-slate-600 uppercase tracking-wide flex items-center gap-2 ml-1">
                                                 <MapPin className="w-4 h-4 text-rose-500" /> สถานที่ส่งมอบ
                                             </label>
                                             <input type="text" name="deliveryLocation" value={formData.deliveryLocation} onChange={handleFormChange} className="w-full border-2 border-slate-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-rose-500 focus:ring-4 focus:ring-rose-50 transition-all text-slate-800" placeholder="ระบุตึก/ชั้น/ไซต์งาน" />
-                                        </div>
-                                    </div>
+                                        </div> */}
+                                  
                                 </div>
                             </div>
                         </div>
