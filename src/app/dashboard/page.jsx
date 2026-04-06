@@ -10,9 +10,9 @@ import {
 } from 'recharts';
 import {
     Wallet, AlertTriangle, Truck, ShieldCheck, Activity,
-    Building2, ChevronRight, Boxes, FileSignature,
-    Target, Package, ArrowRightLeft, ArrowDownToLine, ArrowUpFromLine,
-    Hourglass, Briefcase, Landmark, ListOrdered, ShoppingBag
+    Building2, Boxes, FileSignature,
+    Target, Package, ArrowDownToLine, ArrowUpFromLine,
+    Hourglass, Briefcase, Landmark, ExternalLink
 } from "lucide-react";
 
 const THEME = {
@@ -22,7 +22,6 @@ const THEME = {
     success: "#059669",  // Emerald 600
     danger: "#dc2626",   // Red 600
 };
-
 
 const formatCompact = (val) => {
     const value = safeNum(val);
@@ -44,22 +43,26 @@ export default function FacilityMatrixDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState({
         balances: [], dailyMovements: [], warehouses: [],
-        categories: [], prs: [], srs: [], lowStock: [], pos: []
+        categories: [], prs: [], srs: [], lowStock: [], pos: [],
+        agedStocks: [], deptConsumption: [] // 💡 เพิ่ม State ใหม่
     });
 
     useEffect(() => {
         async function fetchMatrixData() {
             setIsLoading(true);
             try {
-                const [bal, movSummary, wh, cat, pr, sr, low, po] = await Promise.allSettled([
+                // 💡 ยิง API ครบทุกเส้น รวมถึงเส้น department-consumption ที่เพิ่งสร้างใหม่
+                const [bal, movSummary, wh, cat, pr, sr, low, po, aged, dept] = await Promise.allSettled([
                     apiFetch("/inventory/balances"),
                     apiFetch("/inventory/dashboard/movements-summary"),
                     apiFetch("/master/warehouses"),
                     apiFetch("/master/categories"),
                     apiFetch("/api/purchase/pr"),
-                    apiFetch("/outbound/requisitions"),
+                    apiFetch("/outbound/requisitions"), // 💡 ของเดิมเก็บไว้ใช้นับ Pending
                     apiFetch("/inventory/low-stock-alerts"),
-                    apiFetch("/inventory/pos")
+                    apiFetch("/inventory/pos"),
+                    apiFetch("/inventory/aged-stock?days=30"),
+                    apiFetch("/outbound/requisitions/department-consumption") // 🚀 API ใหม่
                 ]);
 
                 setData({
@@ -70,7 +73,9 @@ export default function FacilityMatrixDashboard() {
                     prs: pr.status === 'fulfilled' ? (Array.isArray(pr.value) ? pr.value : []) : [],
                     srs: sr.status === 'fulfilled' ? (Array.isArray(sr.value) ? sr.value : []) : [],
                     lowStock: low.status === 'fulfilled' ? (low.value || []) : [],
-                    pos: po.status === 'fulfilled' ? (Array.isArray(po.value) ? po.value : (po.value?.data || [])) : []
+                    pos: po.status === 'fulfilled' ? (Array.isArray(po.value) ? po.value : (po.value?.data || [])) : [],
+                    agedStocks: aged.status === 'fulfilled' ? (aged.value?.data || []) : [],
+                    deptConsumption: dept.status === 'fulfilled' ? (dept.value?.data || []) : [] // 🚀 เก็บค่ากราฟแผนก
                 });
             } finally {
                 setIsLoading(false);
@@ -80,12 +85,11 @@ export default function FacilityMatrixDashboard() {
     }, []);
 
     const analytics = useMemo(() => {
-        const { balances, dailyMovements, warehouses, categories, prs, srs, lowStock, pos } = data;
+        // 💡 ดึงตัวแปรออกมาให้ครบ รวมถึง balances และ deptConsumption
+        const { balances, dailyMovements, warehouses, categories, prs, srs, lowStock, pos, agedStocks, deptConsumption } = data;
 
         const totalValue = balances.reduce((sum, b) => sum + safeNum(b.totalValue), 0);
         const totalQuantity = balances.reduce((sum, b) => sum + safeNum(b.quantity), 0);
-
-
 
         const facilityStats = warehouses.map(wh => {
             const whItems = balances.filter(b => (b.location?.warehouseId || b.location?.warehouse?.id) === wh.id);
@@ -101,49 +105,36 @@ export default function FacilityMatrixDashboard() {
         }).filter(c => c.value > 0).sort((a, b) => b.value - a.value);
 
         const now = new Date();
-        let age3 = 0, age6 = 0, age12 = 0;
-        balances.forEach(b => {
-            if (safeNum(b.quantity) > 0) {
-                const lastActive = new Date(b.updatedAt || b.createdAt);
-                const diffDays = (now - lastActive) / (1000 * 60 * 60 * 24);
-                if (diffDays >= 365) age12++;
-                else if (diffDays >= 180) age6++;
-                else if (diffDays >= 90) age3++;
-            }
+        let age1 = 0, age3 = 0, age6 = 0, age12 = 0;
+        agedStocks.forEach(b => {
+            const lastActive = new Date(b.updatedAt);
+            const diffDays = (now - lastActive) / (1000 * 60 * 60 * 24);
+            if (diffDays >= 365) age12++;
+            else if (diffDays >= 180) age6++;
+            else if (diffDays >= 90) age3++;
+            else if (diffDays >= 30) age1++;
         });
+
         const agingData = [
+            { range: '1-3 เดือน', value: age1, fill: '#fbbf24' },
             { range: '3-6 เดือน', value: age3, fill: AGING_COLORS[0] },
             { range: '6-12 เดือน', value: age6, fill: AGING_COLORS[1] },
             { range: '> 12 เดือน', value: age12, fill: AGING_COLORS[2] }
         ];
 
-        const deptMap = {};
-        srs.filter(sr => sr.status === 'COMPLETED' || sr.status === 'APPROVED').forEach(sr => {
-            const deptName = sr.department?.name || sr.requisition?.department?.name || 'ส่วนกลาง (General)';
-            let srValue = 0;
-            if (Array.isArray(sr.items)) {
-                srValue = sr.items.reduce((sum, item) => sum + (safeNum(item.quantity) * (safeNum(item.product?.unitCost) || safeNum(item.product?.price) || 0)), 0);
-            }
-            if (srValue === 0) srValue = safeNum(sr._count?.items) || 0;
-            if (!deptMap[deptName]) deptMap[deptName] = 0;
-            deptMap[deptName] += srValue;
-        });
-        const deptConsumption = Object.keys(deptMap).map(k => ({ name: k, value: deptMap[k] })).sort((a, b) => b.value - a.value).slice(0, 5);
+        // 💡 ลบโค้ดคำนวณ Dept ตรงนี้ออกไปแล้ว เพราะ Backend ทำมาให้เบ็ดเสร็จ
 
-        // 💡 แก้ไขการคำนวณคู่ค้า (Supplier Analytics)
         const supMap = {};
         let calculatedTotalSpend = 0;
         const validPOs = pos.filter(po => po.status !== 'CANCELLED' && po.status !== 'REJECTED');
-        const totalPoCount = validPOs.length; // สรุปจำนวนออเดอร์ทั้งหมด
+        const totalPoCount = validPOs.length;
 
         validPOs.forEach(po => {
             const supName = po.supplier?.name || po.vendorName || 'คู่ค้าทั่วไป';
             let poTotal = 0;
-            // คำนวณยอดเงินรวมจากรายการสินค้าในแต่ละ PO
             if (po.items && Array.isArray(po.items)) {
                 poTotal = po.items.reduce((sum, item) => sum + (safeNum(item.orderedQuantity) * safeNum(item.unitPrice)), 0);
             }
-            // Fallback ถ้าไม่มี items ให้ใช้ยอดรวมจากหัวบิล
             if (poTotal === 0) poTotal = safeNum(po.netAmount) || safeNum(po.totalAmount) || 0;
 
             if (poTotal > 0) {
@@ -162,26 +153,17 @@ export default function FacilityMatrixDashboard() {
         })).sort((a, b) => b.value - a.value).slice(0, 5);
 
         return {
-            totalValue,
-            totalQuantity,
-            facilityStats,
-            dailyMovements,
-            categoryAllocation,
-            agingData,
-            deptConsumption,
-            // 💡 ต้องมี 3 ตัวนี้เพื่อให้ส่วนคู่ค้าไม่ Error
-            topSuppliers,
-            totalPoCount,
-            totalPoSpend: calculatedTotalSpend,
-            // ------------------------------------
+            totalValue, totalQuantity, facilityStats, dailyMovements,
+            categoryAllocation, agingData,
+            deptConsumption, // 🚀 ส่งข้อมูลที่ดึงจาก Backend เข้ากราฟ
+            topSuppliers, totalPoCount, totalPoSpend: calculatedTotalSpend,
             pendingPRs: prs.filter(p => p.status === 'PENDING').length,
-            pendingSRs: srs.filter(s => s.status === 'PENDING').length,
+            pendingSRs: srs.filter(s => s.status === 'PENDING').length, // 🚀 ยังนับ Pending ได้ปกติ
             lowStockCount: lowStock.length
         };
     }, [data]);
 
     if (isLoading) return <SystemLoader />;
-
     return (
         <AuthGate>
             <div className="min-h-screen bg-[#f8fafc] p-6 lg:p-10 font-sans text-slate-900 selection:bg-blue-100">
@@ -202,7 +184,7 @@ export default function FacilityMatrixDashboard() {
                     </div>
 
                     <div className="flex flex-wrap gap-4 w-full lg:w-auto">
-                        <div className="bg-white px-8 py-5 rounded-[2rem] shadow-sm border border-slate-200 flex flex-col items-end flex-1 lg:flex-initial min-w-[200px]">
+                        <div className="bg-white px-8 py-5 rounded-4xl shadow-sm border border-slate-200 flex flex-col items-end flex-1 lg:flex-initial min-w-50">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                                 <Boxes className="w-4 h-4 text-slate-400" /> ปริมาณสินค้ารวม
                             </p>
@@ -211,7 +193,7 @@ export default function FacilityMatrixDashboard() {
                             </p>
                         </div>
 
-                        <div className="bg-gradient-to-r from-blue-900 to-blue-700 px-8 py-5 rounded-[2rem] shadow-lg shadow-blue-900/20 border border-blue-800 flex flex-col items-end flex-1 lg:flex-initial min-w-[320px] text-white">
+                        <div className="bg-linear-to-r from-blue-900 to-blue-700 px-8 py-5 rounded-4xl shadow-lg shadow-blue-900/20 border border-blue-800 flex flex-col items-end flex-1 lg:flex-initial min-w-[320px] text-white">
                             <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-1 flex items-center gap-2">
                                 <Wallet className="w-4 h-4 text-blue-300" /> มูลค่าสินค้าคงคลังสุทธิ
                             </p>
@@ -232,7 +214,7 @@ export default function FacilityMatrixDashboard() {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {analytics.facilityStats.map((wh, idx) => (
-                            <div key={wh.id} className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                            <div key={wh.id} className="bg-white p-6 rounded-4xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                                 <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
                                 <div className="relative z-10">
                                     <div className="flex justify-between items-start mb-4">
@@ -268,7 +250,7 @@ export default function FacilityMatrixDashboard() {
                                 <LegendDot color={THEME.danger} label="จ่ายออก (OUT)" />
                             </div>
                         </div>
-                        <div className="h-[320px]">
+                        <div className="h-80">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={analytics.dailyMovements} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <defs>
@@ -298,7 +280,7 @@ export default function FacilityMatrixDashboard() {
                                 <Wallet className="w-5 h-5 text-amber-500" /> สัดส่วนมูลค่าสินค้าแต่ละคลัง
                             </h2>
                         </div>
-                        <div className="h-[280px]">
+                        <div className="h-70">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={analytics.facilityStats} layout="vertical" margin={{ top: 0, right: 50, left: 0, bottom: 0 }}>
                                     <XAxis type="number" hide />
@@ -324,7 +306,7 @@ export default function FacilityMatrixDashboard() {
                                 <Boxes className="w-5 h-5 text-blue-700" /> สัดส่วนมูลค่าแยกตามหมวดหมู่
                             </h2>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 pb-4 border-b border-slate-100">Category Value Distribution</p>
-                            <div className="space-y-4 max-h-[220px] overflow-y-auto pr-2 custom-scrollbar">
+                            <div className="space-y-4 max-h-55 overflow-y-auto pr-2 custom-scrollbar">
                                 {analytics.categoryAllocation.map((cat, idx) => {
                                     const percent = analytics.totalValue > 0 ? ((cat.value / analytics.totalValue) * 100).toFixed(1) : 0;
                                     return (
@@ -342,7 +324,7 @@ export default function FacilityMatrixDashboard() {
                                 })}
                             </div>
                         </div>
-                        <div className="w-full md:w-1/2 h-[300px] relative">
+                        <div className="w-full md:w-1/2 h-75 relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie data={analytics.categoryAllocation} cx="50%" cy="50%" innerRadius={85} outerRadius={120} paddingAngle={4} dataKey="value" stroke="none" cornerRadius={5}>
@@ -366,16 +348,24 @@ export default function FacilityMatrixDashboard() {
                     </div>
                 </div>
 
-                {/* --- TIER 4: BI ANALYTICS (อัปเดตส่วนคู่ค้า) --- */}
+                {/* --- TIER 4: BI ANALYTICS --- */}
                 <div className="mb-10 border-t border-slate-200 pt-10">
                     <h2 className="text-lg font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-3">
                         <Target className="w-6 h-6 text-blue-800" /> Business Intelligence & Analytics
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                        {/* Dead Stock */}
-                        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200">
-                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-3 mb-6 border-b pb-4"><Hourglass className="w-5 h-5 text-amber-500" /> สินค้าค้างสต็อก (Dead Stock)</h3>
-                            <div className="h-[250px]">
+                        {/* 💡 Dead Stock (อัปเดตใหม่) */}
+                        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200 flex flex-col h-full">
+                            <div className="flex justify-between items-center mb-6 border-b pb-4">
+                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-3">
+                                    <Hourglass className="w-5 h-5 text-amber-500" /> สินค้าค้างสต็อก (Dead Stock)
+                                </h3>
+                                {/* 💡 เพิ่มปุ่มลิ้งค์ไปหน้ารายงานเต็ม */}
+                                <Link href="/inventory/agedstock" className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full hover:bg-amber-100 hover:text-amber-700 transition-colors border border-amber-100">
+                                    รายละเอียด <ExternalLink className="w-3 h-3" />
+                                </Link>
+                            </div>
+                            <div className="h-62.5 grow">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={analytics.agingData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -394,7 +384,7 @@ export default function FacilityMatrixDashboard() {
                         {/* Dept Consumption */}
                         <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200">
                             <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-3 mb-6 border-b pb-4"><Briefcase className="w-5 h-5 text-indigo-600" /> มูลค่าเบิกจ่ายแยกตามแผนก</h3>
-                            <div className="h-[250px]">
+                            <div className="h-62.5">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={analytics.deptConsumption} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
                                         <XAxis type="number" hide />
@@ -408,7 +398,7 @@ export default function FacilityMatrixDashboard() {
                             </div>
                         </div>
 
-                        {/* 💡 TOP SUPPLIERS (อัปเดตใหม่แสดง กี่รายการ/มูลค่าเท่าไหร่) */}
+                        {/* TOP SUPPLIERS */}
                         <div className="bg-white rounded-[3rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col relative overflow-hidden group">
                             <div className="absolute -right-20 -top-20 w-64 h-64 bg-emerald-50 rounded-full blur-[100px] opacity-60"></div>
 
@@ -428,7 +418,7 @@ export default function FacilityMatrixDashboard() {
                                 </div>
                             </div>
 
-                            <div className="relative h-[240px] w-full mb-8">
+                            <div className="relative h-60 w-full mb-8">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie data={[{ value: 1 }]} cx="50%" cy="50%" innerRadius={88} outerRadius={90} fill="#f1f5f9" stroke="none" isAnimationActive={false} />
@@ -445,12 +435,7 @@ export default function FacilityMatrixDashboard() {
                                                 <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <RechartsTooltip
-                                            content={<SupplierTooltip />}
-                                            // 💡 ปักหมุดไว้ที่พิกัด x:0 y:0 (มุมบนซ้ายของกราฟ) เพื่อไม่ให้บังตรงกลาง
-                                            position={{ x: 0, y: 0 }}
-                                            allowEscapeViewBox={{ x: true, y: true }}
-                                        />
+                                        <RechartsTooltip content={<SupplierTooltip />} position={{ x: 0, y: 0 }} allowEscapeViewBox={{ x: true, y: true }} />
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -512,7 +497,7 @@ function ActionCard({ title, value, sub, icon, href, color, alert }) {
         rose: "text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-600 hover:text-white"
     };
     return (
-        <Link href={href} className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all flex items-center justify-between">
+        <Link href={href} className="bg-white p-6 rounded-4xl border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all flex items-center justify-between">
             {alert && <div className="absolute top-0 right-0 w-1.5 h-full bg-rose-500 animate-pulse"></div>}
             <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{title}</p>
@@ -551,7 +536,7 @@ const DailyMovementTooltip = ({ active, payload, label }) => {
 const CategoryDonutTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-slate-900 text-white p-4 rounded-xl shadow-2xl border border-slate-700 min-w-[180px]">
+            <div className="bg-slate-900 text-white p-4 rounded-xl shadow-2xl border border-slate-700 min-w-45">
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-2 border-b border-white/10 pb-2">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: payload[0].payload.fill }}></span>
                     {payload[0].payload.name}
@@ -568,7 +553,7 @@ const FacilityBarTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         return (
-            <div className="bg-slate-900 text-white p-4 rounded-xl shadow-2xl border border-slate-700 min-w-[180px]">
+            <div className="bg-slate-900 text-white p-4 rounded-xl shadow-2xl border border-slate-700 min-w-45">
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-2 border-b border-white/10 pb-2 flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: payload[0].fill }}></span>
                     {data.name}
@@ -588,7 +573,7 @@ const FacilityBarTooltip = ({ active, payload }) => {
 const AgingTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-slate-900 text-white p-4 rounded-xl shadow-2xl border border-slate-700 min-w-[150px]">
+            <div className="bg-slate-900 text-white p-4 rounded-xl shadow-2xl border border-slate-700 min-w-37.5">
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-1 text-slate-400">ค้างสต็อกนาน</p>
                 <p className="text-sm font-black mb-2 pb-2 border-b border-slate-700">{payload[0].payload.range}</p>
                 <p className="text-lg font-black tabular-nums" style={{ color: payload[0].payload.fill }}>{payload[0].value} รายการ</p>
@@ -601,7 +586,7 @@ const AgingTooltip = ({ active, payload }) => {
 const DeptTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white p-4 rounded-xl shadow-2xl border border-slate-200 min-w-[180px]">
+            <div className="bg-white p-4 rounded-xl shadow-2xl border border-slate-200 min-w-45">
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-2 border-b pb-2 text-indigo-700">{payload[0].payload.name}</p>
                 <p className="text-xs font-bold text-slate-500">มูลค่าที่เบิกไป:</p>
                 <p className="text-base font-black text-sky-600 tabular-nums">฿{payload[0].value.toLocaleString()}</p>
@@ -631,7 +616,7 @@ const SupplierTooltip = ({ active, payload }) => {
 function SystemLoader() {
     return (
         <div className="flex flex-col items-center justify-center h-screen bg-[#f8fafc] gap-8">
-            <div className="w-14 h-14 border-[4px] border-slate-200 border-t-blue-800 rounded-full animate-spin"></div>
+            <div className="w-14 h-14 border-4 border-slate-200 border-t-blue-800 rounded-full animate-spin"></div>
             <div className="text-center">
                 <p className="text-xs font-black text-blue-900 uppercase tracking-[0.5em] animate-pulse">Establishing Connection</p>
             </div>
