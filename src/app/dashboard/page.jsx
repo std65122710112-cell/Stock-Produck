@@ -191,13 +191,13 @@ export default function FacilityMatrixDashboard() {
                     <div className="space-y-2">
                         <div className="flex items-center gap-2 text-blue-800">
                             <Target className="w-5 h-5" />
-                            <span className="text-xs font-black tracking-[0.3em] uppercase">Enterprise Analytics</span>
+                            <span className="text-xs font-black tracking-[0.3em] uppercase">Warehouse Management System</span>
                         </div>
                         <h1 className="text-4xl font-black tracking-tight text-slate-900 uppercase">
-                            Facility <span className="text-blue-800 italic">Matrix</span> Hub
+                            Warehouse <span className="text-blue-800 italic">Matrix</span> Hub
                         </h1>
-                        <p className="text-slate-500 text-sm font-bold tracking-widest flex items-center gap-2">
-                            วิเคราะห์ความหนาแน่นและปริมาณการไหลเวียนคลังสินค้า
+                        <p className="text-slate-500 text-sm font-bold tracking-wide flex items-center gap-2">
+                            ระบบบริหารจัดการคลังสินค้าและควบคุมสต็อกแบบครบวงจร
                         </p>
                     </div>
 

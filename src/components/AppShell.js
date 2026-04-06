@@ -38,6 +38,7 @@ const menuGroups = [
         items: [
             { href: "/inventory/balances", label: "ยอดสินค้าคงเหลือ" },
             { href: "/inventory/low-stock", label: "สินค้าใกล้หมด" },
+            { href: "/inventory/agedstock", label: "สินค้าค้างสต๊อก" },
             { href: "/inventory/adjust", label: "ปรับปรุงยอดสต๊อก" },
             { href: "/history", label: "ประวัติความเคลื่อนไหว" },
             { href: "/reports", label: "รายงานสรุปผล" },
