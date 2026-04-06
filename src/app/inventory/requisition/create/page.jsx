@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createPortal } from "react-dom"; // 🛡️ Import Portal สำหรับ Pop-up
+import { createPortal } from "react-dom";
 import AuthGate from "@/components/AuthGate";
 import { apiFetch } from "@/lib/api";
 import toast, { Toaster } from "react-hot-toast";
@@ -23,19 +23,15 @@ import {
     CheckCircle2,
     X,
     Truck,
-    ClipboardPenLine, 
-    
+    ClipboardPenLine,
+    Wallet
 } from "lucide-react";
 
 export default function CreateStockRequisitionPage() {
     const router = useRouter();
 
-    // 🛡️ State สำหรับ Next.js Client-side Portal
     const [isMounted, setIsMounted] = useState(false);
-
     const [isLoading, setIsLoading] = useState(false);
-
-    // 🛡️ State สำหรับ Pop-up ยืนยัน
     const [confirmSubmitModal, setConfirmSubmitModal] = useState(false);
 
     // 📦 ข้อมูล Master และ สต๊อกคงเหลือ
@@ -43,14 +39,13 @@ export default function CreateStockRequisitionPage() {
     const [departments, setDepartments] = useState([]);
     const [stockBalances, setStockBalances] = useState([]);
 
-    // 🛡️ ข้อมูลฟอร์ม (เน้นความสะอาด ตัด Priority/Date ออกไปรวมใน Remarks)
     const [formData, setFormData] = useState({
         srNumber: `SR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`,
         purpose: '',
         departmentId: '',
         referenceNo: '',
         deliveryLocation: '',
-        remarks: '' // 💡 ช่องหมายเหตุรวม (ใช้ระบุความด่วนและวันที่แทน)
+        remarks: ''
     });
 
     const [items, setItems] = useState([{ id: Date.now(), productId: '', quantity: 1, remark: '' }]);
@@ -74,7 +69,6 @@ export default function CreateStockRequisitionPage() {
         loadInitialData();
     }, []);
 
-    // 🛡️ Lock scroll เมื่อเปิด Pop-up
     useEffect(() => {
         if (confirmSubmitModal) {
             document.body.style.overflow = 'hidden';
@@ -91,6 +85,18 @@ export default function CreateStockRequisitionPage() {
             .reduce((sum, b) => sum + Number(b.quantity), 0);
     };
 
+    // 💡 ฟังก์ชันดึงราคาต่อหน่วยของพัสดุ
+    const getProductPrice = (productId) => {
+        if (!productId) return 0;
+        const product = products.find(p => p.id === productId);
+        return product ? (Number(product.unitCost) || Number(product.price) || 0) : 0;
+    };
+
+    // 💡 คำนวณมูลค่าเบิกจ่ายยอดรวมทั้งสิ้น (Grand Total)
+    const grandTotalValue = items.reduce((sum, item) => {
+        return sum + (getProductPrice(item.productId) * (Number(item.quantity) || 0));
+    }, 0);
+
     const handleFormChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -104,7 +110,6 @@ export default function CreateStockRequisitionPage() {
     const addItem = () => setItems([...items, { id: Date.now(), productId: '', quantity: 1, remark: '' }]);
     const removeItem = (index) => items.length > 1 && setItems(items.filter((_, i) => i !== index));
 
-    // 🛡️ ขั้นตอนที่ 1: ตรวจสอบข้อมูลและเปิด Pop-up ยืนยัน
     const triggerSubmitSR = (e) => {
         e.preventDefault();
 
@@ -117,13 +122,11 @@ export default function CreateStockRequisitionPage() {
         const isOverStock = validItems.some(it => Number(it.quantity) > getAvailableStock(it.productId));
         if (isOverStock) {
             toast.error("⚠️ มีพัสดุบางรายการระบุจำนวนเกินกว่าสต๊อกที่มีในคลัง");
-            // แจ้งเตือนแต่ยังอนุญาตให้ส่งได้ถ้าต้องการ โดยให้ไปตัดสินใจใน Modal
         }
 
         setConfirmSubmitModal(true);
     };
 
-    // 🛡️ ขั้นตอนที่ 2: ระบบส่งข้อมูลความปลอดภัยสูง
     const executeSubmitSR = async () => {
         setConfirmSubmitModal(false);
         setIsLoading(true);
@@ -159,7 +162,6 @@ export default function CreateStockRequisitionPage() {
         }
     };
 
-    // 🛡️ Pop-up Portal Component
     const ConfirmSubmitPortal = () => {
         if (!isMounted || !confirmSubmitModal) return null;
         return createPortal(
@@ -184,10 +186,17 @@ export default function CreateStockRequisitionPage() {
                         </button>
                     </div>
                     <div className="p-8">
-                        <p className="text-sm font-bold text-slate-600 leading-relaxed text-center">
+                        <p className="text-sm font-bold text-slate-600 leading-relaxed text-center mb-6">
                             คุณตรวจสอบความถูกต้องของข้อมูลและรายการพัสดุเรียบร้อยแล้วใช่หรือไม่? <br /><br />การดำเนินการนี้จะสร้างเอกสารเข้าสู่ระบบเพื่อรอการอนุมัติทันที
                         </p>
-                        <div className="grid grid-cols-2 gap-4 mt-8">
+
+                        {/* 💡 สรุปมูลค่าในหน้ายืนยันเพื่อให้ตัดสินใจได้ดีขึ้น */}
+                        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-6 text-center">
+                            <p className="text-xs font-black text-blue-600 uppercase tracking-widest mb-1">มูลค่าการเบิกจ่ายรวม</p>
+                            <p className="text-2xl font-black text-blue-900 tabular-nums">฿{grandTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
                             <button
                                 disabled={isLoading}
                                 onClick={() => setConfirmSubmitModal(false)}
@@ -217,35 +226,22 @@ export default function CreateStockRequisitionPage() {
 
             <div className="max-w-6xl mx-auto space-y-8 py-8 px-4 md:px-0 animate-in fade-in duration-500">
 
-                {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย ไม่เอาเส้นกั้น และเว้นระยะ pt-10 ตามมาตรฐานระบบ */}
                 <div className="w-full pt-10 mb-6 print:hidden">
-
-                    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
                     <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-
-                        {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า --- */}
                         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                            {/* 💡 ไอคอนหลัก: ClipboardPenLine (สื่อถึงการกรอกเอกสารใบเบิกใหม่) */}
                             <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
                                 <ClipboardPenLine className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
                             </div>
-
-                            {/* กลุ่มข้อความเรียงซ้อนกัน */}
                             <div className="flex flex-col">
-                                {/* ภาษาอังกฤษด้านบน */}
                                 <div className="flex items-center gap-2 mb-1.5">
                                     <Truck className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
                                     <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
                                         TJC Logistics Process
                                     </p>
                                 </div>
-
-                                {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ) */}
                                 <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
                                     สร้างใบขอเบิกพัสดุ
                                 </h1>
-
-                                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
                                 <div className="flex items-center gap-2 pt-1 opacity-90">
                                     <ShieldCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
                                     <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
@@ -255,7 +251,6 @@ export default function CreateStockRequisitionPage() {
                             </div>
                         </div>
 
-                        {/* --- ส่วนขวา: Badge ความปลอดภัย (แสดงเฉพาะหน้าจอใหญ่) --- */}
                         <div className="hidden xl:flex items-center gap-3 text-emerald-700 text-[10px] font-black uppercase tracking-[0.2em] bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 shadow-sm">
                             <ShieldCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
                             ระบบเข้ารหัสความปลอดภัยสูง
@@ -264,19 +259,14 @@ export default function CreateStockRequisitionPage() {
                 </div>
 
                 <form onSubmit={triggerSubmitSR} className="space-y-8">
-
-                    {/* --- THE MASTER DOCUMENT CONTAINER --- */}
                     <div className="bg-white rounded-[2.5rem] shadow-md border border-slate-200 overflow-hidden">
 
                         {/* --- ส่วนที่ 1: ข้อมูลเอกสารหลัก --- */}
                         <div className="p-8 md:p-10 space-y-8 relative">
-
-
                             <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2.5 border-b border-slate-100 pb-4">
                                 <div className="p-2 bg-indigo-100 rounded-lg"><ClipboardList className="w-5 h-5 text-indigo-600" /></div>
                                 ข้อมูลและรายละเอียดทั่วไป
                             </h2>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                                 <div className="space-y-6">
                                     <div className="space-y-2">
@@ -292,7 +282,6 @@ export default function CreateStockRequisitionPage() {
                                         <input required type="text" name="purpose" value={formData.purpose} onChange={handleFormChange} className="w-full border-2 border-slate-200 rounded-2xl p-4 text-sm font-bold outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-50 transition-all text-slate-800" placeholder="เช่น เพื่อซ่อมบำรุงเซิร์ฟเวอร์หลักของบริษัท..." />
                                     </div>
                                 </div>
-
                                 <div className="space-y-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-black text-slate-600 uppercase tracking-wide flex items-center gap-2 ml-1">
@@ -321,13 +310,10 @@ export default function CreateStockRequisitionPage() {
                             </div>
                         </div>
 
-                        {/* เส้นคั่นเอกสาร */}
                         <div className="w-full h-px bg-slate-200/80"></div>
 
                         {/* --- ส่วนที่ 2: รายการพัสดุ --- */}
                         <div className="p-8 md:p-10 space-y-6 relative bg-slate-50/30">
-
-
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2.5">
                                     <div className="p-2 bg-emerald-100 rounded-lg"><Package className="w-5 h-5 text-emerald-600" /></div>
@@ -344,7 +330,11 @@ export default function CreateStockRequisitionPage() {
                                         <tr className="text-xs font-black uppercase text-slate-500 tracking-wider">
                                             <th className="p-6">เลือกพัสดุ (Asset SKU)</th>
                                             <th className="p-6 text-center">คงเหลือรวม</th>
-                                            <th className="p-6 text-center w-48">จำนวนเบิก <span className="text-rose-500">*</span></th>
+                                            {/* 💡 เพิ่ม Header ราคาต่อหน่วย */}
+                                            <th className="p-6 text-right whitespace-nowrap">ราคา/หน่วย</th>
+                                            <th className="p-6 text-center w-40">จำนวนเบิก <span className="text-rose-500">*</span></th>
+                                            {/* 💡 เพิ่ม Header มูลค่ารวมของแถว */}
+                                            <th className="p-6 text-right whitespace-nowrap">มูลค่ารวม</th>
                                             <th className="p-6">หมายเหตุรายชิ้น</th>
                                             <th className="p-6 w-16 text-center">ลบ</th>
                                         </tr>
@@ -353,25 +343,42 @@ export default function CreateStockRequisitionPage() {
                                         {items.map((item, index) => {
                                             const totalStock = getAvailableStock(item.productId);
                                             const isOver = item.productId && Number(item.quantity) > totalStock;
+
+                                            // 💡 คำนวณราคาสินค้าแต่ละแถว
+                                            const unitPrice = getProductPrice(item.productId);
+                                            const rowTotal = unitPrice * (Number(item.quantity) || 0);
+
                                             return (
                                                 <tr key={item.id} className="hover:bg-blue-50 transition-colors duration-200">
-                                                    <td className="p-6">
-                                                        <select required value={item.productId} onChange={e => handleItemChange(index, "productId", e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3.5 text-sm font-black uppercase outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 bg-white text-slate-800 transition-all">
-                                                            <option value="">-- ค้นหา / เลือกรายการสินค้า --</option>
+                                                    <td className="p-6 min-w-[250px]">
+                                                        <select required value={item.productId} onChange={e => handleItemChange(index, "productId", e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-black uppercase outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 bg-white text-slate-800 transition-all">
+                                                            <option value="">-- ค้นหา / เลือกรายการ --</option>
                                                             {products.map(p => <option key={p.id} value={p.id}>[{p.sku}] {p.name}</option>)}
                                                         </select>
                                                     </td>
                                                     <td className="p-6 text-center">
-                                                        <div className={`inline-block px-4 py-2 rounded-xl font-mono font-black text-sm border ${totalStock > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
+                                                        <div className={`inline-block px-3 py-1.5 rounded-xl font-mono font-black text-sm border ${totalStock > 0 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
                                                             {totalStock}
                                                         </div>
                                                     </td>
-                                                    <td className="p-6">
-                                                        <input type="number" min="1" value={item.quantity} onChange={e => handleItemChange(index, "quantity", e.target.value)} className={`w-full border-2 rounded-xl py-3.5 text-center font-mono font-black text-lg outline-none transition-all ${isOver ? 'border-rose-400 bg-rose-50 text-rose-700 focus:ring-2 focus:ring-rose-100' : 'border-slate-200 bg-white text-slate-900 focus:border-sky-500 focus:ring-2 focus:ring-sky-100'}`} />
-                                                        {isOver && <p className="text-xs font-black text-rose-500 mt-2 text-center flex items-center justify-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> สต๊อกไม่พอ</p>}
+                                                    {/* 💡 แสดงข้อมูล ราคาต่อหน่วย */}
+                                                    <td className="p-6 text-right">
+                                                        <span className="text-sm font-bold text-slate-500 tabular-nums">
+                                                            {item.productId ? `฿${unitPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
+                                                        </span>
                                                     </td>
                                                     <td className="p-6">
-                                                        <input type="text" value={item.remark} onChange={e => handleItemChange(index, "remark", e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3.5 text-sm font-bold text-slate-700 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all" placeholder="ระบุ สเปก/ขนาด เพิ่มเติม (ถ้ามี)" />
+                                                        <input type="number" min="1" value={item.quantity} onChange={e => handleItemChange(index, "quantity", e.target.value)} className={`w-full border-2 rounded-xl py-2.5 text-center font-mono font-black text-lg outline-none transition-all ${isOver ? 'border-rose-400 bg-rose-50 text-rose-700 focus:ring-2 focus:ring-rose-100' : 'border-slate-200 bg-white text-slate-900 focus:border-sky-500 focus:ring-2 focus:ring-sky-100'}`} />
+                                                        {isOver && <p className="text-[10px] font-black text-rose-500 mt-1.5 text-center flex items-center justify-center gap-1"><AlertCircle className="w-3 h-3" /> สต๊อกไม่พอ</p>}
+                                                    </td>
+                                                    {/* 💡 แสดงข้อมูล มูลค่ารวมแต่ละแถว */}
+                                                    <td className="p-6 text-right">
+                                                        <span className="text-sm font-black text-blue-700 tabular-nums">
+                                                            {item.productId ? `฿${rowTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-6 min-w-[200px]">
+                                                        <input type="text" value={item.remark} onChange={e => handleItemChange(index, "remark", e.target.value)} className="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100 transition-all" placeholder="สเปก/ขนาด เพิ่มเติม" />
                                                     </td>
                                                     <td className="p-6 text-center">
                                                         <button type="button" onClick={() => removeItem(index)} className="p-2.5 bg-slate-100 text-slate-400 rounded-lg hover:bg-rose-100 hover:text-rose-600 transition-colors">
@@ -382,17 +389,31 @@ export default function CreateStockRequisitionPage() {
                                             );
                                         })}
                                     </tbody>
+                                    {/* 💡 ส่วน Footer สรุปมูลค่าเบิกจ่ายรวมทั้งสิ้น */}
+                                    <tfoot className="bg-blue-50/50 border-t-2 border-blue-100">
+                                        <tr>
+                                            <td colSpan="4" className="p-6 text-right">
+                                                <div className="flex items-center justify-end gap-2 text-sm font-black text-blue-900 uppercase tracking-widest">
+                                                    <Wallet className="w-4 h-4 text-blue-600" />
+                                                    มูลค่าเบิกจ่ายรวมทั้งสิ้น (Grand Total)
+                                                </div>
+                                            </td>
+                                            <td className="p-6 text-right">
+                                                <span className="text-xl font-black text-blue-700 tabular-nums">
+                                                    ฿{grandTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </span>
+                                            </td>
+                                            <td colSpan="2"></td>
+                                        </tr>
+                                    </tfoot>
                                 </table>
                             </div>
                         </div>
 
-                        {/* เส้นคั่นเอกสาร */}
                         <div className="w-full h-px bg-slate-200/80"></div>
 
                         {/* --- ส่วนที่ 3: หมายเหตุรวมถึงผู้อนุมัติ & Action Bar --- */}
                         <div className="p-8 md:p-10 space-y-8 relative">
-
-
                             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                                 <div className="p-2.5 bg-sky-100 rounded-xl"><MessageSquareText className="w-5 h-5 text-sky-600" /></div>
                                 <h3 className="text-sm font-black text-slate-950 uppercase tracking-wider">หมายเหตุเพิ่มเติมถึงผู้อนุมัติ (ความเร่งด่วน / วันที่ต้องการใช้งาน)</h3>
@@ -407,7 +428,6 @@ export default function CreateStockRequisitionPage() {
                                 placeholder="กรุณาระบุความเร่งด่วน วันที่ต้องการใช้พัสดุ หรือรายละเอียดอื่นๆ เพื่อประกอบการพิจารณาของผู้อนุมัติ..."
                             />
 
-                            {/* ACTION CONTROL BAR */}
                             <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-6 border-t border-slate-100">
                                 <div className="flex items-start gap-3 bg-amber-50 p-4 rounded-2xl border border-amber-100 max-w-lg">
                                     <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
@@ -431,7 +451,6 @@ export default function CreateStockRequisitionPage() {
                         </div>
                     </div>
                 </form>
-
 
             </div>
         </AuthGate>
