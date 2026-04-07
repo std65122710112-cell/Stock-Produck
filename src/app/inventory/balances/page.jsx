@@ -8,15 +8,14 @@ import toast, { Toaster } from "react-hot-toast";
 import {
     Database, Search, MapPin, Clock, X,
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    Loader2, Wallet, Tag, Package, Eye, Download, Boxes,
-
-
+    Loader2, Wallet, Tag, Package, Download, Boxes,
+    ChevronDown // 💡 เพิ่ม ChevronDown สำหรับทำไอคอนลูกศรตกแต่ง Dropdown
 } from "lucide-react";
 
 export default function BalancesPage() {
     const [balances, setBalances] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [masterData, setMasterData] = useState({ warehouses: [], zones: [], categories: [] });
+    const [masterData, setMasterData] = useState({ warehouses: [], zones: [], categories: [], locations: [] });
 
     const [totalCount, setTotalCount] = useState(0);
     const [grandTotalValue, setGrandTotalValue] = useState(0);
@@ -26,9 +25,12 @@ export default function BalancesPage() {
 
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
+
+    const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedWarehouse, setSelectedWarehouse] = useState("");
     const [selectedZone, setSelectedZone] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState(""); // 💡 เพิ่ม State หมวดหมู่
+    const [selectedLocation, setSelectedLocation] = useState("");
+
     const [busyId, setBusyId] = useState(null);
 
     const fetchData = async () => {
@@ -38,9 +40,10 @@ export default function BalancesPage() {
                 page: page.toString(),
                 limit: limit.toString(),
                 search: debouncedSearch,
+                categoryId: selectedCategory,
                 warehouseId: selectedWarehouse,
                 zoneId: selectedZone,
-                categoryId: selectedCategory // 💡 ส่งค่าหมวดหมู่ไปกรองที่ Backend
+                locationId: selectedLocation
             });
             const res = await apiFetch(`/inventory/balances?${params.toString()}`);
             if (res.success) {
@@ -56,8 +59,9 @@ export default function BalancesPage() {
         }
     };
 
-    // 💡 เพิ่ม selectedCategory เข้าไปใน Dependency ของ useEffect
-    useEffect(() => { fetchData(); }, [page, selectedWarehouse, selectedZone, selectedCategory, debouncedSearch]);
+    useEffect(() => {
+        fetchData();
+    }, [page, selectedWarehouse, selectedZone, selectedLocation, selectedCategory, debouncedSearch]);
 
     useEffect(() => {
         const timer = setTimeout(() => { if (page !== 1) setPage(1); setDebouncedSearch(search); }, 500);
@@ -67,13 +71,13 @@ export default function BalancesPage() {
     useEffect(() => {
         async function loadMaster() {
             try {
-                // 💡 ดึงข้อมูลหมวดหมู่มาด้วยพร้อมกับคลังและโซน
-                const [w, z, c] = await Promise.all([
+                const [w, z, c, l] = await Promise.all([
                     apiFetch("/master/warehouses").catch(() => []),
                     apiFetch("/master/zones").catch(() => []),
-                    apiFetch("/master/categories").catch(() => []) // ดึง Categories
+                    apiFetch("/master/categories").catch(() => []),
+                    apiFetch("/master/locations").catch(() => [])
                 ]);
-                setMasterData({ warehouses: w, zones: z, categories: c });
+                setMasterData({ warehouses: w, zones: z, categories: c, locations: l });
             } catch (e) { console.error(e); }
         }
         loadMaster();
@@ -99,218 +103,275 @@ export default function BalancesPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="max-w-6xl mx-auto space-y-8 pb-10">
+            <div className="max-w-6xl mx-auto space-y-6 pb-10">
 
                 {/* HEADER SECTION */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4 print:hidden">
-                    {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย เส้นกั้นยาว Edge-to-Edge (print:hidden) */}
-                    {/* pt-10 คือดันลงมาจากด้านบน / mb-4 คือขยับเนื้อหาด้านล่างให้ใกล้ขึ้น */}
-                    <div className="w-full pt-18 mb-2 print:hidden">
-
-                        {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
-                        <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between pb-6 gap-6">
-
-                            {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า --- */}
-                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                                {/* 💡 ไอคอนหลัก: Boxes (สื่อถึงยอดสต๊อกพัสดุทั้งหมดในคลัง) */}
-                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                                    <Boxes className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4 print:hidden pt-8">
+                    <div className="w-full">
+                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6 px-4 md:px-8">
+                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border border-slate-100">
+                                <Boxes className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                            </div>
+                            <div className="flex flex-col">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <Database className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                        Inventory Balance
+                                    </p>
                                 </div>
-
-                                {/* กลุ่มข้อความเรียงซ้อนกัน */}
-                                <div className="flex flex-col">
-                                    {/* ภาษาอังกฤษด้านบน */}
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <Database className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                            Inventory Balance Management
-                                        </p>
-                                    </div>
-
-                                    {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ) */}
-                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                                        ยอดคงเหลือสินค้า
-                                    </h1>
-
-                                    {/* คำอธิบายด้านล่าง พร้อมแสดงจำนวนรายการ (ห้ามลบตัวแปร) */}
-                                    <div className="flex items-center gap-2 pt-1 opacity-90">
-                                        <Package className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                            จำนวนรายการในระบบทั้งหมด: <span className="text-emerald-600 font-black">{totalCount.toLocaleString()}</span> รายการ
-                                        </p>
-                                    </div>
+                                <h1 className="text-3xl md:text-4xl font-black text-slate-950 tracking-tight leading-none mb-2">
+                                    ยอดคงเหลือสินค้า
+                                </h1>
+                                <div className="flex items-center gap-2 pt-1 opacity-90">
+                                    <Package className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                    <p className="text-sm font-bold text-slate-500 tracking-wide">
+                                        จำนวนรายการทั้งหมด: <span className="text-emerald-600 font-black">{totalCount.toLocaleString()}</span> รายการ
+                                    </p>
                                 </div>
                             </div>
-
-                            {/* --- ส่วนขวา: (ถ้ามีปุ่มพิมพ์รายงานหรือปุ่มอื่นๆ สามารถใส่ตรงนี้ได้) --- */}
                         </div>
                     </div>
 
-                    {/* STATUS SUMMARY BAR */}
-                    <div className="flex items-center gap-4 px-2">
-                        {/* ✅ ปรับกล่องเป็นสีเทา (bg-slate-50, border-slate-200) */}
-                        <div className="flex items-center gap-3 bg-slate-50 px-5 py-3 rounded-2xl border-2 border-slate-200 shadow-sm transition-all hover:shadow-md">
-                            <div className="p-2 bg-slate-200/50 rounded-xl shadow-inner">
-                                <Wallet className="w-5 h-5 text-slate-600" />
+                    <div className="flex items-center px-4 md:px-8 mt-4 md:mt-0">
+                        <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-200 shadow-sm">
+                            <div className="p-2 bg-slate-100 rounded-xl text-slate-600">
+                                <Wallet className="w-5 h-5" />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">
-                                    มูลค่ารวม (Total Value)
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                    มูลค่ารวมทั้งหมด
                                 </span>
-
-                                {/* ✅ เอา font-mono ออก และใช้ font-sans เพื่อให้เลข 0 ไม่มีขีดตรงกลาง */}
-                                <span className="text-2xl font-black text-slate-950 font-sans tabular-nums tracking-tight leading-none">
-                                    <span className="text-slate-400 mr-1 text-xl"></span>
-                                    {grandTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                <span className="text-xl font-black text-slate-900 tabular-nums leading-none">
+                                    ฿{grandTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* FILTER BAR */}
-                <div className="bg-white/80 backdrop-blur-sm p-3 rounded-[2rem] border border-slate-200 shadow-sm flex flex-wrap items-center gap-3">
-                    <div className="flex-1 min-w-[250px] relative px-2">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                            className="w-full bg-transparent py-3 pl-12 pr-4 text-base font-bold text-slate-900 outline-none placeholder:text-slate-400"
-                            placeholder="ค้นหาด้วยรหัส SKU หรือชื่อสินค้า..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                        />
-                    </div>
+                {/* 🎨 FILTER SECTION (RE-DESIGNED) */}
+                <div className="bg-white/80 backdrop-blur-md p-5 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col gap-4 mx-2 md:mx-0 print:hidden">
 
-                    <div className="flex flex-wrap items-center gap-2 p-1">
-                        <select className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-black text-slate-700 outline-none cursor-pointer hover:bg-slate-100 transition-colors" value={selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setPage(1); }}>
-                            <option value="">ทุกหมวดหมู่ (All Categories)</option>
-                            {masterData.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
+                    {/* แถวบน: ค้นหา & ปุ่มล้าง */}
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <div className="flex-1 w-full relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                                className="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold text-slate-900 outline-none transition-all placeholder:text-slate-400 placeholder:font-medium"
+                                placeholder="ค้นหาด้วยรหัส SKU หรือชื่อสินค้า..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                            />
+                        </div>
 
-                        <select className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-black text-slate-700 outline-none cursor-pointer hover:bg-slate-100 transition-colors" value={selectedWarehouse} onChange={e => { setSelectedWarehouse(e.target.value); setSelectedZone(""); setPage(1); }}>
-                            <option value="">ทุกคลังสินค้า (All Warehouses)</option>
-                            {masterData.warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.name}</option>)}
-                        </select>
-
-                        <select className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-black text-slate-700 outline-none cursor-pointer hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" value={selectedZone} disabled={!selectedWarehouse} onChange={e => { setSelectedZone(e.target.value); setPage(1); }}>
-                            <option value="">ทุกโซน (All Zones)</option>
-                            {masterData.zones.filter(z => String(z.warehouseId) === String(selectedWarehouse)).map(z => <option key={z.id} value={z.id}>{z.code}</option>)}
-                        </select>
-
-                        {(search || selectedWarehouse || selectedZone || selectedCategory) && (
-                            <button onClick={() => { setSearch(""); setSelectedCategory(""); setSelectedWarehouse(""); setSelectedZone(""); setPage(1); }} className="p-3 text-rose-500 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-100 transition-colors">
-                                <X className="w-5 h-5" />
+                        {(search || selectedWarehouse || selectedZone || selectedLocation || selectedCategory) && (
+                            <button
+                                onClick={() => {
+                                    setSearch("");
+                                    setSelectedCategory("");
+                                    setSelectedWarehouse("");
+                                    setSelectedZone("");
+                                    setSelectedLocation("");
+                                    setPage(1);
+                                }}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-2xl font-bold text-sm transition-colors border border-rose-100 shrink-0"
+                            >
+                                <X className="w-4 h-4" />
+                                <span>ล้างตัวกรอง</span>
                             </button>
                         )}
                     </div>
+
+                    {/* แถวล่าง: Dropdowns จัดแบบ Grid 4 คอลัมน์ */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+
+                        {/* 1. หมวดหมู่ */}
+                        <div className="relative">
+                            <select
+                                className="w-full appearance-none bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none cursor-pointer transition-colors"
+                                value={selectedCategory}
+                                onChange={e => { setSelectedCategory(e.target.value); setPage(1); }}
+                            >
+                                <option value="">🏷️ หมวดหมู่ทั้งหมด</option>
+                                {masterData.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        {/* 2. คลังสินค้า */}
+                        <div className="relative">
+                            <select
+                                className="w-full appearance-none bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none cursor-pointer transition-colors"
+                                value={selectedWarehouse}
+                                onChange={e => {
+                                    setSelectedWarehouse(e.target.value);
+                                    setSelectedZone("");
+                                    setSelectedLocation("");
+                                    setPage(1);
+                                }}
+                            >
+                                <option value="">🏢 คลังทั้งหมด</option>
+                                {masterData.warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.name}</option>)}
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+
+                        {/* 3. โซน */}
+                        <div className="relative">
+                            <select
+                                className="w-full appearance-none bg-white border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none cursor-pointer transition-colors disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                value={selectedZone}
+                                disabled={!selectedWarehouse}
+                                onChange={e => {
+                                    setSelectedZone(e.target.value);
+                                    setSelectedLocation("");
+                                    setPage(1);
+                                }}
+                            >
+                                <option value="">📍 โซนทั้งหมด</option>
+                                {masterData.zones
+                                    .filter(z => String(z.warehouseId) === String(selectedWarehouse))
+                                    .map(z => (
+                                        <option key={z.id} value={z.id}>
+                                            {z.name ? `${z.code} - ${z.name}` : z.code}
+                                        </option>
+                                    ))
+                                }
+                            </select>
+                            <ChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${!selectedWarehouse ? 'text-slate-300' : 'text-slate-400'}`} />
+                        </div>
+
+                        {/* 4. ตำแหน่งจัดเก็บ */}
+                        <div className="relative">
+                            <select
+                                className="w-full appearance-none bg-white border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none cursor-pointer transition-colors disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                                value={selectedLocation}
+                                disabled={!selectedWarehouse && !selectedZone}
+                                onChange={e => { setSelectedLocation(e.target.value); setPage(1); }}
+                            >
+                                <option value="">📌 ตำแหน่งทั้งหมด</option>
+                                {masterData.locations
+                                    .filter(loc => {
+                                        if (selectedZone) return String(loc.zoneId) === String(selectedZone);
+                                        if (selectedWarehouse) return String(loc.warehouseId) === String(selectedWarehouse);
+                                        return true;
+                                    })
+                                    .map(loc => (
+                                        <option key={loc.id} value={loc.id}>
+                                            {loc.code} {loc.name ? `(${loc.name})` : ''}
+                                        </option>
+                                    ))
+                                }
+                            </select>
+                            <ChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${(!selectedWarehouse && !selectedZone) ? 'text-slate-300' : 'text-slate-400'}`} />
+                        </div>
+                    </div>
                 </div>
 
-                {/* DATA TABLE CONTAINER (Glassmorphism Optimized) */}
-                <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-white/70 shadow-[0_20px_60px_-25px_rgba(15,23,42,0.12)] backdrop-blur-sm">
+                {/* DATA TABLE CONTAINER */}
+                <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-white shadow-[0_10px_40px_-15px_rgba(15,23,42,0.08)] backdrop-blur-sm mx-2 md:mx-0">
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-base text-left border-collapse">
                             <thead className="bg-slate-50 border-b border-slate-200">
-                                <tr className="text-slate-900 font-black text-sm tracking-wide">
-                                    <th className="p-6">ข้อมูลสินค้า</th>
-                                    <th className="p-6">ตำแหน่งจัดเก็บ</th>
-                                    <th className="p-6 text-center">ยอดคงเหลือ</th>
-                                    <th className="p-6 text-center">บาร์โค้ด</th>
-                                    <th className="p-6 text-right">มูลค่ารวม</th>
-                                    <th className="p-6 text-center">อัปเดตล่าสุด</th>
+                                <tr className="text-slate-800 font-black text-sm tracking-wide">
+                                    <th className="p-5 pl-8">ข้อมูลสินค้า</th>
+                                    <th className="p-5">ตำแหน่งจัดเก็บ</th>
+                                    <th className="p-5 text-center">ยอดคงเหลือ</th>
+                                    <th className="p-5 text-center">บาร์โค้ด</th>
+                                    <th className="p-5 text-right">มูลค่ารวม</th>
+                                    <th className="p-5 text-center pr-8">อัปเดตล่าสุด</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 bg-white/50">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                                 {isLoading ? (
                                     <tr>
                                         <td colSpan="6" className="p-24 text-center">
                                             <div className="flex flex-col items-center gap-3">
-                                                <div className="w-12 h-12 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin"></div>
-                                                <p className="text-slate-400 font-black tracking-wide text-sm mt-2">กำลังโหลดข้อมูลสินค้าคงคลัง...</p>
+                                                <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
+                                                <p className="text-slate-500 font-bold text-sm mt-2">กำลังดึงข้อมูล...</p>
                                             </div>
                                         </td>
                                     </tr>
                                 ) : balances.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="p-32 text-center">
-                                            <Database className="w-14 h-14 text-slate-200 mx-auto mb-4" />
-                                            <p className="text-slate-500 font-black tracking-wide text-sm">ไม่พบรายการสินค้าที่ตรงกับเงื่อนไข</p>
+                                        <td colSpan="6" className="p-24 text-center">
+                                            <Database className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                                            <p className="text-slate-500 font-bold text-sm">ไม่พบรายการสินค้าที่ตรงกับเงื่อนไข</p>
                                         </td>
                                     </tr>
                                 ) : balances.map((b, i) => (
-                                    <tr key={i} className="hover:bg-slate-50/80 group cursor-default transition-colors">
-                                        <td className="p-6">
+                                    <tr key={i} className="hover:bg-slate-50/80 group transition-colors">
+                                        <td className="p-5 pl-8">
                                             <div className="flex flex-col">
-                                                <div className="flex items-center gap-2 mb-1.5">
-                                                    <span className="tabular-nums text-base font-black text-blue-800 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="tabular-nums font-black text-blue-700 uppercase tracking-tight">
                                                         {b?.product?.sku}
                                                     </span>
                                                     {b?.product?.category?.name && (
-                                                        <span className="text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                                                        <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md uppercase">
                                                             {b.product.category.name}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="font-bold text-slate-600 text-sm truncate max-w-[280px]">
+                                                <p className="font-semibold text-slate-700 text-sm truncate max-w-[280px]">
                                                     {b?.product?.name}
                                                 </p>
                                             </div>
                                         </td>
-                                        <td className="p-6">
+                                        <td className="p-5">
                                             <div className="flex items-center gap-3">
-                                                <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-100 shadow-sm group-hover:bg-white transition-colors flex-shrink-0">
-                                                    <MapPin className="w-4 h-4 text-emerald-600" />
+                                                <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600 flex-shrink-0">
+                                                    <MapPin className="w-4 h-4" />
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-sm font-black text-slate-800 uppercase tracking-wide">
+                                                    <span className="text-sm font-black text-slate-800 tracking-wide">
                                                         {b?.location?.warehouse?.name || b?.location?.warehouse?.code || '-'}
                                                     </span>
-                                                    <div className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1 mt-0.5">
-                                                        <span className="text-slate-300">|</span>
-                                                        <span>โซน: {b?.location?.zone?.code || '-'}</span>
-                                                        <span className="text-slate-300">|</span>
-                                                        <span>โลเคชั่น: {b?.location?.code || '-'}</span>
+                                                    <div className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                                        <span>Z: {b?.location?.zone?.code || '-'}</span>
+                                                        <span className="text-slate-300">•</span>
+                                                        <span>L: {b?.location?.code || '-'}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-6 text-center">
-                                            <span className={`text-sm inline-block min-w-[60px] font-black px-3.5 py-1.5 rounded-xl tabular-nums shadow-sm transition-colors ${b.quantity <= 5
+                                        <td className="p-5 text-center">
+                                            <span className={`text-sm inline-block min-w-[50px] font-black px-3 py-1 rounded-lg tabular-nums ${b.quantity <= 5
                                                 ? 'bg-rose-50 text-rose-600 border border-rose-100'
-                                                : 'bg-slate-50 text-slate-600 border border-slate-200'
+                                                : 'bg-slate-100 text-slate-700'
                                                 }`}>
                                                 {b?.quantity?.toLocaleString()}
                                             </span>
-                                            <p className="text-[10px] font-black text-slate-500 uppercase mt-1.5 tracking-wider">
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">
                                                 {b?.product?.unit?.name || 'PCS'}
                                             </p>
                                         </td>
-                                        <td className="p-6">
-                                            <div className="flex flex-col items-center gap-2">
+                                        <td className="p-5">
+                                            <div className="flex flex-col items-center gap-1.5">
                                                 <button
                                                     onClick={() => handleBarcode(b.product, "view")}
                                                     disabled={busyId === b.product.id}
-                                                    className="w-full bg-white text-[#1e3b8a] border border-slate-200 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm hover:shadow-md hover:bg-[#1e3b8a] hover:text-white hover:border-[#1e3b8a] active:scale-95 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    className="w-[100px] bg-white border border-slate-200 text-slate-700 hover:text-blue-700 hover:border-blue-200 hover:bg-blue-50 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 disabled:opacity-50"
                                                 >
-                                                    ดูบาร์โค้ด <ChevronRight className="w-4 h-4" />
+                                                    ดูบาร์โค้ด <ChevronRight className="w-3 h-3" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleBarcode(b.product, "dl")}
                                                     disabled={busyId === b.product.id}
-                                                    className="text-[10px] font-black text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 px-3 py-1.5 rounded-lg uppercase flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                                                    className="text-[10px] font-bold text-slate-400 hover:text-emerald-600 py-1 flex items-center gap-1 transition-colors disabled:opacity-50"
                                                 >
-                                                    <Download className="w-3.5 h-3.5" /> ดาวน์โหลด
+                                                    <Download className="w-3 h-3" /> โหลดบาร์โค้ด
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className="p-6 text-right">
-                                            {/* ✅ ถอด font-mono ออก เปลี่ยนเป็น font-sans และ tabular-nums แทน */}
-                                            <span className="text-base font-black text-slate-900 font-sans tabular-nums tracking-tighter">
+                                        <td className="p-5 text-right">
+                                            <span className="text-base font-black text-slate-800 tabular-nums">
                                                 {Number(b?.totalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                             </span>
                                         </td>
-                                        <td className="p-6 text-center">
-
-                                            <div className="text-xs font-black text-amber-700 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200 inline-flex items-center gap-1.5 shadow-sm">
-                                                <Clock className="w-3 h-3 text-amber-500" />
+                                        <td className="p-5 text-center pr-8">
+                                            <div className="text-xs font-bold text-slate-500 flex items-center justify-center gap-1.5">
+                                                <Clock className="w-3.5 h-3.5 text-slate-400" />
                                                 {new Date(b.updatedAt).toLocaleDateString('th-TH')}
                                             </div>
                                         </td>
@@ -322,53 +383,44 @@ export default function BalancesPage() {
                 </section>
 
                 {/* BOTTOM PAGINATION NOTE */}
-                <div className="flex flex-col md:flex-row justify-between items-center p-4 md:px-6 md:py-4 bg-white/80 backdrop-blur-md rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/40 print:hidden mt-2">
+                <div className="flex flex-col sm:flex-row justify-between items-center px-6 py-4 bg-white rounded-3xl border border-slate-200 shadow-sm print:hidden mx-2 md:mx-0">
+                    <p className="text-xs font-black text-slate-500 tracking-wide mb-3 sm:mb-0">
+                        กำลังแสดงหน้า <span className="text-blue-600 font-mono text-sm mx-1">{page}</span> จากทั้งหมด <span className="text-blue-600 font-mono text-sm mx-1">{totalPages}</span> หน้า
+                    </p>
 
-                    {/* ฝั่งซ้าย: ข้อมูลหน้า */}
-                    <div className="flex items-center gap-3 bg-emerald-50/80 px-5 py-2.5 rounded-full border border-emerald-100/50">
-                        <div className="bg-emerald-500 p-1.5 rounded-full shadow-sm">
-                            <Tag className="w-3 h-3 text-white" />
-                        </div>
-                        <p className="text-xs font-black text-emerald-800 tracking-wider">
-                            หน้าที่ <span className="text-emerald-950 text-sm font-mono">{page}</span> จาก <span className="text-emerald-950 text-sm font-mono">{totalPages}</span>
-                        </p>
-                    </div>
-
-                    {/* ฝั่งขวา: ปุ่มควบคุม (Segmented Control Style) */}
-                    <div className="flex items-center gap-1 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 mt-4 md:mt-0 shadow-inner">
+                    <div className="flex items-center gap-1.5">
                         <button
                             onClick={() => setPage(1)}
                             disabled={page === 1 || isLoading}
-                            className="p-2.5 rounded-xl text-slate-400 hover:bg-white hover:text-blue-600 hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none transition-all"
+                            className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                         >
-                            <ChevronsLeft className="w-4 h-4" />
+                            <ChevronsLeft className="w-5 h-5" />
                         </button>
                         <button
                             onClick={() => setPage(p => Math.max(p - 1, 1))}
                             disabled={page === 1 || isLoading}
-                            className="p-2.5 rounded-xl text-slate-400 hover:bg-white hover:text-blue-600 hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none transition-all"
+                            className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-5 h-5" />
                         </button>
 
-                        {/* ตัวเลขบอกหน้าปัจจุบัน */}
-                        <div className="px-6 py-2 text-sm font-black text-blue-800 bg-blue-100 border border-blue-200 rounded-xl min-w-[90px] text-center shadow-sm mx-1 font-mono tracking-widest">
-                            {page} <span className="text-blue-400 mx-1">/</span> {totalPages}
+                        <div className="px-4 py-1.5 text-sm font-black text-slate-700 bg-slate-50 border border-slate-200 rounded-lg min-w-[70px] text-center font-mono">
+                            {page} / {totalPages}
                         </div>
 
                         <button
                             onClick={() => setPage(p => Math.min(p + 1, totalPages))}
                             disabled={page === totalPages || isLoading}
-                            className="p-2.5 rounded-xl text-slate-400 hover:bg-white hover:text-blue-600 hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none transition-all"
+                            className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-5 h-5" />
                         </button>
                         <button
                             onClick={() => setPage(totalPages)}
                             disabled={page === totalPages || isLoading}
-                            className="p-2.5 rounded-xl text-slate-400 hover:bg-white hover:text-blue-600 hover:shadow-sm disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:shadow-none transition-all"
+                            className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
                         >
-                            <ChevronsRight className="w-4 h-4" />
+                            <ChevronsRight className="w-5 h-5" />
                         </button>
                     </div>
                 </div>

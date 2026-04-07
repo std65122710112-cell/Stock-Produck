@@ -31,6 +31,7 @@ const menuGroups = [
         items: [
             { href: "/inbound", label: "รับสินค้าเข้า" },
             { href: "/outbound", label: "เบิกจ่ายสินค้า" },
+            { href: "/inventory/adjust", label: "ปรับปรุงยอดสต๊อก" },
         ],
     },
     {
@@ -39,7 +40,6 @@ const menuGroups = [
             { href: "/inventory/balances", label: "ยอดสินค้าคงเหลือ" },
             { href: "/inventory/low-stock", label: "สินค้าใกล้หมด" },
             { href: "/inventory/agedstock", label: "สินค้าค้างสต๊อก" },
-            { href: "/inventory/adjust", label: "ปรับปรุงยอดสต๊อก" },
             { href: "/history", label: "ประวัติความเคลื่อนไหว" },
             { href: "/reports", label: "รายงานสรุปผล" },
         ],
@@ -81,7 +81,7 @@ function MenuButton({ href, label, isActive, onNavigate, isPending }) {
                 <div className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${isActive ? "bg-white scale-125" : "bg-slate-300 group-hover:bg-[#1e3b8a]"}`} />
                 <span className="leading-5">{label}</span>
             </div>
-            
+
             {isActive && <ChevronRight className="w-4 h-4 text-white/70 relative z-10" />}
         </button>
     );
@@ -236,9 +236,8 @@ export default function AppShell({ children }) {
 
                 <main className="flex-1 p-4 md:p-8 bg-slate-50/50">
                     <div
-                        className={`w-full rounded-[2.5rem] border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 md:p-10 ${
-                            isPending ? "opacity-50 grayscale" : "opacity-100"
-                        }`}
+                        className={`w-full rounded-[2.5rem] border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 md:p-10 ${isPending ? "opacity-50 grayscale" : "opacity-100"
+                            }`}
                     >
                         {children}
                     </div>
