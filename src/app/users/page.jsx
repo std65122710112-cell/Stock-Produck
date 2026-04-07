@@ -153,24 +153,43 @@ export default function UserAndDeptManagementPage() {
     const saveEditUser = async (id) => {
         setLoading(true);
         try {
-            const payload = {
-                firstName: editUserForm.firstName,
-                lastName: editUserForm.lastName,
-                isActive: editUserForm.isActive,
-                departmentId: editUserForm.departmentId || ""
-            };
-
-            if (editUserForm.password && editUserForm.password.trim() !== "") {
-                payload.password = editUserForm.password;
+            // 1. เช็คว่าชื่อ-นามสกุลไม่ได้ถูกลบจนเป็นค่าว่าง
+            if (!editUserForm.firstName?.trim() || !editUserForm.lastName?.trim()) {
+                throw new Error("กรุณาระบุชื่อและนามสกุลให้ครบถ้วน");
             }
 
-            await apiFetch(`/users/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
-            await apiFetch(`/users/${id}/roles`, { method: "POST", body: JSON.stringify({ roles: [editUserForm.role] }) });
+            // 2. จัดเตรียมข้อมูล (Payload)
+            const payload = {
+                firstName: editUserForm.firstName.trim(),
+                lastName: editUserForm.lastName.trim(),
+                isActive: editUserForm.isActive,
+                // 💡 [จุดสำคัญ] ถ้าไม่ได้เลือกแผนก (ค่าว่าง) ให้ส่งเป็น null แทน "" Backend จะได้ไม่ฟ้อง 400
+                departmentId: editUserForm.departmentId ? editUserForm.departmentId : null
+            };
 
-            toast.success("บันทึกข้อมูลผู้ใช้เรียบร้อย");
+            // 3. ส่ง Request อัปเดตข้อมูลส่วนตัว (PATCH)
+            await apiFetch(`/users/${id}`, {
+                method: "PATCH",
+                body: JSON.stringify(payload)
+            });
+
+            // 4. ส่ง Request อัปเดตสิทธิ์การใช้งาน (POST)
+            if (editUserForm.role) {
+                await apiFetch(`/users/${id}/roles`, {
+                    method: "POST",
+                    body: JSON.stringify({ roles: [editUserForm.role] })
+                });
+            }
+
+            toast.success("บันทึกการแก้ไขข้อมูลสำเร็จ");
             setEditingUserId(null);
             loadUsers();
-        } catch (err) { toast.error(err.message); } finally { setLoading(false); }
+
+        } catch (err) {
+            toast.error(err.message || "ระบบปฏิเสธคำขอ (Bad Request) โปรดตรวจสอบข้อมูล");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const executeDeleteUser = async () => {
@@ -479,8 +498,8 @@ export default function UserAndDeptManagementPage() {
                                                 onClick={() => setSelectedRoleId(r.id)}
                                                 /* 💡 ปรับ p-4 เป็น p-3 และ rounded-[1.5rem] เป็น rounded-2xl */
                                                 className={`group relative w-full flex items-center justify-between p-3 rounded-2xl transition-all duration-300 border-2 overflow-hidden outline-none ${isSelected
-                                                        ? 'bg-gradient-to-br from-[#1F3B8B] to-[#2A4B9F] text-white border-transparent shadow-xl shadow-[#1F3B8B]/30 scale-[1.03] z-10'
-                                                        : 'bg-white text-slate-600 border-slate-100 hover:border-[#1F3B8B]/30 hover:shadow-md hover:bg-slate-50/80'
+                                                    ? 'bg-gradient-to-br from-[#1F3B8B] to-[#2A4B9F] text-white border-transparent shadow-xl shadow-[#1F3B8B]/30 scale-[1.03] z-10'
+                                                    : 'bg-white text-slate-600 border-slate-100 hover:border-[#1F3B8B]/30 hover:shadow-md hover:bg-slate-50/80'
                                                     }`}
                                             >
                                                 {/* 💡 เอฟเฟกต์แสงเงาด้านหลัง ปรับให้เล็กลง (w-20 h-20) */}
@@ -492,8 +511,8 @@ export default function UserAndDeptManagementPage() {
                                                 <div className="flex items-center gap-3 relative z-10">
                                                     {/* 💡 ปรับกล่องไอคอนจาก w-12 h-12 เป็น w-10 h-10 และลดความโค้งเป็น rounded-xl */}
                                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${isSelected
-                                                            ? 'bg-white/20 text-white shadow-inner backdrop-blur-sm ring-1 ring-white/30'
-                                                            : 'bg-slate-100 text-slate-400 group-hover:bg-[#1F3B8B]/10 group-hover:text-[#1F3B8B] group-hover:scale-110'
+                                                        ? 'bg-white/20 text-white shadow-inner backdrop-blur-sm ring-1 ring-white/30'
+                                                        : 'bg-slate-100 text-slate-400 group-hover:bg-[#1F3B8B]/10 group-hover:text-[#1F3B8B] group-hover:scale-110'
                                                         }`}>
                                                         {/* 💡 ลดขนาดไอคอนเหลือ 18 */}
                                                         <RoleIcon size={18} />
@@ -507,8 +526,8 @@ export default function UserAndDeptManagementPage() {
 
                                                 {/* 💡 ไอคอนลูกศรลดขนาดเหลือ 18 */}
                                                 <div className={`relative z-10 flex items-center justify-center transition-all duration-300 ${isSelected
-                                                        ? 'text-white translate-x-0 opacity-100'
-                                                        : 'text-slate-300 -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[#1F3B8B]'
+                                                    ? 'text-white translate-x-0 opacity-100'
+                                                    : 'text-slate-300 -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[#1F3B8B]'
                                                     }`}>
                                                     <ChevronRight size={18} strokeWidth={3} />
                                                 </div>
