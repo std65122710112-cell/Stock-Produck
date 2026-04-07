@@ -9,7 +9,7 @@ import {
     ArrowLeft, Database, FileText, CheckCircle2,
     Package, ClipboardCheck, User, Info, Hash,
     LayoutDashboard, Clock, ShieldCheck, FileCheck, X, Truck, PackagePlus,
-    ArrowDownLeft,
+    ArrowDownLeft, MapPin, Tag, Calendar, Building2, Loader2
 } from "lucide-react";
 
 function createDefaultItem() {
@@ -189,8 +189,23 @@ export default function CreateGoodsReceiptPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const validItems = items.filter(it => it.productId && it.locationId && Number(it.quantity) > 0);
-        if (validItems.length === 0) return toast.error("กรุณาระบุจำนวนสินค้าและตำแหน่งเก็บให้ครบถ้วน");
+
+        // 💡 Validation: ตรวจสอบข้อมูลก่อนส่ง
+        const receivingItems = items.filter(it => Number(it.quantity) > 0);
+
+        if (receivingItems.length === 0) {
+            return toast.error("กรุณาระบุจำนวนสินค้าที่ต้องการรับอย่างน้อย 1 รายการ");
+        }
+
+        // ตรวจสอบว่ารายการที่ระบุจำนวน มีการเลือกคลังและตำแหน่งครบหรือไม่
+        for (const it of receivingItems) {
+            if (!it.warehouseId) {
+                return toast.error(`กรุณาเลือกคลังสินค้าสำหรับ: ${it.name}`);
+            }
+            if (!it.locationId) {
+                return toast.error(`กรุณาระบุตำแหน่งจัดเก็บสำหรับ: ${it.name}`);
+            }
+        }
 
         setIsSubmitting(true);
         try {
@@ -199,7 +214,7 @@ export default function CreateGoodsReceiptPage() {
                 receiptNo,
                 purchaseOrderId,
                 remarks: remarks.trim(),
-                items: validItems.map(it => ({
+                items: receivingItems.map(it => ({
                     productId: it.productId, locationId: it.locationId,
                     quantity: Number(it.quantity), unitCost: Number(it.unitCost) || 0,
                 }))
@@ -234,76 +249,65 @@ export default function CreateGoodsReceiptPage() {
         <AuthGate>
             <Toaster position="top-right" />
 
-            <div className="max-w-6xl mx-auto space-y-8 py-8 px-4 md:px-0 animate-in fade-in duration-500">
-                {/* HEADER SECTION - คอนเซปต์พรีเมียม ชิดซ้าย ไม่เอาเส้นกั้น และเว้นระยะ pt-10 */}
+            <div className="max-w-[1440px] mx-auto space-y-8 py-8 px-4 md:px-10 animate-in fade-in duration-500">
+                {/* HEADER SECTION */}
                 <div className="w-full pt-10 mb-6 print:hidden">
-
-                    {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) */}
-                    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-
-                        {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า (ปรับตามสถานะ viewMode) --- */}
-                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                            {/* 💡 ไอคอนหลัก: PackagePlus (สื่อถึงการตรวจรับสินค้าใหม่เข้าคลัง) */}
-                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                                <PackagePlus className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
-                            </div>
-
-                            {/* กลุ่มข้อความเรียงซ้อนกัน */}
-                            <div className="flex flex-col">
-                                {/* ภาษาอังกฤษด้านบน */}
-                                <div className="flex items-center gap-2 mb-1.5">
-                                    <ArrowDownLeft className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                        Inbound Supply Chain Process
-                                    </p>
-                                </div>
-
-                                {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ เปลี่ยนตาม viewMode) */}
-                                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                                    {viewMode === 'LIST' ? "การตรวจรับสินค้าเข้าคลัง" : "บันทึกใบรับสินค้า (GR)"}
-                                </h1>
-
-                                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
-                                <div className="flex items-center gap-2 pt-1 opacity-90">
-                                    <Database className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                        ระบบตรวจรับสินค้าเข้าคลังและตรวจสอบประวัติพัสดุ
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* --- ส่วนขวา: ปุ่มย้อนกลับ หรือ Tab Switcher --- */}
-                        <div className="flex items-center">
-                            {viewMode === 'FORM' ? (
-                                /* ปุ่มย้อนกลับในโหมด FORM */
+                    <div className="w-full flex flex-col gap-6">
+                        {viewMode === 'FORM' && (
+                            <div>
                                 <button
                                     onClick={handleCancel}
-                                    className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm"
+                                    className="group flex items-center gap-3 bg-white border-2 border-slate-200 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm w-fit"
                                 >
                                     <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" />
                                     ยกเลิกและย้อนกลับ
                                 </button>
-                            ) : (
-                                /* Tab Switcher ในโหมด LIST */
-                                <div className="flex bg-white p-1.5 rounded-[2rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
+                            </div>
+                        )}
+
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                    <PackagePlus className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <ArrowDownLeft className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                            Inbound Supply Chain Process
+                                        </p>
+                                    </div>
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                        {viewMode === 'LIST' ? "การตรวจรับสินค้าเข้าคลัง" : "บันทึกใบรับสินค้า (GR)"}
+                                    </h1>
+                                    <div className="flex items-center gap-2 pt-1 opacity-90">
+                                        <Database className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                            ระบบตรวจรับสินค้าเข้าคลังและตรวจสอบประวัติพัสดุ
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {viewMode === 'LIST' && (
+                                <div className="flex bg-white p-2 rounded-[2.5rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
                                     <button
                                         onClick={() => setFilterTab("PENDING")}
-                                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'PENDING'
+                                        className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'PENDING'
                                             ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
                                             : 'border-transparent text-slate-400 hover:bg-slate-50'
                                             }`}
                                     >
-                                        <Clock className="w-4 h-4" /> รอรับเข้าคลัง ({pendingPOs.length})
+                                        <Clock className="w-5 h-5" /> รอรับเข้าคลัง ({pendingPOs.length})
                                     </button>
                                     <button
                                         onClick={() => setFilterTab("COMPLETED")}
-                                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'COMPLETED'
+                                        className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'COMPLETED'
                                             ? 'bg-[#1F3B8B]/5 text-[#1F3B8B] border-[#1F3B8B]/20 shadow-sm'
                                             : 'border-transparent text-slate-400 hover:bg-slate-50'
                                             }`}
                                     >
-                                        <ShieldCheck className="w-4 h-4" /> ประวัติรับของ (GR) ({completedGRs.length})
+                                        <ShieldCheck className="w-5 h-5" /> ประวัติรับของ (GR) ({completedGRs.length})
                                     </button>
                                 </div>
                             )}
@@ -313,8 +317,8 @@ export default function CreateGoodsReceiptPage() {
 
                 {/* --- VIEW 1: LIST --- */}
                 {viewMode === 'LIST' && (
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
+                    <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-sm overflow-hidden">
+                        <div className="p-6 md:p-8 bg-slate-50/50 border-b-2 border-slate-100 flex justify-between items-center">
                             <h2 className="text-sm font-black text-slate-900 tracking-wide flex items-center gap-3">
                                 <div className={`p-2 rounded-lg ${filterTab === 'PENDING' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>
                                     {filterTab === 'PENDING' ? <Package className="w-5 h-5" /> : <FileCheck className="w-5 h-5" />}
@@ -325,8 +329,8 @@ export default function CreateGoodsReceiptPage() {
 
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
-                                <thead className="bg-white border-b border-slate-200">
-                                    <tr className="text-xs font-black uppercase text-slate-500 tracking-wider">
+                                <thead className="bg-white border-b-2 border-slate-200">
+                                    <tr className="text-sm font-black uppercase text-slate-500 tracking-wider">
                                         <th className="p-6">วันที่</th>
                                         <th className="p-6">เอกสารอ้างอิง (PO/GR)</th>
                                         <th className="p-6">{filterTab === 'PENDING' ? 'ผู้จัดจำหน่าย (Vendor)' : 'ผู้รับสินค้า / หมายเหตุ'}</th>
@@ -339,9 +343,9 @@ export default function CreateGoodsReceiptPage() {
                                         pendingPOs.length === 0 ? (
                                             <tr><td colSpan="5" className="p-32 text-center text-slate-400 font-black uppercase text-xs">ไม่มีใบสั่งซื้อรอรับของ</td></tr>
                                         ) : pendingPOs.map((po) => (
-                                            <tr key={po.id} className="hover:bg-blue-50 transition-colors">
-                                                <td className="p-6 font-bold text-slate-500 text-sm">{new Date(po.createdAt).toLocaleDateString('th-TH')}</td>
-                                                <td className="p-6 font-mono font-black text-blue-600 text-base tracking-tight">{po.poNumber}</td>
+                                            <tr key={po.id} className="hover:bg-blue-50/50 transition-colors">
+                                                <td className="p-6 font-bold text-slate-500 text-sm tabular-nums">{new Date(po.createdAt).toLocaleDateString('th-TH')}</td>
+                                                <td className="p-6 font-black text-[#1F3B8B] text-base tracking-tight tabular-nums">{po.poNumber}</td>
                                                 <td className="p-6">
                                                     <p className="font-black text-slate-800 text-sm uppercase">{po.vendorName}</p>
                                                     <p className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mt-1"><Truck className="w-3.5 h-3.5" /> Logistic Inbound</p>
@@ -353,10 +357,10 @@ export default function CreateGoodsReceiptPage() {
                                                 </td>
                                                 <td className="p-6 text-right">
                                                     <div className="flex justify-end gap-3">
-                                                        <button onClick={() => handleViewPDF(po.pdfPath, 'PO')} className="bg-white border border-slate-200 text-slate-900 px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-slate-50 transition-colors flex items-center gap-2">
+                                                        <button onClick={() => handleViewPDF(po.pdfPath, 'PO')} className="bg-white border-2 border-slate-200 text-[#1F3B8B] px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] transition-all flex items-center gap-2 shadow-sm">
                                                             <FileText className="w-4 h-4" /> ดู PO
                                                         </button>
-                                                        <button onClick={() => handleSelectPO(po)} className="bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-black uppercase hover:bg-emerald-700 shadow-md flex items-center gap-2">
+                                                        <button onClick={() => handleSelectPO(po)} className="bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase hover:bg-emerald-700 shadow-md flex items-center gap-2 transition-all active:scale-95">
                                                             <ClipboardCheck className="w-4 h-4" /> เริ่มตรวจรับ
                                                         </button>
                                                     </div>
@@ -367,8 +371,8 @@ export default function CreateGoodsReceiptPage() {
                                         completedGRs.length === 0 ? (
                                             <tr><td colSpan="5" className="p-32 text-center text-slate-400 font-black uppercase text-xs">ยังไม่มีประวัติการรับสินค้า</td></tr>
                                         ) : completedGRs.map((gr) => (
-                                            <tr key={gr.id} className="hover:bg-blue-50 transition-colors">
-                                                <td className="p-6 font-bold text-slate-500 text-sm">{new Date(gr.createdAt).toLocaleDateString('th-TH')}</td>
+                                            <tr key={gr.id} className="hover:bg-blue-50/50 transition-colors">
+                                                <td className="p-6 font-bold text-slate-500 text-sm tabular-nums">{new Date(gr.createdAt).toLocaleDateString('th-TH')}</td>
                                                 <td className="p-6">
                                                     <p className="tabular-nums font-black text-emerald-600 text-base tracking-tight">{gr.receiptNo}</p>
                                                     <p className="tabular-nums text-xs font-bold text-slate-400 mt-1 uppercase tracking-tighter">PO: {gr.purchaseOrder?.poNumber || 'N/A'}</p>
@@ -387,8 +391,8 @@ export default function CreateGoodsReceiptPage() {
                                                         onClick={() => handleViewPDF(gr.pdfPath, 'GR')}
                                                         disabled={!gr.pdfPath}
                                                         className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm ${gr.pdfPath
-                                                            ? 'bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white hover:shadow-md active:scale-95'
-                                                            : 'bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed'
+                                                            ? 'bg-white text-[#1F3B8B] border-2 border-slate-200 hover:border-[#1F3B8B] hover:bg-[#1F3B8B] hover:text-white hover:shadow-md active:scale-95'
+                                                            : 'bg-slate-50 text-slate-300 border-2 border-slate-100 cursor-not-allowed'
                                                             }`}
                                                     >
                                                         <FileText className="w-4 h-4" /> ดูใบ GR
@@ -405,127 +409,177 @@ export default function CreateGoodsReceiptPage() {
 
                 {/* --- VIEW 2: FORM --- */}
                 {viewMode === 'FORM' && (
-                    <form onSubmit={handleSubmit} className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                        {/* Info Header Card */}
-                        <div className="bg-slate-950 text-white p-8 md:p-10 rounded-[2.5rem] shadow-xl flex flex-col md:flex-row gap-6 md:gap-10 relative overflow-hidden border border-slate-800">
-                            <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
-                                <Package className="w-64 h-64 text-emerald-400" />
-                            </div>
-                            <div className="relative z-10 w-full md:w-auto">
-                                <p className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-2">เลขที่ใบรับสินค้า (GR Number)</p>
-                                <p className="font-mono font-black text-3xl md:text-4xl tracking-tight">{receiptNo}</p>
-                            </div>
-                            <div className="hidden md:block w-px bg-white/20 relative z-10"></div>
-                            <div className="relative z-10 flex-1">
-                                <p className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-2">อ้างอิงใบสั่งซื้อ / ผู้จัดจำหน่าย</p>
-                                <p className="font-bold text-lg md:text-xl text-white tracking-tight">{selectedPO?.poNumber} | <span className="text-emerald-400">{selectedPO?.vendorName}</span></p>
-                            </div>
-                        </div>
+                    <div className="w-full max-w-[1440px] mx-auto animate-in slide-in-from-bottom-4 duration-500 relative">
+                        <form onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border-2 border-slate-200 overflow-hidden flex flex-col">
 
-                        {/* Items Table Card */}
-                        <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
-                            <h2 className="text-sm font-black text-slate-950 uppercase tracking-wider flex items-center gap-2.5 border-b border-slate-100 pb-4">
-                                <div className="p-2 bg-emerald-100 rounded-lg"><ClipboardCheck className="w-5 h-5 text-emerald-600" /></div>
-                                ตรวจสอบและระบุตำแหน่งจัดเก็บพัสดุ
-                            </h2>
-                            <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
-                                <table className="w-full text-left border-collapse min-w-[800px]">
-                                    <thead className="bg-slate-50 text-xs font-black text-slate-500 uppercase border-b border-slate-200">
-                                        <tr>
-                                            <th className="p-5">พัสดุ / SKU</th>
-                                            <th className="p-5 w-[30%]">คลัง / โซนจัดเก็บ</th>
-                                            <th className="p-5 w-[25%]">ตำแหน่งที่วาง (Location) *</th>
-                                            <th className="p-5 text-center">ค้างรับ</th>
-                                            <th className="p-5 text-center text-emerald-600">จำนวนที่รับจริง</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50 bg-white">
-                                        {items.map((item) => (
-                                            <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="p-5">
-                                                    <p className="font-black text-slate-800 text-sm uppercase">[{item.sku}]</p>
-                                                    <p className="text-xs font-bold text-slate-500 mt-1">{item.name}</p>
-                                                </td>
-                                                <td className="p-5">
-                                                    <div className="flex flex-col gap-2">
-                                                        {/* 💡 แก้ไข: ให้แสดงชื่อคลังสินค้า (name) แทนรหัส (code) */}
-                                                        <select
-                                                            value={item.warehouseId}
-                                                            onChange={(e) => updateItem(item.id, "warehouseId", e.target.value)}
-                                                            className="border-2 border-slate-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:border-emerald-400 bg-white text-slate-700 w-full truncate"
-                                                        >
-                                                            <option value="">-- เลือกคลังสินค้า --</option>
-                                                            {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                                                        </select>
-
-                                                        {/* 💡 แก้ไข: ให้แสดงชื่อโซน (name) แทนรหัส (code) */}
-                                                        <select
-                                                            value={item.zoneId}
-                                                            onChange={(e) => updateItem(item.id, "zoneId", e.target.value)}
-                                                            disabled={!item.warehouseId}
-                                                            className="border-2 border-slate-100 rounded-xl px-3 py-2 text-xs font-bold outline-none disabled:bg-slate-50 disabled:text-slate-400 bg-white text-slate-700 w-full truncate"
-                                                        >
-                                                            <option value="">-- เลือกโซน (ถ้ามี) --</option>
-                                                            {getAvailableZones(item.warehouseId).map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </td>
-                                                <td className="p-5">
-                                                    {/* 💡 แก้ไข: ให้แสดงชื่อตำแหน่ง (name) แทนรหัส (code) และถ้าไม่มีชื่อให้ดึง Code มาโชว์สำรอง */}
-                                                    <select
-                                                        value={item.locationId}
-                                                        onChange={(e) => updateItem(item.id, "locationId", e.target.value)}
-                                                        disabled={!item.warehouseId}
-                                                        required
-                                                        className="w-full border-2 border-emerald-100 bg-emerald-50/30 rounded-xl px-3 py-3 text-xs font-black text-emerald-700 outline-none focus:border-emerald-500 focus:bg-emerald-50 disabled:bg-slate-50 disabled:border-slate-100 disabled:text-slate-400 transition-colors"
-                                                    >
-                                                        <option value="">-- ระบุชั้นวาง / จุดเก็บ --</option>
-                                                        {getAvailableLocations(item).map(l => <option key={l.id} value={l.id}>{l.name || l.code}</option>)}
-                                                    </select>
-                                                </td>
-                                                <td className="p-5 text-center font-black text-slate-400 text-lg tabular-nums">
-                                                    {item.remainingQuantity}
-                                                </td>
-                                                <td className="p-5">
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={item.quantity}
-                                                        onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
-                                                        className="w-full border-2 border-emerald-500 bg-emerald-50 text-emerald-900 rounded-xl py-3 text-center font-mono font-black text-xl outline-none focus:ring-4 focus:ring-emerald-100 transition-all"
-                                                    />
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Footer Action Card */}
-                        <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-                                <div className="space-y-3">
-                                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                        <Info className="w-4 h-4 text-sky-500" /> หมายเหตุ (Remarks)
-                                    </label>
-                                    <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows="3" className="w-full border-2 border-slate-200 bg-white rounded-2xl p-4 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 transition-all placeholder:text-slate-300" placeholder="ระบุสภาพสินค้าหรือปัญหาที่พบตอนตรวจรับ..." />
-                                </div>
-                                <div className="p-8 rounded-[2rem] bg-slate-950 text-white flex flex-col md:flex-row justify-between items-center gap-6">
-                                    <div className="text-center md:text-left">
-                                        <p className="text-xs font-black uppercase text-emerald-400 tracking-widest mb-1">ยอดรับรวมทั้งสิ้น</p>
-                                        <p className="text-4xl font-black font-mono tracking-tight">{totalQty} <span className="text-sm font-bold text-slate-500">Units</span></p>
+                            {/* 1. ส่วนหัวเอกสาร */}
+                            <div className="p-8 md:p-10 border-b-2 border-slate-100 border-dashed flex flex-col md:flex-row justify-between items-start gap-8 bg-white">
+                                <div className="space-y-5 flex-1">
+                                    <div className="flex items-center gap-3 text-indigo-600">
+                                        <Package className="w-7 h-7 text-indigo-500" />
+                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">
+                                            เลขที่ใบรับสินค้า (GR Number)
+                                        </span>
                                     </div>
-                                    <button type="submit" disabled={isSubmitting} className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-900/20 transition-all disabled:opacity-50 flex items-center justify-center gap-3">
-                                        {isSubmitting ? "กำลังประมวลผล..." : "ยืนยันการรับสินค้า"} <CheckCircle2 className="w-5 h-5" />
-                                    </button>
+                                    <h2 className="text-3xl md:text-5xl font-black text-[#1F3B8B] tracking-tighter tabular-nums">
+                                        {receiptNo}
+                                    </h2>
+                                </div>
+
+                                <div className="bg-slate-50 border-2 border-slate-200 rounded-[2rem] p-6 flex flex-col w-full md:max-w-md shadow-sm">
+                                    <p className="text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                        <FileText className="w-5 h-5 text-blue-500" /> อ้างอิงใบสั่งซื้อ / ผู้จัดจำหน่าย
+                                    </p>
+                                    <p className="font-black text-lg md:text-xl text-slate-950 tracking-tight tabular-nums">
+                                        {selectedPO?.poNumber}
+                                    </p>
+                                    <p className="text-sm font-bold text-emerald-600 uppercase mt-1">
+                                        {selectedPO?.vendorName}
+                                    </p>
                                 </div>
                             </div>
-                        </div>
-                    </form>
+
+                            {/* 2. ส่วนตารางรายการรับเข้า */}
+                            <div className="px-8 md:px-10 py-10 bg-white border-b-2 border-slate-100">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                                    <h2 className="text-base font-black text-slate-950 uppercase tracking-wider flex items-center gap-3">
+                                        <div className="p-2 bg-slate-100 rounded-lg"><ClipboardCheck className="w-6 h-6 text-[#1F3B8B]" /></div>
+                                        รายการพัสดุและตำแหน่งจัดเก็บ (Items & Storage)
+                                    </h2>
+                                </div>
+
+                                <div className="overflow-x-auto rounded-[2rem] border-2 border-slate-100 shadow-sm">
+                                    <table className="w-full text-left border-collapse min-w-[900px]">
+                                        <thead className="bg-slate-50 text-sm font-black text-black uppercase tracking-widest border-b-2 border-slate-200">
+                                            <tr>
+                                                <th className="p-6">พัสดุ / SKU</th>
+                                                <th className="p-6 w-[28%]">
+                                                    คลัง / โซน <span className="text-red-600">*</span>
+                                                </th>
+                                                <th className="p-6 w-[22%]">
+                                                    ตำแหน่ง (Location) <span className="text-red-600">*</span>
+                                                </th>
+                                                <th className="p-6 text-center w-28">ค้างรับ</th>
+                                                <th className="p-6 text-center w-40">
+                                                    จำนวนที่รับจริง <span className="text-red-600">*</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 bg-white">
+                                            {items.map((item) => (
+                                                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="p-6">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[11px] text-slate-400 font-black tracking-wider mb-1 uppercase tabular-nums">#{item.sku}</span>
+                                                            <span className="text-base font-black text-slate-900">{item.name}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-6">
+                                                        <div className="flex flex-col gap-2">
+                                                            {/* --- ช่องเลือกคลังสินค้า (สีปกติ) --- */}
+                                                            <select
+                                                                value={item.warehouseId}
+                                                                onChange={(e) => updateItem(item.id, "warehouseId", e.target.value)}
+                                                                className={`border-2 rounded-xl px-3 py-2 text-xs font-black outline-none focus:border-[#1F3B8B] bg-white transition-all w-full cursor-pointer
+                ${item.warehouseId ? 'border-slate-400 text-black' : 'border-slate-200 text-slate-400'}`}
+                                                            >
+                                                                <option value="">-- เลือกคลังสินค้า --</option>
+                                                                {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                                                            </select>
+
+                                                            {/* --- ช่องเลือกโซน (สีปกติ) --- */}
+                                                            <select
+                                                                value={item.zoneId}
+                                                                onChange={(e) => updateItem(item.id, "zoneId", e.target.value)}
+                                                                disabled={!item.warehouseId}
+                                                                className={`border-2 rounded-xl px-3 py-2 text-xs font-black outline-none transition-all w-full cursor-pointer disabled:bg-slate-50 disabled:border-slate-100 disabled:text-slate-300
+                                                                ${item.zoneId ? 'border-slate-400 text-black' : 'border-slate-200 text-slate-400'}`}
+                                                            >
+                                                                <option value="">-- เลือกโซน (ถ้ามี) --</option>
+                                                                {getAvailableZones(item.warehouseId).map(z => <option key={z.id} value={z.id}>{z.name}</option>)}
+                                                            </select>
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="p-6">
+                                                        {/* --- ช่องเลือกตำแหน่ง (เดิมเป็นสีม่วง ปรับเป็นสีปกติเหมือนอันแรกแล้ว) --- */}
+                                                        <select
+                                                            value={item.locationId}
+                                                            onChange={(e) => updateItem(item.id, "locationId", e.target.value)}
+                                                            disabled={!item.warehouseId}
+                                                            className={`w-full border-2 rounded-xl px-3 py-3 text-xs font-black outline-none focus:border-[#1F3B8B] transition-all cursor-pointer shadow-sm disabled:bg-slate-50 disabled:border-slate-100
+                                                            ${item.locationId ? 'border-slate-400 text-black' : 'border-slate-200 text-slate-400'}`}
+                                                        >
+                                                            <option value="">-- ระบุจุดเก็บ --</option>
+                                                            {getAvailableLocations(item).map(l => (
+                                                                <option key={l.id} value={l.id}>{l.name || l.code}</option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+                                                    <td className="p-6 text-center font-black text-slate-400 text-lg tabular-nums">
+                                                        {item.remainingQuantity}
+                                                    </td>
+                                                    <td className="p-6">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={item.quantity}
+                                                            onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
+                                                            className="w-full border-2 border-emerald-500 bg-emerald-50 text-emerald-900 rounded-xl py-3 text-center font-black text-xl outline-none focus:ring-4 focus:ring-emerald-100 transition-all tabular-nums"
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* 3. ส่วนท้าย (หมายเหตุและสรุป) */}
+                            <div className="p-6 md:p-8 bg-slate-50 flex flex-col gap-6">
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+                                    <div className="p-5 md:p-6 rounded-[1.5rem] bg-white border-2 border-slate-200 shadow-md flex flex-col gap-3">
+                                        <label className="text-[13px] font-black text-slate-950 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                            <Info className="w-4 h-4 text-sky-500" /> หมายเหตุการตรวจรับ (Remarks)
+                                        </label>
+                                        <textarea
+                                            value={remarks}
+                                            onChange={(e) => setRemarks(e.target.value)}
+                                            rows="3"
+                                            className="w-full flex-1 border-2 border-slate-100 bg-slate-50/50 rounded-xl p-4 text-sm font-bold text-slate-700 outline-none focus:border-[#1F3B8B] transition-all resize-none placeholder:text-slate-300"
+                                            placeholder="ระบุสภาพสินค้าหรือปัญหาที่พบ..."
+                                        />
+                                    </div>
+
+                                    <div className="p-5 md:p-6 rounded-[1.5rem] bg-white border-2 border-slate-200 shadow-md flex flex-col md:flex-row justify-center items-center gap-6 md:gap-12">
+                                        <div className="flex flex-col items-center md:items-start">
+                                            <p className="text-xs font-black uppercase text-slate-400 tracking-[0.2em] mb-1">ยอดรับรวมทั้งสิ้น</p>
+                                            <p className="text-3xl md:text-4xl font-black text-[#1F3B8B] tabular-nums tracking-tighter flex items-baseline gap-1.5">
+                                                {totalQty}
+                                                <span className="text-xs font-black text-slate-300 uppercase tracking-widest">Units</span>
+                                            </p>
+                                        </div>
+                                        <div className="hidden md:block w-px h-10 bg-slate-100"></div>
+                                        <button
+                                            type="submit"
+                                            disabled={isSubmitting}
+                                            className="w-full md:w-auto min-w-[220px] bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-900/10 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 group"
+                                        >
+                                            {isSubmitting ? (
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                                    <span>ยืนยันการรับสินค้า</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 )}
-
-
             </div>
         </AuthGate>
     );

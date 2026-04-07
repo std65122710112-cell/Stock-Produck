@@ -173,62 +173,71 @@ export default function ApprovePRPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="max-w-6xl mx-auto space-y-8 py-8 px-4 md:px-0 animate-in fade-in duration-500">
+            {/* 💡 ปรับขยายความกว้างคอนเทนเนอร์หลักเป็น max-w-[1440px] */}
+            <div className="max-w-[1440px] mx-auto space-y-8 py-8 px-4 md:px-10 animate-in fade-in duration-500">
 
                 {/* HEADER SECTION */}
                 <div className="w-full pt-10 mb-6 print:hidden">
-                    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                                <FileCheck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
-                            </div>
-                            <div className="flex flex-col">
-                                <div className="flex items-center gap-2 mb-1.5">
-                                    <UserCheck className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                        Executive Purchase Requisition Approval
-                                    </p>
-                                </div>
-                                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                                    {viewMode === 'LIST' ? "อนุมัติใบขอซื้อ (PR)" : "พิจารณาอนุมัติเอกสาร"}
-                                </h1>
-                                <div className="flex items-center gap-2 pt-1 opacity-90">
-                                    <BadgeCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                        ระบบตรวจสอบและอนุมัติการจัดซื้อสำหรับผู้บริหาร
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="w-full flex flex-col gap-6">
 
-                        <div className="flex items-center">
-                            {viewMode === 'FORM' ? (
+                        {/* 💡 แถวบน: ปุ่มย้อนกลับ (ตามคอนเซปต์) */}
+                        {viewMode === 'FORM' && (
+                            <div>
                                 <button
                                     onClick={() => setViewMode('LIST')}
-                                    className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm"
+                                    className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm w-fit"
                                 >
                                     <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-[#1F3B8B] transition-colors" />
-                                    ย้อนกลับไปหน้ารายการ
+                                    ย้อนกลับ
                                 </button>
-                            ) : (
-                                <div className="flex bg-white p-1.5 rounded-[2rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
+                            </div>
+                        )}
+
+                        {/* แถวล่าง: หัวข้อและ Tab ตัวกรอง */}
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                    <FileCheck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <UserCheck className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                            Executive Purchase Requisition Approval
+                                        </p>
+                                    </div>
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                        {viewMode === 'LIST' ? "อนุมัติใบขอซื้อ (PR)" : "พิจารณาอนุมัติเอกสาร"}
+                                    </h1>
+                                    <div className="flex items-center gap-2 pt-1 opacity-90">
+                                        <BadgeCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                            ระบบตรวจสอบและอนุมัติการจัดซื้อสำหรับผู้บริหาร
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* แสดง Tabs เฉพาะในหน้า LIST */}
+                            {viewMode === 'LIST' && (
+                                <div className="flex bg-white p-2 rounded-[2.5rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
                                     <button
                                         onClick={() => setFilterTab("PENDING")}
-                                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'PENDING'
+                                        className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'PENDING'
                                             ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
                                             : 'border-transparent text-slate-400 hover:bg-slate-50'
                                             }`}
                                     >
-                                        <Clock className="w-4 h-4" /> รอพิจารณาอนุมัติ
+                                        <Clock className="w-5 h-5" /> รอพิจารณาอนุมัติ
                                     </button>
                                     <button
                                         onClick={() => setFilterTab("APPROVED")}
-                                        className={`px-6 py-3 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'APPROVED'
+                                        className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'APPROVED'
                                             ? 'bg-[#1F3B8B]/5 text-[#1F3B8B] border-[#1F3B8B]/20 shadow-sm'
                                             : 'border-transparent text-slate-400 hover:bg-slate-50'
                                             }`}
                                     >
-                                        <CheckCircle2 className="w-4 h-4" /> ประวัติการอนุมัติแล้ว
+                                        <CheckCircle2 className="w-5 h-5" /> ประวัติการอนุมัติแล้ว
                                     </button>
                                 </div>
                             )}
@@ -302,7 +311,10 @@ export default function ApprovePRPage() {
                                             </td>
                                             <td className="p-6 text-right">
                                                 {filterTab === 'PENDING' ? (
-                                                    <button onClick={() => handleSelectPRFromList(pr)} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-blue-700 transition-colors shadow-md shadow-blue-900/10 inline-flex items-center justify-center">
+                                                    <button
+                                                        onClick={() => handleSelectPRFromList(pr)}
+                                                        className="bg-white text-[#1F3B8B] border-2 border-slate-200 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm hover:shadow-md active:scale-95 inline-flex items-center justify-center"
+                                                    >
                                                         ตรวจสอบและอนุมัติ
                                                     </button>
                                                 ) : (
@@ -328,60 +340,67 @@ export default function ApprovePRPage() {
 
                 {/* --- VIEW 2: APPROVAL FORM --- */}
                 {viewMode === 'FORM' && selectedPRData && (
-                    <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4 duration-500 relative">
-                        <form className="bg-white rounded-[3rem] shadow-2xl shadow-slate-200/60 border border-slate-100 overflow-hidden flex flex-col">
+
+                    <div className="w-full max-w-[1440px] mx-auto animate-in slide-in-from-bottom-4 duration-500 relative">
+                        {/* 💡 ปรับเงากล่องหลักให้เบาและละมุนขึ้น คล้ายในรูป */}
+                        <form className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-200 overflow-hidden flex flex-col">
 
                             {/* 1. ส่วนหัวเอกสาร (Document Identity) */}
-                            <div className="p-10 border-b border-slate-50 flex flex-col md:flex-row justify-between items-start gap-6 bg-slate-50/30">
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2 text-slate-900 mb-2">
-                                        <FileText className="w-5 h-5 text-slate-900" />
-                                        <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-900">เอกสารใบขออนุมัติจัดซื้อ (PR)</span>
+                            {/* 💡 เปลี่ยนมาใช้ bg-white และขอบเส้นประเหมือนในรูป */}
+                            <div className="p-10 border-b border-slate-200 border-dashed flex flex-col md:flex-row justify-between items-start gap-6 bg-white">
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center gap-3 text-indigo-900">
+                                        <FileText className="w-6 h-6 text-indigo-600" />
+                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">เอกสารใบขออนุมัติจัดซื้อ (PR)</span>
                                     </div>
-                                    <h2 className="text-3xl font-black text-slate-900 tracking-tighter">
+                                    <h2 className="text-3xl md:text-4xl font-black text-[#1F3B8B] tracking-tighter">
                                         {selectedPRData.prNumber}
                                     </h2>
-                                    <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                        <Clock className="w-4 h-4" /> วันที่ส่งคำขอ: {new Date(selectedPRData.createdAt).toLocaleDateString('th-TH')}
+                                </div>
+                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 md:p-6 flex flex-col items-center justify-center min-w-[200px]">
+                                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 text-center">วันที่ส่งคำขอ</span>
+                                    <p className="text-base md:text-lg font-bold text-slate-900 flex items-center justify-center gap-2.5">
+                                        <Clock className="w-5 h-5 text-blue-600" /> {new Date(selectedPRData.createdAt).toLocaleDateString('th-TH')}
                                     </p>
                                 </div>
                             </div>
 
-                            {/* 💡 2. อัปเดตใหม่: แผงข้อมูลสรุป (General Information) แสดงข้อมูลละเอียดขึ้น */}
+                            {/* 2. แผงข้อมูลสรุป (General Information) */}
                             <div className="px-10 py-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-slate-50/80 border border-slate-100 p-6 rounded-[2rem] space-y-5">
+                                {/* 💡 ปรับกล่องข้อมูลเป็น bg-slate-50 และ border บาง 1px */}
+                                <div className="bg-slate-50 border border-slate-200 p-6 rounded-[1.5rem] space-y-6">
                                     <div>
-                                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-2">
-                                            <User className="w-3.5 h-3.5" /> ผู้ขอซื้อ (Requester)
+                                        <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5">
+                                            <User className="w-4 h-4 text-blue-600" /> ผู้ขอซื้อ (Requester)
                                         </h3>
-                                        <p className="text-base font-black text-slate-900">
+                                        <p className="text-base md:text-lg font-black text-slate-900">
                                             {selectedPRData.user?.firstName} {selectedPRData.user?.lastName}
                                         </p>
                                     </div>
                                     <div>
-                                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-2">
-                                            <Building2 className="w-3.5 h-3.5" /> แผนก (Cost Center)
+                                        <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5">
+                                            <Building2 className="w-4 h-4 text-emerald-600" /> แผนก (Cost Center)
                                         </h3>
-                                        <p className="text-base font-black text-slate-900">
+                                        <p className="text-base md:text-lg font-black text-slate-900">
                                             {selectedPRData.department?.name || 'ไม่ระบุแผนก'}
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="bg-slate-50/80 border border-slate-100 p-6 rounded-[2rem] space-y-5">
+                                <div className="bg-slate-50 border border-slate-200 p-6 rounded-[1.5rem] space-y-6">
                                     <div>
-                                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-2">
-                                            <Truck className="w-3.5 h-3.5" /> แนะนำคู่ค้า (Suggested Vendor)
+                                        <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5">
+                                            <Truck className="w-4 h-4 text-orange-500" /> แนะนำคู่ค้า (Suggested Vendor)
                                         </h3>
-                                        <p className="text-base font-black text-slate-900">
+                                        <p className="text-base md:text-lg font-black text-slate-900">
                                             {selectedPRData.supplier?.name || 'ไม่ได้ระบุ (ให้จัดซื้อดำเนินการหาคู่ค้าเอง)'}
                                         </p>
                                     </div>
                                     <div>
-                                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1.5 flex items-center gap-2">
-                                            <AlertCircle className="w-3.5 h-3.5" /> วัตถุประสงค์โครงการ (Purpose)
+                                        <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5">
+                                            <AlertCircle className="w-4 h-4 text-rose-500" /> วัตถุประสงค์โครงการ (Purpose)
                                         </h3>
-                                        <p className="text-base font-black text-slate-900 leading-snug">
+                                        <p className="text-base md:text-lg font-black text-slate-900 leading-snug">
                                             {selectedPRData.purpose || '-'}
                                         </p>
                                     </div>
@@ -389,42 +408,43 @@ export default function ApprovePRPage() {
                             </div>
 
                             {/* 3. ตารางรายการสินค้า (Items Table) */}
-                            <div className="px-10 py-4 flex-1">
-                                <div className="border border-slate-100 rounded-[2rem] overflow-hidden">
+                            <div className="px-10 py-2 flex-1">
+                                {/* 💡 ตารางลดความหนาขอบลง */}
+                                <div className="border border-slate-200 rounded-[1.5rem] overflow-hidden">
                                     <table className="w-full text-left">
-                                        <thead className="bg-slate-50/80 border-b border-slate-100">
-                                            <tr className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-                                                <th className="px-6 py-4">รายการพัสดุ</th>
-                                                <th className="px-6 py-4 text-center">จำนวน</th>
-                                                <th className="px-6 py-4 text-right">ราคาประเมิน/หน่วย</th>
-                                                <th className="px-6 py-4 text-right">รวม (บาท)</th>
+                                        <thead className="bg-slate-50 border-b border-slate-200">
+                                            <tr className="text-sm font-black text-slate-800 uppercase tracking-widest">
+                                                <th className="px-6 py-6">รายการพัสดุ</th>
+                                                <th className="px-6 py-6 text-center">จำนวน</th>
+                                                <th className="px-6 py-6 text-right">ราคาประเมิน/หน่วย</th>
+                                                <th className="px-6 py-6 text-right">รวม (บาท)</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-50">
+                                        <tbody className="divide-y divide-slate-100 bg-white">
                                             {selectedPRData.items.map((item, index) => (
-                                                <tr key={index} className="text-sm font-bold text-slate-700 hover:bg-slate-50/50 transition-colors">
+                                                <tr key={index} className="hover:bg-slate-50/50 transition-colors">
                                                     <td className="px-6 py-5">
                                                         <div className="flex flex-col">
-                                                            <span className="text-[10px] text-slate-400 mb-0.5 font-black tracking-wider">#{item.product?.sku || 'N/A'}</span>
-                                                            <span className="text-slate-900 font-black text-base">{item.product?.name || "ไม่ทราบชื่อสินค้า"}</span>
+                                                            <span className="text-[11px] text-slate-400 mb-1 font-black tracking-wider">#{item.product?.sku || 'N/A'}</span>
+                                                            <span className="text-slate-900 font-black text-sm md:text-base">{item.product?.name || "ไม่ทราบชื่อสินค้า"}</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-5 text-center font-black text-lg text-slate-900">{item.quantity}</td>
-                                                    <td className="px-6 py-5 text-right font-bold text-slate-500 tabular-nums">
+                                                    <td className="px-6 py-5 text-right font-bold text-slate-600 tabular-nums text-sm md:text-base">
                                                         ฿{Number(item.estimatedPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                     </td>
-                                                    <td className="px-6 py-5 text-right font-black text-sky-700 text-lg tabular-nums">
+                                                    <td className="px-6 py-5 text-right font-black text-[#1e3b8a] text-base md:text-lg tabular-nums">
                                                         ฿{(item.quantity * item.estimatedPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                     </td>
                                                 </tr>
                                             ))}
                                         </tbody>
-                                        <tfoot className="bg-slate-50/50 border-t-2 border-slate-100">
+                                        <tfoot className="bg-slate-50/50 border-t border-slate-200">
                                             <tr>
-                                                <td colSpan="3" className="px-6 py-6 text-right text-xs font-black uppercase tracking-widest text-slate-500">
+                                                <td colSpan="3" className="px-6 py-6 text-right text-sm font-black uppercase tracking-widest text-slate-600">
                                                     มูลค่าประเมินรวมทั้งสิ้น (Total Amount)
                                                 </td>
-                                                <td className="px-6 py-6 text-right font-black text-3xl text-slate-950 tracking-tighter tabular-nums">
+                                                <td className="px-6 py-6 text-right font-black text-2xl md:text-3xl text-[#1e3b8a] tracking-tighter tabular-nums">
                                                     ฿{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </td>
                                             </tr>
@@ -434,15 +454,16 @@ export default function ApprovePRPage() {
                             </div>
 
                             {/* 4. ส่วนการอนุมัติและลายเซ็น (Approval Sign-off) */}
-                            <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex flex-col gap-8 mt-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* 💡 ปรับพื้นหลังส่วนท้ายให้สว่างขึ้น (bg-slate-50/50) */}
+                            <div className="p-10 bg-slate-50/80 border-t border-slate-200 flex flex-col gap-8 mt-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* หมายเหตุ */}
                                     <div className="space-y-3">
-                                        <label className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                            <MessageSquare className="w-4 h-4 text-slate-900" /> ความเห็น/หมายเหตุเพิ่มเติม (ผู้อนุมัติ)
+                                        <label className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2.5">
+                                            <MessageSquare className="w-5 h-5 text-violet-600" /> ความเห็น/หมายเหตุเพิ่มเติม (ผู้อนุมัติ)
                                         </label>
                                         <textarea
-                                            className="w-full bg-white border-2 border-slate-200 rounded-[1.5rem] p-5 text-sm font-bold text-slate-700 outline-none focus:border-slate-400 min-h-[140px] transition-all"
+                                            className="w-full bg-white border border-slate-200 rounded-[1.25rem] p-5 text-sm font-bold text-slate-700 outline-none focus:border-indigo-400 min-h-[140px] transition-all shadow-sm"
                                             placeholder="ระบุข้อความถึงฝ่ายจัดซื้อ หรือเหตุผลที่ไม่อนุมัติ..."
                                             value={approvalComment}
                                             onChange={(e) => setApprovalComment(e.target.value)}
@@ -451,12 +472,12 @@ export default function ApprovePRPage() {
 
                                     {/* ลายเซ็น */}
                                     <div className="space-y-3">
-                                        <label className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                            <PenTool className="w-4 h-4 text-slate-900" /> ลายเซ็นผู้อนุมัติ (Signature) <span className="text-rose-500">*</span>
+                                        <label className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-2.5">
+                                            <PenTool className="w-5 h-5 text-sky-600" /> ลายเซ็นผู้อนุมัติ (Signature) <span className="text-rose-500">*</span>
                                         </label>
                                         <div className="relative h-[140px]">
                                             {signatureImage ? (
-                                                <div className="w-full h-full border-2 border-dashed border-emerald-300 rounded-[1.5rem] bg-white p-4 flex items-center justify-center relative overflow-hidden group">
+                                                <div className="w-full h-full border border-dashed border-emerald-400 rounded-[1.25rem] bg-white p-4 flex items-center justify-center relative overflow-hidden group shadow-sm">
                                                     <img src={signatureImage} alt="Signature" className="max-h-full object-contain mix-blend-multiply" />
                                                     <button
                                                         type="button"
@@ -467,7 +488,7 @@ export default function ApprovePRPage() {
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <label className="w-full h-full border-2 border-dashed border-slate-300 rounded-[1.5rem] bg-white flex flex-col items-center justify-center cursor-pointer hover:border-slate-400 hover:bg-slate-100 transition-all group">
+                                                <label className="w-full h-full border border-dashed border-slate-300 rounded-[1.25rem] bg-white flex flex-col items-center justify-center cursor-pointer hover:border-slate-400 hover:bg-slate-50 transition-all group shadow-sm">
                                                     <Upload className="w-6 h-6 text-slate-400 group-hover:text-slate-700 mb-2 transition-colors" />
                                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900">อัปโหลดลายเซ็น</span>
                                                     <input type="file" accept="image/*" onChange={handleSignatureUpload} className="hidden" />
@@ -478,28 +499,29 @@ export default function ApprovePRPage() {
                                 </div>
 
                                 {/* ปุ่มดำเนินการ */}
-                                <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-slate-200/60 mt-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsApproveModalOpen(true)}
-                                        disabled={isLoading || !signatureImage}
-                                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-emerald-900/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-3"
-                                    >
-                                        <CheckCircle2 className="w-5 h-5" /> ยืนยันการอนุมัติและสร้างเอกสาร PDF
-                                    </button>
+                                <div className="flex flex-col md:flex-row justify-end gap-4 pt-4 mt-2">
                                     <button
                                         type="button"
                                         onClick={() => setIsRejectModalOpen(true)}
                                         disabled={isLoading}
-                                        className="px-10 bg-white border-2 border-rose-100 hover:bg-rose-50 text-rose-600 py-5 rounded-[2rem] font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-sm"
+                                        className="px-8 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
                                     >
-                                        <XCircle className="w-5 h-5" /> ปฏิเสธคำขอ
+                                        ไม่อนุมัติ (REJECT)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsApproveModalOpen(true)}
+                                        disabled={isLoading || !signatureImage}
+                                        className="px-8 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                    >
+                                        <CheckCircle2 className="w-4 h-4" /> ยืนยันการอนุมัติพัสดุ
                                     </button>
                                 </div>
                             </div>
                         </form>
                     </div>
                 )}
+
             </div>
 
             {/* --- POPUP ยืนยันการอนุมัติ --- */}

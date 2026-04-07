@@ -53,7 +53,8 @@ export default function PRListPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="max-w-6xl mx-auto space-y-8 py-8">
+            {/* 💡 ปรับขยายความกว้างตรงนี้: w-[98%] max-w-[1600px] */}
+            <div className="w-[98%] max-w-[1600px] mx-auto space-y-8 py-8">
 
                 {/* HEADER SECTION */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4">

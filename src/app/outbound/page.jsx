@@ -9,7 +9,7 @@ import {
     User, Hash, CheckCircle2, Trash2, Layers, ShieldCheck,
     UserCheck, Clock, X, LayoutDashboard, Building2,
     MessageSquare, Info, AlertTriangle, ArrowUpRight,
-    MapPinned, FileText, Plus // 💡 นำเข้า Plus icon สำหรับปุ่มแบ่งเบิก
+    MapPinned, FileText, Plus, Calendar // 💡 นำเข้า Plus icon สำหรับปุ่มแบ่งเบิก
 } from "lucide-react";
 
 export default function ProfessionalOutboundPage() {
@@ -108,11 +108,12 @@ export default function ProfessionalOutboundPage() {
             setModal({
                 isOpen: true,
                 title: "ยืนยันการลบรายการ",
-                message: "คุณต้องการลบพัสดุนี้ออกจากรายการนำจ่ายใช่หรือไม่?",
+                message: "คุณต้องการลบพัสดุนี้ออกจากรายการนำจ่ายใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้",
                 type: "danger",
                 onConfirm: () => {
                     setItems(items.filter(it => it.id !== id));
                     setModal({ ...modal, isOpen: false });
+                    toast.success("ลบรายการสำเร็จ");
                 }
             });
         } else {
@@ -182,68 +183,89 @@ export default function ProfessionalOutboundPage() {
                         className="fixed inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300"
                         onClick={() => setModal({ ...modal, isOpen: false })}
                     />
-                    <div className="relative bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
-                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 ${modal.type === 'danger' ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-[#1e3b8a]'}`}>
-                            {modal.type === 'danger' ? <AlertTriangle className="w-8 h-8" /> : <ShieldCheck className="w-8 h-8" />}
+                    <div className="relative bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 md:p-10 overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+
+                        {/* 💡 เพิ่ม mx-auto เพื่อให้กล่องไอคอนอยู่กึ่งกลาง */}
+                        <div className={`mx-auto w-20 h-20 rounded-[1.5rem] flex items-center justify-center mb-6 ${modal.type === 'danger' ? 'bg-rose-50 text-rose-500' : 'bg-blue-50 text-[#1F3B8B]'}`}>
+                            {modal.type === 'danger' ? <AlertTriangle className="w-10 h-10" /> : <ShieldCheck className="w-10 h-10" />}
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">{modal.title}</h3>
-                        <p className="text-slate-500 font-medium leading-relaxed mb-8">{modal.message}</p>
+
+                        {/* 💡 เพิ่ม text-center เพื่อให้หัวข้อและรายละเอียดอยู่กึ่งกลาง */}
+                        <div className="text-center mb-10">
+                            <h3 className="text-2xl font-black text-slate-950 mb-3 uppercase tracking-tight">
+                                {modal.title}
+                            </h3>
+                            <p className="text-slate-500 font-medium leading-relaxed px-2">
+                                {modal.message}
+                            </p>
+                        </div>
+
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setModal({ ...modal, isOpen: false })}
-                                className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-slate-400 hover:bg-slate-50 transition-colors"
+                                className="flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all active:scale-95"
                             >
                                 ยกเลิก
                             </button>
                             <button
                                 onClick={modal.onConfirm}
-                                className={`flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-wider text-white shadow-lg transition-all active:scale-95 ${modal.type === 'danger' ? 'bg-rose-500 hover:bg-rose-600 shadow-rose-200' : 'bg-[#1e3b8a] hover:bg-[#1a3673] shadow-blue-200'}`}
+                                className={`flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-lg transition-all active:scale-95 ${modal.type === 'danger'
+                                        ? 'bg-rose-500 hover:bg-rose-600 shadow-rose-200'
+                                        : 'bg-[#1e3b8a] hover:bg-[#1a3673] shadow-blue-200'
+                                    }`}
                             >
-                                ยืนยันดำเนินการ
+                                ยืนยัน
                             </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            <div className="max-w-6xl mx-auto space-y-8 py-8 px-4 md:px-0 animate-in fade-in duration-500">
+            {/* ปรับแก้ max-w จาก 6xl เป็น 1600px เพื่อให้กว้างขึ้นตามคอนเซปต์ Pro Dashboard */}
+            <div className="max-w-[1600px] mx-auto space-y-8 py-8 px-4 md:px-8 animate-in fade-in duration-500">
+
                 {/* HEADER SECTION */}
                 <div className="w-full pt-10 mb-6 print:hidden">
-                    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                                <Truck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
-                            </div>
-                            <div className="flex flex-col">
-                                <div className="flex items-center gap-2 mb-1.5">
-                                    <ArrowUpRight className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                        Inventory Outbound Management
-                                    </p>
-                                </div>
-                                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                                    {viewMode === 'LIST' ? "คิวเบิกและประวัติการนำจ่าย" : "บันทึกการเบิกพัสดุ"}
-                                </h1>
-                                <div className="flex items-center gap-2 pt-1 opacity-90">
-                                    <MapPinned className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                        ระบบบริหารจัดการนำจ่ายสินค้าและตรวจสอบตำแหน่งจัดเก็บ
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="w-full px-6 md:px-10 flex flex-col gap-6">
 
+                        {/* 💡 แถวบน: ปุ่มย้อนกลับ (ย้ายมาไว้บนซ้ายตามคอนเซปต์ แสดงเฉพาะโหมด FORM) */}
                         {viewMode === 'FORM' && (
-                            <div className="flex items-center">
+                            <div>
                                 <button
                                     onClick={() => setViewMode('LIST')}
-                                    className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm"
+                                    className="group flex items-center gap-3 bg-white border-2 border-slate-200 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm w-fit"
                                 >
                                     <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-[#1F3B8B] transition-colors" />
                                     ย้อนกลับ
                                 </button>
                             </div>
                         )}
+
+                        {/* แถวล่าง: ส่วนเนื้อหา Header (Icon & Title) */}
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                    <Truck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <ArrowUpRight className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                            Inventory Outbound Management
+                                        </p>
+                                    </div>
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                        {viewMode === 'LIST' ? "คิวเบิกและประวัติการนำจ่าย" : "บันทึกการเบิกพัสดุ"}
+                                    </h1>
+                                    <div className="flex items-center gap-2 pt-1 opacity-90">
+                                        <MapPinned className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                            ระบบบริหารจัดการนำจ่ายสินค้าและตรวจสอบตำแหน่งจัดเก็บ
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -251,7 +273,7 @@ export default function ProfessionalOutboundPage() {
                 {viewMode === 'LIST' && (
                     <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-500">
                         <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
-                            <h2 className="text-sm font-black text-slate-900 tracking-wide flex items-center gap-3">
+                            <h2 className="text-sm font-black text-slate-950 tracking-wide flex items-center gap-3">
                                 <div className="p-2 bg-indigo-100 rounded-lg"><LayoutDashboard className="w-5 h-5 text-indigo-600" /></div>
                                 รายการใบเบิกพัสดุที่ผ่านการอนุมัติ (Approved SR)
                             </h2>
@@ -320,237 +342,313 @@ export default function ProfessionalOutboundPage() {
 
                 {/* --- FORM MODE --- */}
                 {viewMode === 'FORM' && selectedSR && (
-                    <form onSubmit={handleSubmit} className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                    <form onSubmit={handleSubmit} className="animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden">
 
-                        {/* Summary Header Card (Dark Theme) */}
-                        <div className="bg-slate-950 text-white p-8 md:p-10 rounded-[2.5rem] shadow-xl flex flex-col md:flex-row gap-6 md:gap-12 relative overflow-hidden border border-slate-800">
-                            <div className="absolute right-0 bottom-0 opacity-10 pointer-events-none">
-                                <Truck className="w-64 h-64 text-emerald-400" />
-                            </div>
-                            <div className="relative z-10 w-full md:w-auto">
-                                <p className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-2">เลขที่ใบนำจ่าย (Delivery Order)</p>
-                                <p className="tabular-nums font-black text-3xl md:text-4xl tracking-tight text-white">{doNo}</p>
-                            </div>
-                            <div className="hidden md:block w-px bg-white/20 relative z-10"></div>
-                            <div className="relative z-10 w-full md:w-auto flex-1">
-                                <p className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-2">อ้างอิงใบเบิก (SR Ref.)</p>
-                                <p className="tabular-nums font-black text-xl md:text-2xl tracking-tight text-white">{selectedSR.srNumber}</p>
-                            </div>
-                        </div>
-
-                        {/* 💡 Requisition Information Detailed Dashboard */}
-                        <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
-                            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-                                <h2 className="text-sm font-black text-slate-950 uppercase tracking-wider flex items-center gap-2.5">
-                                    <div className="p-2 bg-indigo-100 rounded-lg"><FileText className="w-5 h-5 text-indigo-600" /></div>
-                                    รายละเอียดอ้างอิงจากใบเบิกต้นทาง (SR Details)
-                                </h2>
-                                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-3 py-1 rounded-full uppercase tracking-widest">
-                                    วันที่ขอเบิก: {new Date(selectedSR.createdAt).toLocaleDateString('th-TH')}
-                                </span>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {/* กล่องผู้ขอเบิก */}
-                                <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                    <User className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">ผู้ขอเบิกพัสดุ (Requester)</p>
-                                        <p className="text-sm font-black text-slate-900">{selectedSR.user?.firstName} {selectedSR.user?.lastName}</p>
-                                    </div>
+                            {/* 1. Header Section (White Theme / Black Labels / Green Data) */}
+                            <div className="bg-white p-8 md:p-10 relative overflow-hidden border-b border-slate-100">
+                                {/* ไอคอนพื้นหลังจางๆ เพื่อความสวยงาม */}
+                                <div className="absolute right-0 bottom-0 opacity-40 pointer-events-none">
+                                    <Truck className="w-64 h-64 text-slate-50" />
                                 </div>
 
-                                {/* กล่องผู้อนุมัติ */}
-                                <div className="flex items-start gap-3 bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
-                                    <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                                <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-12 items-center">
                                     <div>
-                                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-0.5">ผู้อนุมัติเบิก (Approved By)</p>
-                                        <p className="text-sm font-black text-emerald-950">{selectedSR.approver?.firstName} {selectedSR.approver?.lastName}</p>
+                                        {/* หัวข้อเป็นสีดำ (Black Label) */}
+                                        <p className="text-xs font-black text-black uppercase tracking-widest mb-2">เลขที่ใบนำจ่าย (Delivery Order)</p>
+                                        {/* ข้อมูลเป็นสีเขียว (Green Data) */}
+                                        <p className="tabular-nums font-black text-3xl md:text-4xl tracking-tight text-emerald-600">{doNo}</p>
+                                    </div>
+
+                                    {/* เส้นแบ่งระหว่างข้อมูล */}
+                                    <div className="hidden md:block w-px h-12 bg-slate-200"></div>
+
+                                    <div className="flex-1 text-center md:text-left">
+                                        {/* หัวข้อเป็นสีดำ (Black Label) */}
+                                        <p className="text-xs font-black text-black uppercase tracking-widest mb-2">อ้างอิงใบเบิก (SR Ref.)</p>
+                                        {/* ข้อมูลเป็นสีเขียว (Green Data) */}
+                                        <p className="tabular-nums font-black text-xl md:text-2xl tracking-tight text-emerald-600">{selectedSR.srNumber}</p>
                                     </div>
                                 </div>
+                            </div>
+                            <div className="p-6 md:p-10 space-y-10">
 
-                                {/* กล่องแผนก */}
-                                <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                    <Building2 className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">แผนกที่เบิก (Department)</p>
-                                        <p className="text-sm font-black text-slate-900">{selectedSR.department?.name || 'ส่วนกลาง (General)'}</p>
-                                    </div>
-                                </div>
-
-                                {/* วัตถุประสงค์ (ขยายเต็ม 3 คอลัมน์) */}
-                                <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 md:col-span-3">
-                                    <Layers className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-                                    <div className="w-full">
-                                        <div className="flex justify-between items-center mb-0.5">
-                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">วัตถุประสงค์ / โครงการ (Purpose)</p>
-                                            {selectedSR.referenceNo && <span className="text-[10px] font-black text-indigo-500 tracking-wider">Ref No: {selectedSR.referenceNo}</span>}
+                                {/* 2. SR Details Section - ปรับปรุงหัวข้อให้ใหญ่และเข้มชัดเจน */}
+                                <section className="px-8 md:px-10 py-10 bg-slate-50/50 flex flex-col gap-8 border-b-2 border-slate-100">
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                        <h2 className="text-xl md:text-2xl font-black text-black uppercase tracking-tight flex items-center gap-4">
+                                            <div className="p-2.5 bg-white rounded-2xl shadow-md border border-slate-200">
+                                                <FileText className="w-7 h-7 text-indigo-600" />
+                                            </div>
+                                            ข้อมูลพื้นฐานจากใบเบิกต้นทาง (Requisition Details)
+                                        </h2>
+                                        <div className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-2xl border-2 border-slate-200 shadow-sm">
+                                            <Calendar className="w-5 h-5 text-orange-500" />
+                                            <span className="text-xs font-black text-slate-600 uppercase tracking-widest tabular-nums">
+                                                วันที่ขอเบิก: {new Date(selectedSR.createdAt).toLocaleDateString('th-TH')}
+                                            </span>
                                         </div>
-                                        <p className="text-sm font-black text-slate-900">{selectedSR.purpose || 'ไม่ได้ระบุวัตถุประสงค์'}</p>
                                     </div>
-                                </div>
-                            </div>
 
-                            {/* หมายเหตุเพิ่มเติม */}
-                            {selectedSR.remarks && (
-                                <div className="mt-2 bg-amber-50/60 p-5 rounded-2xl border border-amber-100/60">
-                                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1 flex items-center gap-1.5"><MessageSquare className="w-3.5 h-3.5" /> หมายเหตุจากผู้เบิก (SR Note)</p>
-                                    <p className="text-xs font-bold text-slate-700 leading-relaxed">{selectedSR.remarks}</p>
-                                </div>
-                            )}
-                        </div>
+                                    {/* แถวบน: ข้อมูลบุคคลและแผนก */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {/* ผู้ขอเบิก */}
+                                        <div className="bg-white p-7 rounded-[2rem] border-2 border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="p-2.5 bg-blue-50 rounded-xl">
+                                                    <User className="w-6 h-6 text-blue-600" />
+                                                </div>
+                                                <p className="text-xs font-black text-slate-600 uppercase tracking-widest">ผู้ขอเบิกพัสดุ</p>
+                                            </div>
+                                            <p className="text-lg font-black text-black ml-1">{selectedSR.user?.firstName} {selectedSR.user?.lastName}</p>
+                                        </div>
 
-                        {/* Items Table Card */}
-                        <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
-                            <h2 className="text-sm font-black text-slate-950 uppercase tracking-wider flex items-center gap-2.5 border-b border-slate-100 pb-4">
-                                <div className="p-2 bg-blue-100 rounded-lg"><ClipboardCheck className="w-5 h-5 text-blue-600" /></div>
-                                รายการพัสดุที่ต้องจัดเตรียมและนำจ่าย
-                            </h2>
-                            <div className="overflow-x-auto rounded-[2rem] border border-slate-100">
-                                <table className="w-full text-left border-collapse min-w-[800px]">
-                                    <thead className="bg-slate-50 text-xs font-black text-slate-500 uppercase border-b border-slate-200">
-                                        <tr>
-                                            <th className="p-5">รายการพัสดุ / SKU</th>
-                                            <th className="p-5 text-center">ยอดเบิกรวม</th>
-                                            <th className="p-5 w-[35%]">หยิบจากคลัง/โซน (Location) *</th>
-                                            <th className="p-5 text-center text-blue-600 w-32">จำนวนที่จ่าย</th>
-                                            <th className="p-5 text-center w-24">จัดการ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50 bg-white">
-                                        {items.map((item, idx) => {
-                                            const locs = getAvailableLocations(item.productId);
-                                            const stock = getAvailableStock(item.productId, item.locationId);
-                                            const isOverStock = item.quantity > stock;
+                                        {/* ผู้อนุมัติ */}
+                                        <div className="bg-white p-7 rounded-[2rem] border-2 border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="p-2.5 bg-emerald-50 rounded-xl">
+                                                    <ShieldCheck className="w-6 h-6 text-emerald-600" />
+                                                </div>
+                                                <p className="text-xs font-black text-slate-600 uppercase tracking-widest">ผู้อนุมัติเบิก</p>
+                                            </div>
+                                            <p className="text-lg font-black text-emerald-800 ml-1">{selectedSR.approver?.firstName} {selectedSR.approver?.lastName}</p>
+                                        </div>
 
-                                            // 💡 คำนวณยอดรวมของสินค้านี้จากทุกแถว (กรณีมีแบ่งเบิกหลายคลัง)
-                                            const currentTotalPicked = items.filter(it => it.originalId === item.originalId).reduce((sum, it) => sum + Number(it.quantity || 0), 0);
-                                            const isOverRequired = currentTotalPicked > item.requiredQty;
-                                            const isFullyPicked = currentTotalPicked === item.requiredQty;
+                                        {/* แผนก */}
+                                        <div className="bg-white p-7 rounded-[2rem] border-2 border-slate-200 shadow-sm hover:shadow-md transition-all">
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="p-2.5 bg-fuchsia-50 rounded-xl">
+                                                    <Building2 className="w-6 h-6 text-fuchsia-600" />
+                                                </div>
+                                                <p className="text-xs font-black text-slate-600 uppercase tracking-widest">แผนกที่เบิก</p>
+                                            </div>
+                                            <p className="text-lg font-black text-black ml-1">{selectedSR.department?.name || 'ส่วนกลาง (General)'}</p>
+                                        </div>
+                                    </div>
 
-                                            // 💡 ตรวจสอบว่าเป็นแถวแรกของสินค้าชิ้นนี้หรือไม่
-                                            const isFirstOfGroup = items.findIndex(it => it.originalId === item.originalId) === idx;
+                                    {/* แถวล่าง: วัตถุประสงค์และหมายเหตุ */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                        {/* วัตถุประสงค์ */}
+                                        <div className="lg:col-span-7 bg-white p-7 rounded-[2rem] border-2 border-slate-200 shadow-sm">
+                                            <div className="flex justify-between items-center mb-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-2.5 bg-sky-50 rounded-xl">
+                                                        <Layers className="w-6 h-6 text-sky-600" />
+                                                    </div>
+                                                    <p className="text-xs font-black text-slate-600 uppercase tracking-widest">วัตถุประสงค์ / โครงการ</p>
+                                                </div>
+                                                {selectedSR.referenceNo && (
+                                                    <div className="flex items-center gap-2 bg-indigo-50 px-4 py-1.5 rounded-xl border-2 border-indigo-100">
+                                                        <Hash className="w-3.5 h-3.5 text-indigo-600" />
+                                                        <span className="text-xs font-black text-indigo-700 uppercase">Ref: {selectedSR.referenceNo}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-base font-bold text-slate-800 leading-relaxed bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                                                {selectedSR.purpose || 'ไม่ได้ระบุวัตถุประสงค์'}
+                                            </p>
+                                        </div>
 
-                                            return (
-                                                <tr key={item.id} className={`transition-colors ${isFirstOfGroup ? 'hover:bg-slate-50/50' : 'bg-slate-50/30 hover:bg-slate-50'}`}>
-                                                    <td className="p-5">
-                                                        {isFirstOfGroup ? (
-                                                            <>
-                                                                <p className="font-black text-slate-800 text-sm uppercase">[{item.sku}] {item.productName}</p>
-                                                                {item.remark && <p className="text-[10px] text-amber-600 font-bold mt-1.5 flex items-center gap-1 italic"><Info className="w-3 h-3" /> หมายเหตุ: {item.remark}</p>}
-                                                            </>
-                                                        ) : (
-                                                            <div className="flex items-center gap-2 pl-4 text-slate-400">
-                                                                <div className="w-3 h-3 border-l-2 border-b-2 border-slate-300 rounded-bl-lg mb-1"></div>
-                                                                <span className="text-xs font-bold italic">แบ่งเบิกจากคลังอื่น</span>
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-5 text-center">
-                                                        {isFirstOfGroup ? (
-                                                            <div className="flex flex-col items-center">
-                                                                <span className="font-black text-slate-950 text-xl tracking-tighter tabular-nums">{item.requiredQty}</span>
-                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 border ${isFullyPicked ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : (isOverRequired ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-amber-50 text-amber-600 border-amber-200')}`}>
-                                                                    รวม: {currentTotalPicked}/{item.requiredQty}
-                                                                </span>
-                                                            </div>
-                                                        ) : (
-                                                            <span className="text-slate-300 font-bold">-</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="p-5">
-                                                        <select
-                                                            required
-                                                            value={item.locationId}
-                                                            onChange={e => updateItem(item.id, "locationId", e.target.value)}
-                                                            className={`w-full border-2 rounded-xl px-3 py-3 text-xs font-black outline-none transition-colors ${item.locationId ? 'border-emerald-200 bg-emerald-50 text-emerald-800 focus:border-emerald-500' : 'border-slate-200 bg-white text-slate-700 focus:border-blue-500'}`}
-                                                        >
-                                                            <option value="">-- เลือกตำแหน่งเพื่อหยิบสินค้า --</option>
-                                                            {locs.map(l => {
-                                                                const whName = l.location.warehouse?.name || l.location.warehouse?.code || "คลังสินค้า";
-                                                                const zoneName = l.location.zone?.name || l.location.zone?.code ? ` > ${l.location.zone?.name || l.location.zone?.code}` : "";
-                                                                const locName = l.location.name || l.location.code;
-
-                                                                return (
-                                                                    <option key={l.locationId} value={l.locationId}>
-                                                                        {whName}{zoneName} | จุดเก็บ: {locName} (คงเหลือ: {l.quantity})
-                                                                    </option>
-                                                                );
-                                                            })}
-                                                        </select>
-                                                    </td>
-                                                    <td className="p-5 text-center">
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            value={item.quantity === 0 ? '' : item.quantity}
-                                                            onChange={e => updateItem(item.id, "quantity", e.target.value)}
-                                                            className={`w-24 mx-auto block border-2 rounded-xl py-2 text-center tabular-nums font-black text-lg outline-none transition-all ${(isOverStock || isOverRequired) ? 'border-rose-500 bg-rose-50 text-rose-600 ring-4 ring-rose-100' : 'border-blue-600 bg-blue-50 text-blue-900 focus:ring-4 focus:ring-blue-100'}`}
-                                                        />
-                                                    </td>
-                                                    <td className="p-5 text-center">
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            {isFirstOfGroup && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleSplitItem(item)}
-                                                                    title="แยกเบิกจากคลังอื่น"
-                                                                    className="p-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                                                                >
-                                                                    <Plus className="w-4 h-4" />
-                                                                </button>
-                                                            )}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => removeItem(item.id)}
-                                                                className="p-2 bg-slate-50 text-slate-400 border border-slate-200 rounded-lg hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition-all"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
+                                        {/* หมายเหตุ */}
+                                        <div className="lg:col-span-5 flex flex-col h-full">
+                                            {selectedSR.remarks ? (
+                                                <div className="bg-amber-50 p-7 rounded-[2rem] border-2 border-amber-200 h-full flex flex-col gap-4 shadow-sm">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-white rounded-lg shadow-sm">
+                                                            <MessageSquare className="w-5 h-5 text-amber-500" />
                                                         </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        {/* Footer Action Card */}
-                        <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
-                                <div className="space-y-3">
-                                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                        <MessageSquare className="w-4 h-4 text-sky-500" /> หมายเหตุการนำจ่าย (Remarks)
-                                    </label>
-                                    <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows="3" className="w-full border-2 border-slate-200 bg-white rounded-2xl p-4 text-sm font-bold text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all" placeholder="ระบุสภาพสินค้าหรือข้อความฝากถึงผู้รับ..." />
-                                </div>
-
-                                <div className="p-8 rounded-[2.5rem] bg-slate-50 flex flex-col md:flex-row justify-between items-center gap-8 border border-slate-200 shadow-sm">
-                                    <div className="text-center md:text-left">
-                                        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">สถานะความพร้อมข้อมูล</p>
-                                        <div className="text-lg font-black tracking-tight flex items-center gap-2">
-                                            {canSubmit ? (
-                                                <><CheckCircle2 className="w-5 h-5 text-emerald-600" /> <span className="text-emerald-600">พร้อมตัดสต๊อก</span></>
+                                                        <p className="text-xs font-black text-amber-700 uppercase tracking-widest">หมายเหตุจากผู้เบิก (SR Note)</p>
+                                                    </div>
+                                                    <p className="text-sm font-bold text-amber-950/90 leading-relaxed italic px-1">
+                                                        "{selectedSR.remarks}"
+                                                    </p>
+                                                </div>
                                             ) : (
-                                                <div className="flex items-center gap-2 whitespace-nowrap">
-                                                    <Clock className="w-4 h-4 text-amber-500" />
-                                                    <span className="text-amber-600 text-sm font-bold uppercase tracking-tight">
-                                                        กรุณาระบุข้อมูลให้ครบ
-                                                    </span>
+                                                <div className="bg-white p-7 rounded-[2rem] border-2 border-dashed border-slate-300 h-full flex items-center justify-center">
+                                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest italic">ไม่มีหมายเหตุเพิ่มเติม</p>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    <button
-                                        type="submit"
-                                        disabled={!canSubmit || isSubmitting}
-                                        className="w-full md:w-auto bg-[#1e3b8a] hover:bg-blue-800 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-900/20 disabled:opacity-30 disabled:scale-100 active:scale-95 transition-all flex items-center justify-center gap-3"
-                                    >
-                                        {isSubmitting ? "กำลังประมวลผล..." : "ยืนยันการนำจ่าย"}
-                                    </button>
-                                </div>
+                                </section>
+
+                                {/* 3. Items Table Section - ปรับปรุงใหม่ให้โมเดิร์นและใช้งานง่าย */}
+                                <section className="space-y-6">
+                                    <h2 className="text-xl md:text-2xl font-black text-black uppercase tracking-tight flex items-center gap-4 border-b-2 border-slate-100 pb-6">
+                                        <div className="p-2.5 bg-white rounded-2xl shadow-md border border-slate-200">
+                                            <ClipboardCheck className="w-7 h-7 text-blue-600" />
+                                        </div>
+                                        รายการพัสดุที่ต้องจัดเตรียมและนำจ่าย
+                                    </h2>
+
+                                    <div className="overflow-x-auto rounded-[2.5rem] border-2 border-slate-200 bg-slate-100/30 p-3 md:p-4">
+                                        <table className="w-full text-left border-separate border-spacing-y-3 min-w-[900px]">
+                                            <thead>
+                                                <tr className="text-sm font-black text-black uppercase tracking-widest">
+                                                    <th className="px-6 py-2">รายการพัสดุ / SKU</th>
+                                                    <th className="px-6 py-2 text-center">ยอดเบิกรวม</th>
+                                                    <th className="px-6 py-2 w-[35%]">หยิบจากคลัง/โซน (Location) <span className="text-red-600">*</span></th>
+                                                    <th className="px-6 py-2 text-center w-40">จำนวนที่จ่าย <span className="text-red-600">*</span></th>
+                                                    <th className="px-6 py-2 text-center w-32">จัดการ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {items.map((item, idx) => {
+                                                    const locs = getAvailableLocations(item.productId);
+                                                    const stock = getAvailableStock(item.productId, item.locationId);
+                                                    const isOverStock = item.quantity > stock;
+                                                    const currentTotalPicked = items.filter(it => it.originalId === item.originalId).reduce((sum, it) => sum + Number(it.quantity || 0), 0);
+                                                    const isOverRequired = currentTotalPicked > item.requiredQty;
+                                                    const isFullyPicked = currentTotalPicked === item.requiredQty;
+                                                    const isFirstOfGroup = items.findIndex(it => it.originalId === item.originalId) === idx;
+
+                                                    return (
+                                                        <tr key={item.id} className="bg-white shadow-sm group hover:shadow-md transition-all">
+                                                            <td className="px-6 py-5 rounded-l-[1.5rem] border-y-2 border-l-2 border-transparent group-hover:border-slate-200">
+                                                                {isFirstOfGroup ? (
+                                                                    <div className="flex flex-col">
+                                                                        <p className="font-black text-black text-base uppercase tracking-tight">
+                                                                            <span className="text-slate-400 mr-2 tabular-nums">#{item.sku}</span>
+                                                                            {item.productName}
+                                                                        </p>
+                                                                        {item.remark && (
+                                                                            <p className="text-[11px] text-amber-600 font-bold mt-2 flex items-center gap-1.5 italic bg-amber-50 w-fit px-2 py-0.5 rounded-md border border-amber-100">
+                                                                                <Info className="w-3.5 h-3.5" /> หมายเหตุ: {item.remark}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex items-center gap-2 pl-6 text-slate-400">
+                                                                        <div className="w-4 h-4 border-l-2 border-b-2 border-slate-200 rounded-bl-lg mb-1"></div>
+                                                                        <span className="text-xs font-black uppercase italic tracking-wider">แบ่งเบิกเพิ่ม</span>
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-6 py-5 text-center border-y-2 border-transparent group-hover:border-slate-200">
+                                                                {isFirstOfGroup ? (
+                                                                    <div className="flex flex-col items-center">
+                                                                        <span className="font-black text-black text-2xl tracking-tighter tabular-nums leading-none">{item.requiredQty}</span>
+                                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full mt-2 border tabular-nums shadow-sm
+                                            ${isFullyPicked ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : (isOverRequired ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-amber-50 text-amber-600 border-amber-200')}`}>
+                                                                            รวม: {currentTotalPicked}/{item.requiredQty}
+                                                                        </span>
+                                                                    </div>
+                                                                ) : <span className="text-slate-300 font-bold">-</span>}
+                                                            </td>
+                                                            <td className="px-6 py-5 border-y-2 border-transparent group-hover:border-slate-200">
+                                                                <select
+                                                                    required
+                                                                    value={item.locationId}
+                                                                    onChange={e => updateItem(item.id, "locationId", e.target.value)}
+                                                                    className={`w-full border-2 rounded-xl px-3 py-3 text-xs font-black outline-none transition-all cursor-pointer shadow-sm
+                                        ${item.locationId ? 'border-slate-400 text-black bg-white' : 'border-slate-200 text-slate-400 bg-white hover:border-slate-300'}`}
+                                                                >
+                                                                    <option value="">-- เลือกตำแหน่งเพื่อหยิบสินค้า --</option>
+                                                                    {locs.map(l => (
+                                                                        <option key={l.locationId} value={l.locationId}>
+                                                                            {l.location.warehouse?.name} | จุดเก็บ: {l.location.name || l.location.code} (สต๊อก: {l.quantity})
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </td>
+                                                            <td className="px-6 py-5 border-y-2 border-transparent group-hover:border-slate-200">
+                                                                <input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    value={item.quantity === 0 ? '' : item.quantity}
+                                                                    onChange={e => updateItem(item.id, "quantity", e.target.value)}
+                                                                    className={`w-28 mx-auto block border-2 rounded-xl py-3 text-center tabular-nums font-black text-xl outline-none transition-all shadow-inner
+                                        ${(isOverStock || isOverRequired)
+                                                                            ? 'border-rose-500 bg-rose-50 text-rose-600 ring-4 ring-rose-100'
+                                                                            : 'border-blue-500 bg-blue-50 text-blue-950 focus:ring-4 focus:ring-blue-100'}`}
+                                                                />
+                                                            </td>
+                                                            <td className="px-6 py-5 rounded-r-[1.5rem] border-y-2 border-r-2 border-transparent group-hover:border-slate-200 text-center">
+                                                                <div className="flex items-center justify-center gap-2">
+                                                                    {isFirstOfGroup && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleSplitItem(item)}
+                                                                            title="แยกเบิกจากคลังอื่น"
+                                                                            className="p-2.5 bg-slate-50 text-slate-400 border border-slate-200 rounded-xl hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all shadow-sm active:scale-90"
+                                                                        >
+                                                                            <Plus className="w-5 h-5" />
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => removeItem(item.id)}
+                                                                        title="ลบรายการนี้"
+                                                                        className="p-2.5 bg-slate-50 text-slate-400 border border-slate-200 rounded-xl hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm active:scale-90"
+                                                                    >
+                                                                        <Trash2 className="w-5 h-5" />
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </section>
+
+                                {/* 4. Footer Section - ปรับขนาดให้กะทัดรัด ไม่ใหญ่จนเกินไป */}
+                                <section className="p-6 md:p-8 bg-slate-50/50 rounded-[2rem] border-2 border-slate-200 mt-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+
+                                        {/* --- ฝั่งซ้าย: หมายเหตุ (Remarks) --- */}
+                                        <div className="flex flex-col gap-3">
+                                            <label className="text-[13px] font-black text-black uppercase tracking-widest ml-1 flex items-center gap-2.5">
+                                                <MessageSquare className="w-4 h-4 text-sky-500" /> หมายเหตุการนำจ่าย (Remarks)
+                                            </label>
+                                            <textarea
+                                                value={remarks}
+                                                onChange={(e) => setRemarks(e.target.value)}
+                                                rows="3"
+                                                className="w-full flex-1 border-2 border-slate-200 bg-white rounded-xl p-4 text-sm font-bold text-slate-700 outline-none focus:border-[#1F3B8B] transition-all resize-none shadow-sm placeholder:text-slate-300"
+                                                placeholder="ระบุสภาพสินค้าหรือข้อความฝากถึงผู้รับ..."
+                                            />
+                                        </div>
+
+                                        {/* --- ฝั่งขวา: สถานะความพร้อมและปุ่มยืนยัน (จัดเรียงแนวนอนตามรูป) --- */}
+                                        <div className="p-6 md:p-8 rounded-[2rem] bg-white border-2 border-slate-200 shadow-lg flex flex-col md:flex-row justify-between items-center gap-8">
+
+                                            {/* ส่วนสถานะ (ด้านซ้ายในกล่อง) */}
+                                            <div className="text-center md:text-left">
+                                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-2">สถานะความพร้อมข้อมูล</p>
+                                                <div className="text-lg font-black tracking-tight flex items-center justify-center md:justify-start gap-2.5">
+                                                    {canSubmit ? (
+                                                        <>
+                                                            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                                            <span className="text-emerald-600 uppercase">พร้อมตัดสต๊อก</span>
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2.5">
+                                                            <Clock className="w-5 h-5 text-amber-500" />
+                                                            <span className="text-amber-600 uppercase text-sm">กรุณาระบุข้อมูลให้ครบ</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                disabled={!canSubmit || isSubmitting}
+                                                className="w-full md:w-auto min-w-[200px] bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-green-900/20 transition-all active:scale-95 disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed flex items-center justify-center gap-3 group"
+                                            >
+                                                {isSubmitting ? (
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                                                        ยืนยันการนำจ่าย
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </section>
                             </div>
                         </div>
                     </form>

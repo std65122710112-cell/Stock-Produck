@@ -90,51 +90,62 @@ export default function StockRequisitionListPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="max-w-6xl mx-auto space-y-8">
+            {/* ปรับคอนเทนเนอร์หลักให้กว้างและชิดขอบมากขึ้น */}
+            <div className="w-[96%] max-w-[1600px] mx-auto space-y-8">
 
                 {/* HEADER SECTION */}
                 <div className="w-full pt-10 mb-6 print:hidden">
-                    <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-                        <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                            <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                                <Truck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
-                            </div>
-                            <div className="flex flex-col">
-                                <div className="flex items-center gap-2 mb-1.5">
-                                    <ArrowUpRight className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                        Inventory Outbound Management
-                                    </p>
-                                </div>
-                                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                                    {viewMode === 'LIST' ? 'รายการใบขอเบิก (SR)' : 'รายละเอียดใบเบิก'}
-                                </h1>
-                                <div className="flex items-center gap-2 pt-1 opacity-90">
-                                    <History className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                        รายการประวัติใบขอเบิกพัสดุ (Requisition Queue)
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="w-full px-6 md:px-10 flex flex-col gap-6">
 
-                        <div className="flex items-center">
-                            {viewMode === 'LIST' ? (
-                                <Link
-                                    href="/inventory/requisition/create"
-                                    className="group flex items-center gap-2 bg-emerald-600 text-white px-7 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-emerald-900/10 transition-all active:scale-95 whitespace-nowrap"
-                                >
-                                    <Plus className="w-5 h-5 shrink-0" strokeWidth={3} />
-                                    สร้างใบขอเบิกใหม่
-                                </Link>
-                            ) : (
+                        {/* แถวบน: ปุ่มย้อนกลับ (แสดงเฉพาะตอนอยู่หน้ารายละเอียด) */}
+                        {viewMode === 'FORM' && (
+                            <div>
                                 <button
                                     onClick={() => setViewMode('LIST')}
-                                    className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm whitespace-nowrap"
+                                    className="group flex items-center gap-3 bg-white border-2 border-slate-200 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm w-fit"
                                 >
                                     <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-[#1F3B8B] transition-colors" />
                                     ย้อนกลับไปหน้ารายการ
                                 </button>
+                            </div>
+                        )}
+
+                        {/* แถวล่าง: ส่วนเนื้อหา Header (Icon & Title) และ ปุ่มสร้างใบเบิก */}
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                                    <Truck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <ArrowUpRight className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                                            Inventory Outbound Management
+                                        </p>
+                                    </div>
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                        {viewMode === 'LIST' ? 'รายการใบขอเบิก (SR)' : 'รายละเอียดใบเบิก'}
+                                    </h1>
+                                    <div className="flex items-center gap-2 pt-1 opacity-90">
+                                        <History className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                                            รายการประวัติใบขอเบิกพัสดุ (Requisition Queue)
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ปุ่มสร้างใบเบิก (แสดงเฉพาะตอนอยู่หน้ารายการ) */}
+                            {viewMode === 'LIST' && (
+                                <div className="flex items-center">
+                                    <Link
+                                        href="/inventory/requisition/create"
+                                        className="group flex items-center gap-2 bg-emerald-600 text-white px-7 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-emerald-900/10 transition-all active:scale-95 whitespace-nowrap"
+                                    >
+                                        <Plus className="w-5 h-5 shrink-0" strokeWidth={3} />
+                                        สร้างใบขอเบิกใหม่
+                                    </Link>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -268,99 +279,122 @@ export default function StockRequisitionListPage() {
 
                 {/* --- DETAIL VIEW --- */}
                 {viewMode === 'DETAIL' && selectedSR && (
-                    <div className="bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 max-w-5xl mx-auto flex flex-col mb-10">
+                    /* ปรับขนาดหน้า Detail ให้กว้างขึ้นให้สอดคล้องกับ Layout หลัก */
+                    <div className="bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 max-w-[1300px] mx-auto flex flex-col mb-10">
 
                         {/* 1. Header Section */}
-                        <div className="bg-slate-950 p-10 text-white relative overflow-hidden border-b border-slate-800">
+                        <div className="bg-white p-10 relative overflow-hidden border-b border-slate-200">
                             <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                 <div>
-                                    <p className="text-indigo-400 text-sm font-black uppercase tracking-[0.3em] mb-2">เลขที่ใบเบิก (SR Number)</p>
-                                    <h2 className="text-3xl lg:text-4xl tabular-nums font-black tracking-tighter text-white">{selectedSR.srNumber}</h2>
+                                    {/* ปรับหัวข้อเป็นสีดำเข้ม */}
+                                    <p className="text-slate-950 text-sm font-black uppercase tracking-[0.3em] mb-2">
+                                        เลขที่ใบเบิก (SR Number)
+                                    </p>
+                                    {/* ปรับส่วนแสดงข้อมูลเป็นสีน้ำเงินเข้ม */}
+                                    <h2 className="text-3xl lg:text-4xl tabular-nums font-black tracking-tighter text-[#1F3B8B]">
+                                        {selectedSR.srNumber}
+                                    </h2>
                                 </div>
                                 <div className="text-left md:text-right">
-                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">วันที่ส่งคำขอเบิก</p>
-                                    <p className="text-xl font-bold flex items-center md:justify-end gap-2 text-white tabular-nums">
-                                        <Calendar className="w-5 h-5 text-indigo-400" />
+                                    {/* ปรับเป็น text-slate-500 */}
+                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">วันที่ส่งคำขอเบิก</p>
+                                    {/* ปรับเป็น text-slate-900 */}
+                                    <p className="text-xl font-bold flex items-center md:justify-end gap-2 text-slate-900 tabular-nums">
+                                        <Calendar className="w-5 h-5 text-indigo-600" />
                                         {new Date(selectedSR.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* 2. Content Body */}
-                        <div className="p-10 space-y-10">
-                            {/* Meta Data Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10 border-b border-dashed border-slate-200">
-                                {/* ข้อมูลผู้เบิก */}
-                                <div className="space-y-3">
-                                    <p className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-2.5">
-                                        <User className="w-5 h-5 text-indigo-600" /> ผู้ขอเบิกพัสดุ
+                        {/* 2. Content Body - 💡 เปลี่ยนพื้นหลังเป็นสีเทาอ่อน เพื่อให้กล่องย่อยสีขาวเด้งออกมา */}
+                        <div className="p-8 md:p-10 space-y-8 bg-slate-50/80">
+
+                            {/* 💡 แยกส่วนที่ 1: ข้อมูลบุคคลและสถานะ (Meta Data Grid) เป็น 3 กล่องชัดเจน */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* 1. ข้อมูลผู้เบิก - ปรับขนาดกระทัดรัด */}
+                                <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] flex items-center gap-2 mb-2">
+                                        <User className="w-3.5 h-3.5 text-indigo-500" /> ผู้ขอเบิกพัสดุ
                                     </p>
-                                    <p className="text-lg font-black text-slate-900 uppercase">{selectedSR.user?.firstName} {selectedSR.user?.lastName}</p>
-                                    <p className="text-xs font-bold text-slate-500 bg-slate-50 border border-slate-100 w-fit px-3 py-1.5 rounded-lg">
-                                        {selectedSR.department?.name || 'ส่วนกลาง'}
+                                    <p className="text-lg font-black text-slate-900 uppercase truncate">
+                                        {selectedSR.user?.firstName} {selectedSR.user?.lastName}
                                     </p>
+                                    <div className="mt-1">
+                                        <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
+                                            {selectedSR.department?.name || 'ส่วนกลาง'}
+                                        </span>
+                                    </div>
                                 </div>
 
-                                {/* สถานะปัจจุบัน */}
-                                <div className="space-y-3">
-                                    <p className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-2.5">
-                                        <Clock className="w-5 h-5 text-blue-500" /> สถานะปัจจุบัน
+                                {/* 2. สถานะปัจจุบัน - ปรับ Layout ให้สมดุล (Center alignment) */}
+                                <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] flex items-center gap-2 mb-3">
+                                        <Clock className="w-3.5 h-3.5 text-blue-500" /> สถานะปัจจุบัน
                                     </p>
-                                    <div className="pt-1">
+                                    <div className="w-full flex justify-center">
+                                        {/* badge จะดูเด่นและสะอาดขึ้นเมื่อวางกึ่งกลางในพื้นที่จำกัด */}
                                         {getStatusBadge(selectedSR.status)}
                                     </div>
                                 </div>
 
-                                {/* ผู้อนุมัติ (ถ้ามี) */}
-                                <div className="space-y-3">
-                                    <p className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-2.5">
-                                        <ShieldCheck className="w-5 h-5 text-emerald-500" /> ผู้อนุมัติ
+                                {/* 3. ผู้อนุมัติ - ปรับให้คลีนเหมือนกล่องแรก */}
+                                <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] flex items-center gap-2 mb-2">
+                                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> ผู้อนุมัติเอกสาร
                                     </p>
-                                    <p className="text-lg font-black text-slate-900 uppercase">
+                                    <p className="text-lg font-black text-slate-900 uppercase truncate">
                                         {selectedSR.approver?.firstName ? `${selectedSR.approver.firstName} ${selectedSR.approver.lastName}` : "-"}
+                                    </p>
+                                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
+                                        {selectedSR.approver?.firstName ? 'Authorized Personnel' : 'Waiting for action'}
                                     </p>
                                 </div>
                             </div>
 
-                            {/* Purpose & Remarks Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* 💡 แยกส่วนที่ 2: วัตถุประสงค์และหมายเหตุ เป็นกล่องชัดเจน */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* วัตถุประสงค์การใช้งาน */}
-                                <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 flex flex-col">
-                                    <div className="flex justify-between items-center mb-4">
+                                <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col">
+                                    <div className="flex justify-between items-center mb-5">
                                         <p className="text-sm font-black text-[#1e3b8a] uppercase tracking-widest flex items-center gap-2.5">
                                             <Briefcase className="w-5 h-5 text-sky-500" /> วัตถุประสงค์การใช้งาน
                                         </p>
-                                        {selectedSR.referenceNo && <span className="text-[10px] font-black text-indigo-500 tracking-wider bg-indigo-50 px-2 py-1 rounded">Ref: {selectedSR.referenceNo}</span>}
+                                        {selectedSR.referenceNo && <span className="text-[10px] font-black text-indigo-500 tracking-wider bg-indigo-50 px-3 py-1.5 rounded-md border border-indigo-100">Ref: {selectedSR.referenceNo}</span>}
                                     </div>
-                                    <p className="text-sm font-bold text-slate-700 leading-relaxed italic flex-1">
-                                        "{selectedSR.purpose}"
-                                    </p>
+                                    <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 flex-1">
+                                        <p className="text-base font-bold text-slate-700 leading-relaxed italic">
+                                            "{selectedSR.purpose}"
+                                        </p>
+                                    </div>
                                 </div>
 
                                 {/* หมายเหตุเพิ่มเติม */}
-                                <div className={`${selectedSR.remarks ? 'bg-amber-50/50 border-amber-100' : 'bg-slate-50 border-slate-100'} p-6 rounded-[1.5rem] border flex flex-col`}>
-                                    <p className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2.5">
+                                <div className={`bg-white p-6 md:p-8 rounded-[2rem] border ${selectedSR.remarks ? 'border-amber-200' : 'border-slate-200'} shadow-sm flex flex-col`}>
+                                    <p className="text-sm font-black text-slate-500 uppercase tracking-widest mb-5 flex items-center gap-2.5">
                                         <MessageSquareText className={`w-5 h-5 ${selectedSR.remarks ? 'text-amber-500' : 'text-slate-400'}`} />
                                         หมายเหตุ (Remarks)
                                     </p>
-                                    <p className="text-sm font-bold text-slate-700 leading-relaxed flex-1">
-                                        {selectedSR.remarks || "--- ไม่มีการระบุข้อมูลเพิ่มเติม ---"}
-                                    </p>
+                                    <div className={`${selectedSR.remarks ? 'bg-amber-50/30 border-amber-100' : 'bg-slate-50/50 border-slate-100'} p-5 rounded-2xl border flex-1`}>
+                                        <p className="text-base font-bold text-slate-700 leading-relaxed">
+                                            {selectedSR.remarks || "--- ไม่มีการระบุข้อมูลเพิ่มเติม ---"}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Items Table Section */}
-                            <div className="space-y-4">
+                            {/* 💡 แยกส่วนที่ 3: รายการพัสดุ (Items Table Section) อยู่ในกล่องพื้นขาวของตัวเอง */}
+                            <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
                                 <div className="flex items-center justify-between px-2">
-                                    <h3 className="text-sm font-black text-slate-950 uppercase tracking-wider flex items-center gap-2">
-                                        <Package className="w-5 h-5 text-[#1e3b8a]" /> รายการพัสดุและมูลค่า
+                                    <h3 className="text-base font-black text-slate-950 uppercase tracking-wider flex items-center gap-3">
+                                        <div className="p-2.5 bg-indigo-50 rounded-xl"><Package className="w-6 h-6 text-[#1e3b8a]" /></div>
+                                        รายการพัสดุและมูลค่า
                                     </h3>
-                                    <p className="text-xs font-black text-slate-400">ทั้งหมด {selectedSR.items?.length || 0} รายการ</p>
+                                    <p className="text-sm font-black text-slate-500 bg-slate-50 border border-slate-100 px-4 py-2 rounded-xl">ทั้งหมด {selectedSR.items?.length || 0} รายการ</p>
                                 </div>
-                                <div className="border border-slate-200 rounded-[2rem] overflow-hidden shadow-sm">
+                                <div className="border-2 border-slate-100 rounded-[1.5rem] overflow-hidden shadow-sm">
                                     <table className="w-full text-left border-collapse">
-                                        <thead className="bg-slate-50 border-b border-slate-200">
+                                        <thead className="bg-slate-50 border-b-2 border-slate-100">
                                             <tr className="text-xs font-black uppercase text-slate-500 tracking-wider">
                                                 <th className="p-5 w-16 text-center">ลำดับ</th>
                                                 <th className="p-5">รายละเอียดพัสดุ (Product Name / SKU)</th>
@@ -378,12 +412,12 @@ export default function StockRequisitionListPage() {
                                                     <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                                                         <td className="p-5 text-center font-black text-slate-400">{idx + 1}</td>
                                                         <td className="p-5">
-                                                            <p className="font-black text-slate-900 text-sm">{item.product?.name}</p>
-                                                            <span className="tabular-nums text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200 mt-1 inline-block">
+                                                            <p className="font-black text-slate-900 text-base">{item.product?.name}</p>
+                                                            <span className="tabular-nums text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md border border-slate-200 mt-1.5 inline-block">
                                                                 [{item.product?.sku}]
                                                             </span>
                                                         </td>
-                                                        <td className="p-5 text-right font-bold text-slate-500 tabular-nums">
+                                                        <td className="p-5 text-right font-bold text-slate-500 tabular-nums text-base">
                                                             ฿{unitCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                         </td>
                                                         <td className="p-5 text-center">
@@ -394,9 +428,9 @@ export default function StockRequisitionListPage() {
                                                         </td>
                                                         <td className="p-5">
                                                             {item.remark ? (
-                                                                <div className="flex items-start gap-1.5 bg-amber-50 border border-amber-100 p-2 rounded-lg w-fit max-w-[150px]">
-                                                                    <Info className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
-                                                                    <p className="text-[10px] font-bold text-slate-600 leading-tight truncate">
+                                                                <div className="flex items-start gap-2 bg-amber-50 border border-amber-100 p-2.5 rounded-xl w-fit max-w-[200px]">
+                                                                    <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                                                    <p className="text-xs font-bold text-slate-600 leading-relaxed break-words">
                                                                         {item.remark}
                                                                     </p>
                                                                 </div>
@@ -411,10 +445,10 @@ export default function StockRequisitionListPage() {
                                         {/* สรุปยอดรวมท้ายตาราง */}
                                         <tfoot className="bg-indigo-50/30 border-t-2 border-indigo-100">
                                             <tr>
-                                                <td colSpan="4" className="p-5 text-right text-xs font-black uppercase tracking-widest text-indigo-900">
+                                                <td colSpan="4" className="p-6 text-right text-sm font-black uppercase tracking-widest text-indigo-900">
                                                     มูลค่าประเมินรวมทั้งสิ้น (Grand Total)
                                                 </td>
-                                                <td className="p-5 text-right font-black text-xl text-indigo-700 tabular-nums">
+                                                <td className="p-6 text-right font-black text-2xl text-indigo-700 tabular-nums">
                                                     ฿{grandTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </td>
                                                 <td></td>
