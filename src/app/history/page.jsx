@@ -6,6 +6,7 @@ import GoodsReceiptHistoryPage from './inbound/page';
 import OutboundHistoryPage from './outbound/page';
 import TransferHistoryPage from './transfer/page';
 import AdjustmentHistoryPage from './adjust/page';
+import ProductHistoryPage from './products/page';
 import { Toaster } from "react-hot-toast";
 import {
   ArrowDownLeft,
@@ -20,7 +21,8 @@ import {
   ClipboardCheck,
   Logs, 
     DatabaseBackup, 
-    ArrowLeftRight
+    ArrowLeftRight,
+    Package
 } from "lucide-react";
 
 export default function HistoryDashboardPage() {
@@ -38,6 +40,9 @@ export default function HistoryDashboardPage() {
 
     // Adjust: ใช้ ClipboardCheck สื่อถึงการตรวจสอบและปรับยอด (ตรงกับหน้า Audit)
     { id: 'adjust', label: 'ประวัติปรับยอด', sub: 'Adjust', icon: ClipboardCheck, color: 'text-slate-600' },
+
+    { id: 'products', label: 'ประวัติสินค้า', sub: 'Products', icon: Package, color: 'text-indigo-600' },
+
   ];
 
   return (
@@ -130,6 +135,7 @@ export default function HistoryDashboardPage() {
             {activeTab === 'outbound' && <OutboundHistoryPage />}
             {activeTab === 'transfer' && <TransferHistoryPage />}
             {activeTab === 'adjust' && <AdjustmentHistoryPage />}
+            {activeTab === 'products' && <ProductHistoryPage />}
           </div>
         </section>
       </div>
