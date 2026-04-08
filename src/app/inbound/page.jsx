@@ -260,7 +260,7 @@ export default function CreateGoodsReceiptPage() {
                                     className="group flex items-center gap-3 bg-white border-2 border-slate-200 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm w-fit"
                                 >
                                     <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" />
-                                    ยกเลิกและย้อนกลับ
+                                    ยกเลิก
                                 </button>
                             </div>
                         )}
@@ -442,26 +442,30 @@ export default function CreateGoodsReceiptPage() {
                             {/* 2. ส่วนตารางรายการรับเข้า */}
                             <div className="px-8 md:px-10 py-10 bg-white border-b-2 border-slate-100">
                                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                                    <h2 className="text-base font-black text-slate-950 uppercase tracking-wider flex items-center gap-3">
-                                        <div className="p-2 bg-slate-100 rounded-lg"><ClipboardCheck className="w-6 h-6 text-[#1F3B8B]" /></div>
+                                    <h2 className="text-lg md:text-xl font-black text-slate-900 uppercase tracking-widest flex items-center gap-3">
+                                        <div className="p-2.5 bg-indigo-100 rounded-xl">
+                                            <ClipboardCheck className="w-6 h-6 text-indigo-600" />
+                                        </div>
                                         รายการพัสดุและตำแหน่งจัดเก็บ (Items & Storage)
                                     </h2>
                                 </div>
 
                                 <div className="overflow-x-auto rounded-[2rem] border-2 border-slate-100 shadow-sm">
                                     <table className="w-full text-left border-collapse min-w-[900px]">
-                                        <thead className="bg-slate-50 text-sm font-black text-black uppercase tracking-widest border-b-2 border-slate-200">
-                                            <tr>
-                                                <th className="p-6">พัสดุ / SKU</th>
-                                                <th className="p-6 w-[28%]">
-                                                    คลัง / โซน <span className="text-red-600">*</span>
+                                        <thead className="bg-slate-50 border-b-2 border-slate-100">
+                                            <tr className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                                                <th className="p-6 text-left">พัสดุ / SKU</th>
+                                                <th className="p-6 text-left w-[28%]">
+                                                    คลัง / โซน <span className="text-rose-500 ml-1">*</span>
                                                 </th>
-                                                <th className="p-6 w-[22%]">
-                                                    ตำแหน่ง (Location) <span className="text-red-600">*</span>
+                                                <th className="p-6 text-left w-[22%]">
+                                                    ตำแหน่ง (Location) <span className="text-rose-500 ml-1">*</span>
                                                 </th>
                                                 <th className="p-6 text-center w-28">ค้างรับ</th>
-                                                <th className="p-6 text-center w-40">
-                                                    จำนวนที่รับจริง <span className="text-red-600">*</span>
+
+                                                {/* 💡 แก้ไขตรงนี้: เพิ่ม whitespace-nowrap และขยายเป็น w-48 */}
+                                                <th className="p-6 text-center w-48 whitespace-nowrap">
+                                                    จำนวนที่รับจริง <span className="text-rose-500 ml-1">*</span>
                                                 </th>
                                             </tr>
                                         </thead>
@@ -538,15 +542,18 @@ export default function CreateGoodsReceiptPage() {
                             {/* 3. ส่วนท้าย (หมายเหตุและสรุป) */}
                             <div className="p-6 md:p-8 bg-slate-50 flex flex-col gap-6">
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-                                    <div className="p-5 md:p-6 rounded-[1.5rem] bg-white border-2 border-slate-200 shadow-md flex flex-col gap-3">
-                                        <label className="text-[13px] font-black text-slate-950 uppercase tracking-widest ml-1 flex items-center gap-2">
-                                            <Info className="w-4 h-4 text-sky-500" /> หมายเหตุการตรวจรับ (Remarks)
+                                    <div className="p-5 md:p-6 rounded-[1.5rem] bg-white border-2 border-slate-200 shadow-sm flex flex-col gap-3">
+                                        {/* 💡 ปรับ Label: ขยายเป็น text-sm, ลดความหนาเป็น font-bold, เปลี่ยนสีเป็น slate-500, ขยายไอคอนเป็น w-5 h-5 */}
+                                        <label className="text-sm font-bold text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2.5">
+                                            <Info className="w-5 h-5 text-sky-500" /> หมายเหตุการตรวจรับ (Remarks)
                                         </label>
+
+                                        {/* 💡 ปรับ Textarea: ขยายตัวหนังสือเป็น text-base, เพิ่ม padding เป็น p-5, เปลี่ยนสีขอบตอนกดโฟกัสเป็นสีพาสเทล */}
                                         <textarea
                                             value={remarks}
                                             onChange={(e) => setRemarks(e.target.value)}
                                             rows="3"
-                                            className="w-full flex-1 border-2 border-slate-100 bg-slate-50/50 rounded-xl p-4 text-sm font-bold text-slate-700 outline-none focus:border-[#1F3B8B] transition-all resize-none placeholder:text-slate-300"
+                                            className="w-full flex-1 border-2 border-slate-200 bg-slate-50 rounded-2xl p-5 text-base font-bold text-slate-700 outline-none focus:border-sky-400 focus:bg-white transition-all resize-none placeholder:text-slate-300 shadow-sm"
                                             placeholder="ระบุสภาพสินค้าหรือปัญหาที่พบ..."
                                         />
                                     </div>

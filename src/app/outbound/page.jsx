@@ -210,8 +210,8 @@ export default function ProfessionalOutboundPage() {
                             <button
                                 onClick={modal.onConfirm}
                                 className={`flex-1 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-lg transition-all active:scale-95 ${modal.type === 'danger'
-                                        ? 'bg-rose-500 hover:bg-rose-600 shadow-rose-200'
-                                        : 'bg-[#1e3b8a] hover:bg-[#1a3673] shadow-blue-200'
+                                    ? 'bg-rose-500 hover:bg-rose-600 shadow-rose-200'
+                                    : 'bg-[#1e3b8a] hover:bg-[#1a3673] shadow-blue-200'
                                     }`}
                             >
                                 ยืนยัน
@@ -474,24 +474,29 @@ export default function ProfessionalOutboundPage() {
 
                                 {/* 3. Items Table Section - ปรับปรุงใหม่ให้โมเดิร์นและใช้งานง่าย */}
                                 <section className="space-y-6">
-                                    <h2 className="text-xl md:text-2xl font-black text-black uppercase tracking-tight flex items-center gap-4 border-b-2 border-slate-100 pb-6">
-                                        <div className="p-2.5 bg-white rounded-2xl shadow-md border border-slate-200">
+                                    {/* หัวข้อ Section */}
+                                    <h2 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-widest flex items-center gap-4 border-b-2 border-slate-100 pb-6">
+                                        <div className="p-2.5 bg-blue-100/50 rounded-xl shadow-sm border border-blue-100">
                                             <ClipboardCheck className="w-7 h-7 text-blue-600" />
                                         </div>
                                         รายการพัสดุที่ต้องจัดเตรียมและนำจ่าย
                                     </h2>
 
-                                    <div className="overflow-x-auto rounded-[2.5rem] border-2 border-slate-200 bg-slate-100/30 p-3 md:p-4">
+                                    {/* กล่องพื้นหลังตาราง (คลีนขึ้น มีกรอบละมุน) */}
+                                    <div className="overflow-x-auto rounded-[2rem] border-2 border-slate-100 bg-slate-50/80 p-4 md:p-6 shadow-inner">
                                         <table className="w-full text-left border-separate border-spacing-y-3 min-w-[900px]">
+                                            {/* หัวข้อตาราง */}
                                             <thead>
-                                                <tr className="text-sm font-black text-black uppercase tracking-widest">
+                                                <tr className="text-[13px] font-bold text-slate-500 uppercase tracking-widest">
                                                     <th className="px-6 py-2">รายการพัสดุ / SKU</th>
                                                     <th className="px-6 py-2 text-center">ยอดเบิกรวม</th>
-                                                    <th className="px-6 py-2 w-[35%]">หยิบจากคลัง/โซน (Location) <span className="text-red-600">*</span></th>
-                                                    <th className="px-6 py-2 text-center w-40">จำนวนที่จ่าย <span className="text-red-600">*</span></th>
+                                                    <th className="px-6 py-2 w-[35%]">หยิบจากคลัง/โซน (Location) <span className="text-rose-500 ml-1">*</span></th>
+                                                    <th className="px-6 py-2 text-center w-40">จำนวนที่จ่าย <span className="text-rose-500 ml-1">*</span></th>
                                                     <th className="px-6 py-2 text-center w-32">จัดการ</th>
                                                 </tr>
                                             </thead>
+
+                                            {/* เนื้อหาตาราง */}
                                             <tbody>
                                                 {items.map((item, idx) => {
                                                     const locs = getAvailableLocations(item.productId);
@@ -503,12 +508,13 @@ export default function ProfessionalOutboundPage() {
                                                     const isFirstOfGroup = items.findIndex(it => it.originalId === item.originalId) === idx;
 
                                                     return (
-                                                        <tr key={item.id} className="bg-white shadow-sm group hover:shadow-md transition-all">
-                                                            <td className="px-6 py-5 rounded-l-[1.5rem] border-y-2 border-l-2 border-transparent group-hover:border-slate-200">
+                                                        <tr key={item.id} className="bg-white group hover:shadow-md transition-all">
+                                                            {/* TD 1: รายการพัสดุ */}
+                                                            <td className="px-6 py-5 rounded-l-[1.5rem] border-y border-l border-slate-200/70 group-hover:border-blue-300 group-hover:bg-blue-50/30 transition-colors">
                                                                 {isFirstOfGroup ? (
                                                                     <div className="flex flex-col">
-                                                                        <p className="font-black text-black text-base uppercase tracking-tight">
-                                                                            <span className="text-slate-400 mr-2 tabular-nums">#{item.sku}</span>
+                                                                        <p className="font-bold text-slate-900 text-base uppercase tracking-tight">
+                                                                            <span className="text-slate-400 mr-2 tabular-nums font-bold">#{item.sku}</span>
                                                                             {item.productName}
                                                                         </p>
                                                                         {item.remark && (
@@ -519,15 +525,17 @@ export default function ProfessionalOutboundPage() {
                                                                     </div>
                                                                 ) : (
                                                                     <div className="flex items-center gap-2 pl-6 text-slate-400">
-                                                                        <div className="w-4 h-4 border-l-2 border-b-2 border-slate-200 rounded-bl-lg mb-1"></div>
-                                                                        <span className="text-xs font-black uppercase italic tracking-wider">แบ่งเบิกเพิ่ม</span>
+                                                                        <div className="w-4 h-4 border-l-2 border-b-2 border-slate-300 rounded-bl-lg mb-1"></div>
+                                                                        <span className="text-xs font-bold uppercase italic tracking-wider">แบ่งเบิกเพิ่ม</span>
                                                                     </div>
                                                                 )}
                                                             </td>
-                                                            <td className="px-6 py-5 text-center border-y-2 border-transparent group-hover:border-slate-200">
+
+                                                            {/* TD 2: ยอดเบิกรวม */}
+                                                            <td className="px-6 py-5 text-center border-y border-slate-200/70 group-hover:border-blue-300 group-hover:bg-blue-50/30 transition-colors">
                                                                 {isFirstOfGroup ? (
                                                                     <div className="flex flex-col items-center">
-                                                                        <span className="font-black text-black text-2xl tracking-tighter tabular-nums leading-none">{item.requiredQty}</span>
+                                                                        <span className="font-black text-slate-900 text-2xl tracking-tighter tabular-nums leading-none">{item.requiredQty}</span>
                                                                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full mt-2 border tabular-nums shadow-sm
                                             ${isFullyPicked ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : (isOverRequired ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-amber-50 text-amber-600 border-amber-200')}`}>
                                                                             รวม: {currentTotalPicked}/{item.requiredQty}
@@ -535,13 +543,15 @@ export default function ProfessionalOutboundPage() {
                                                                     </div>
                                                                 ) : <span className="text-slate-300 font-bold">-</span>}
                                                             </td>
-                                                            <td className="px-6 py-5 border-y-2 border-transparent group-hover:border-slate-200">
+
+                                                            {/* TD 3: คลัง/โซน */}
+                                                            <td className="px-6 py-5 border-y border-slate-200/70 group-hover:border-blue-300 group-hover:bg-blue-50/30 transition-colors">
                                                                 <select
                                                                     required
                                                                     value={item.locationId}
                                                                     onChange={e => updateItem(item.id, "locationId", e.target.value)}
-                                                                    className={`w-full border-2 rounded-xl px-3 py-3 text-xs font-black outline-none transition-all cursor-pointer shadow-sm
-                                        ${item.locationId ? 'border-slate-400 text-black bg-white' : 'border-slate-200 text-slate-400 bg-white hover:border-slate-300'}`}
+                                                                    className={`w-full border-2 rounded-xl px-4 py-3 text-sm font-bold outline-none transition-all cursor-pointer shadow-sm
+                                        ${item.locationId ? 'border-blue-300 text-blue-900 bg-blue-50/50 focus:border-blue-500' : 'border-slate-200 text-slate-500 bg-white hover:border-slate-300 focus:border-blue-400'}`}
                                                                 >
                                                                     <option value="">-- เลือกตำแหน่งเพื่อหยิบสินค้า --</option>
                                                                     {locs.map(l => (
@@ -551,7 +561,9 @@ export default function ProfessionalOutboundPage() {
                                                                     ))}
                                                                 </select>
                                                             </td>
-                                                            <td className="px-6 py-5 border-y-2 border-transparent group-hover:border-slate-200">
+
+                                                            {/* TD 4: จำนวน */}
+                                                            <td className="px-6 py-5 border-y border-slate-200/70 group-hover:border-blue-300 group-hover:bg-blue-50/30 transition-colors">
                                                                 <input
                                                                     type="number"
                                                                     min="1"
@@ -559,18 +571,20 @@ export default function ProfessionalOutboundPage() {
                                                                     onChange={e => updateItem(item.id, "quantity", e.target.value)}
                                                                     className={`w-28 mx-auto block border-2 rounded-xl py-3 text-center tabular-nums font-black text-xl outline-none transition-all shadow-inner
                                         ${(isOverStock || isOverRequired)
-                                                                            ? 'border-rose-500 bg-rose-50 text-rose-600 ring-4 ring-rose-100'
-                                                                            : 'border-blue-500 bg-blue-50 text-blue-950 focus:ring-4 focus:ring-blue-100'}`}
+                                                                            ? 'border-rose-400 bg-rose-50 text-rose-600 focus:ring-4 focus:ring-rose-100'
+                                                                            : 'border-slate-200 bg-white text-slate-900 focus:border-blue-400 focus:ring-4 focus:ring-blue-100'}`}
                                                                 />
                                                             </td>
-                                                            <td className="px-6 py-5 rounded-r-[1.5rem] border-y-2 border-r-2 border-transparent group-hover:border-slate-200 text-center">
+
+                                                            {/* TD 5: ปุ่มจัดการ */}
+                                                            <td className="px-6 py-5 rounded-r-[1.5rem] border-y border-r border-slate-200/70 group-hover:border-blue-300 group-hover:bg-blue-50/30 transition-colors text-center">
                                                                 <div className="flex items-center justify-center gap-2">
                                                                     {isFirstOfGroup && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleSplitItem(item)}
                                                                             title="แยกเบิกจากคลังอื่น"
-                                                                            className="p-2.5 bg-slate-50 text-slate-400 border border-slate-200 rounded-xl hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all shadow-sm active:scale-90"
+                                                                            className="p-2.5 bg-white text-slate-400 border border-slate-200 rounded-xl hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all shadow-sm active:scale-90"
                                                                         >
                                                                             <Plus className="w-5 h-5" />
                                                                         </button>
@@ -579,7 +593,7 @@ export default function ProfessionalOutboundPage() {
                                                                         type="button"
                                                                         onClick={() => removeItem(item.id)}
                                                                         title="ลบรายการนี้"
-                                                                        className="p-2.5 bg-slate-50 text-slate-400 border border-slate-200 rounded-xl hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm active:scale-90"
+                                                                        className="p-2.5 bg-white text-slate-400 border border-slate-200 rounded-xl hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all shadow-sm active:scale-90"
                                                                     >
                                                                         <Trash2 className="w-5 h-5" />
                                                                     </button>

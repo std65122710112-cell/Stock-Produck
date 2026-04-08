@@ -25,7 +25,12 @@ import {
     FilePlus2,
     Search,
     ArrowLeft,
-    AlertTriangle
+    AlertTriangle,
+    // --- เพิ่ม 4 ตัวนี้ครับ ---
+    AlertCircle,
+    Layout,
+    Tag,
+    Ruler,
 } from "lucide-react";
 
 // --- 💡 คอมโพเนนต์พิเศษ: ช่องค้นหาสินค้า (เพิ่ม prop 'error' สำหรับแสดงสีแดงตอนลืมกรอก) ---
@@ -58,8 +63,8 @@ const SearchableProductSelect = ({ options, value, onChange, error }) => {
                     onBlur={() => setIsOpen(false)}
                     // 💡 ปรับเส้นขอบให้เข้มขึ้น (border-slate-300) และพื้นหลังช่องกรอก (bg-slate-50) ให้ตัดกับพื้นหลัง
                     className={`w-full border-2 rounded-xl p-3.5 text-sm font-black outline-none transition-all pr-10 ${error
-                            ? 'border-rose-400 bg-rose-50 text-rose-800 placeholder-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100'
-                            : 'border-slate-300 bg-slate-50 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-50'
+                        ? 'border-rose-400 bg-rose-50 text-rose-800 placeholder-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-100'
+                        : 'border-slate-300 bg-slate-50 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-50'
                         }`}
                     placeholder="พิมพ์ค้นหา รหัส (SKU) หรือ ชื่อสินค้า..."
                     required={!value}
@@ -113,8 +118,11 @@ export default function CreatePurchaseRequisitionPage() {
     const [supplierId, setSupplierId] = useState("");
     const [items, setItems] = useState([{ productId: "", quantity: 1, estimatedPrice: 0 }]);
 
-    // 💡 State สำหรับจัดการ Error แจ้งเตือนเมื่อลืมกรอก
+    // 💡 State สำหรับจัดการ Error แจ้งเตือนเมื่อลืมกรอก (แบบ Manual)
     const [errors, setErrors] = useState({});
+
+    // 👇 เพิ่มบรรทัดนี้: State สำหรับ Quick Product Modal (เตือนเมื่อกดส่ง)
+    const [hasSubmittedForm, setHasSubmittedForm] = useState(false);
 
     // ตัวแปรเก็บ ID สินค้าที่เพิ่งสร้างใหม่ (เพื่อเปิดให้กรอกราคาได้)
     const [newlyCreatedProductIds, setNewlyCreatedProductIds] = useState([]);
@@ -444,16 +452,20 @@ export default function CreatePurchaseRequisitionPage() {
                     <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-200 overflow-hidden">
 
                         {/* SECTION 1: MASTER INFO */}
-                        <div className="p-8 md:p-10 space-y-8 relative">
-                            <h2 className="text-sm font-black text-slate-950 uppercase tracking-wider flex items-center gap-2.5 border-b-2 border-slate-100 pb-4">
-                                <div className="p-2 bg-indigo-100 rounded-lg"><LayoutGrid className="w-5 h-5 text-indigo-600" /></div>
+                        <div className="p-8 md:p-10 space-y-10 relative">
+                            {/* ปรับหัวข้อ Section ให้ใหญ่ขึ้นเป็น text-lg และไอคอนเป็น w-6 */}
+                            <h2 className="text-lg font-black text-slate-900 uppercase tracking-widest flex items-center gap-3 border-b-2 border-slate-100 pb-5">
+                                <div className="p-2.5 bg-indigo-100 rounded-xl">
+                                    <LayoutGrid className="w-6 h-6 text-indigo-600" />
+                                </div>
                                 ข้อมูลและรายละเอียดทั่วไป
                             </h2>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="text-xs font-black text-slate-600 uppercase tracking-wide flex items-center gap-2 ml-1">
-                                        <Info className="w-4 h-4 text-sky-500" /> วัตถุประสงค์การจัดซื้อ (Purpose) <span className="text-rose-500">*</span>
+                                <div className="md:col-span-2 space-y-3">
+                                    {/* ปรับ Label ให้ใหญ่ขึ้นเป็น text-sm และไอคอนเป็น w-5 */}
+                                    <label className="text-sm font-black text-slate-600 uppercase tracking-wide flex items-center gap-2.5 ml-1">
+                                        <Info className="w-5 h-5 text-sky-500" /> วัตถุประสงค์การจัดซื้อ (Purpose) <span className="text-rose-500">*</span>
                                     </label>
                                     <input
                                         type="text"
@@ -462,10 +474,9 @@ export default function CreatePurchaseRequisitionPage() {
                                             setPurpose(e.target.value);
                                             if (errors.purpose) setErrors({ ...errors, purpose: null });
                                         }}
-                                        // 💡 ปรับขอบให้ชัดเจน (border-slate-300)
                                         className={`w-full border-2 rounded-2xl p-4 text-sm font-bold outline-none transition-all ${errors.purpose
-                                                ? 'border-rose-400 bg-rose-50 text-rose-800 placeholder-rose-300 focus:border-rose-500 focus:ring-4 focus:ring-rose-100'
-                                                : 'border-slate-300 bg-slate-50 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-50'
+                                            ? 'border-rose-400 bg-rose-50 text-rose-800 placeholder-rose-300 focus:border-rose-500 focus:ring-4 focus:ring-rose-100'
+                                            : 'border-slate-300 bg-slate-50 text-slate-800 placeholder-slate-400 focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-50'
                                             }`}
                                         placeholder="เช่น ขออนุมัติสั่งซื้อพัสดุสำหรับโครงการ TJC Phase 2..."
                                         required
@@ -473,9 +484,10 @@ export default function CreatePurchaseRequisitionPage() {
                                     {errors.purpose && <p className="text-sm font-bold text-rose-500 mt-2 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4" /> {errors.purpose}</p>}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-600 uppercase tracking-wide flex items-center gap-2 ml-1">
-                                        <Building2 className="w-4 h-4 text-emerald-500" /> แผนกที่ร้องขอ (Cost Center) <span className="text-rose-500">*</span>
+                                <div className="space-y-3">
+                                    {/* ปรับ Label ให้ใหญ่ขึ้นเป็น text-sm และไอคอนเป็น w-5 */}
+                                    <label className="text-sm font-black text-slate-600 uppercase tracking-wide flex items-center gap-2.5 ml-1">
+                                        <Building2 className="w-5 h-5 text-emerald-500" /> แผนกที่ร้องขอ (Cost Center) <span className="text-rose-500">*</span>
                                     </label>
                                     <select
                                         value={departmentId}
@@ -484,8 +496,8 @@ export default function CreatePurchaseRequisitionPage() {
                                             if (errors.departmentId) setErrors({ ...errors, departmentId: null });
                                         }}
                                         className={`w-full border-2 rounded-2xl p-4 text-sm font-bold outline-none transition-all ${errors.departmentId
-                                                ? 'border-rose-400 bg-rose-50 text-rose-800 focus:border-rose-500 focus:ring-4 focus:ring-rose-100'
-                                                : 'border-slate-300 bg-slate-50 text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50'
+                                            ? 'border-rose-400 bg-rose-50 text-rose-800 focus:border-rose-500 focus:ring-4 focus:ring-rose-100'
+                                            : 'border-slate-300 bg-slate-50 text-slate-800 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50'
                                             }`}
                                         required
                                     >
@@ -495,9 +507,10 @@ export default function CreatePurchaseRequisitionPage() {
                                     {errors.departmentId && <p className="text-sm font-bold text-rose-500 mt-2 flex items-center gap-1.5"><AlertTriangle className="w-4 h-4" /> {errors.departmentId}</p>}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-600 uppercase tracking-wide flex items-center gap-2 ml-1">
-                                        <Truck className="w-4 h-4 text-amber-500" /> แนะนำคู่ค้า (Suggested Vendor)
+                                <div className="space-y-3">
+                                    {/* ปรับ Label ให้ใหญ่ขึ้นเป็น text-sm และไอคอนเป็น w-5 */}
+                                    <label className="text-sm font-black text-slate-600 uppercase tracking-wide flex items-center gap-2.5 ml-1">
+                                        <Truck className="w-5 h-5 text-amber-500" /> แนะนำคู่ค้า (Suggested Vendor)
                                     </label>
                                     <select
                                         value={supplierId}
@@ -515,22 +528,27 @@ export default function CreatePurchaseRequisitionPage() {
 
                         {/* SECTION 2: ITEM MANIFEST */}
                         {/* 💡 ปรับพื้นหลังส่วนตารางให้เข้มขึ้นเล็กน้อย (bg-slate-100/50) เพื่อให้กล่องสินค้าย่อยเด่นขึ้น */}
-                        <div className="p-8 md:p-10 space-y-6 relative bg-slate-100/50">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                <h2 className="text-sm font-black text-slate-950 uppercase tracking-wider flex items-center gap-2.5">
-                                    <div className="p-2 bg-emerald-100 rounded-lg"><Package className="w-5 h-5 text-emerald-600" /></div>
+                        <div className="p-8 md:p-10 space-y-8 relative bg-slate-100/50">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                                {/* ปรับหัวข้อ Section ให้ใหญ่ขึ้นเป็น text-lg และไอคอนเป็น w-6 */}
+                                <h2 className="text-lg font-black text-slate-900 uppercase tracking-widest flex items-center gap-3">
+                                    <div className="p-2.5 bg-emerald-100 rounded-xl">
+                                        <Package className="w-6 h-6 text-emerald-600" />
+                                    </div>
                                     ระบุรายการพัสดุที่ต้องการขอซื้อ
                                 </h2>
+
+                                {/* ปรับขนาดปุ่มเพิ่มรายการให้ตัวอักษรใหญ่ขึ้นเป็น text-sm */}
                                 <button
                                     type="button"
                                     onClick={handleAddItem}
-                                    className="bg-emerald-600 text-white text-xs font-black px-5 py-3 rounded-2xl uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2 w-full sm:w-auto justify-center"
+                                    className="bg-emerald-600 text-white text-sm font-black px-6 py-3.5 rounded-2xl uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-md flex items-center gap-2 w-full sm:w-auto justify-center"
                                 >
-                                    <Plus className="w-4 h-4" /> เพิ่มรายการพัสดุ
+                                    <Plus className="w-5 h-5" /> เพิ่มรายการพัสดุ
                                 </button>
                             </div>
 
-                            <div className="space-y-4 pt-2">
+                            <div className="space-y-6 pt-2">
                                 {items.map((item, index) => {
                                     const isNewProduct = newlyCreatedProductIds.includes(item.productId);
                                     const isPriceReadOnly = item.productId ? !isNewProduct : true;
@@ -539,20 +557,21 @@ export default function CreatePurchaseRequisitionPage() {
                                     const errQuantity = errors.items?.[index]?.quantity;
 
                                     return (
-                                        // 💡 ปรับกล่องสินค้าย่อยให้มีขอบเข้มขึ้น (border-slate-300) และเงาชัดขึ้น (shadow-md)
-                                        <div key={index} className="flex flex-col xl:flex-row gap-6 p-6 md:p-8 bg-white border-2 border-slate-300 rounded-[2rem] hover:border-blue-300 transition-colors shadow-md items-end relative group">
-                                            <div className="absolute -top-3 -left-3 w-8 h-8 bg-slate-950 text-white rounded-full flex items-center justify-center font-black text-xs shadow-md border-4 border-white">
+                                        <div key={index} className="flex flex-col xl:flex-row gap-6 p-6 md:p-8 bg-white border-2 border-slate-300 rounded-[2.5rem] hover:border-blue-300 transition-colors shadow-md items-end relative group">
+                                            <div className="absolute -top-3 -left-3 w-9 h-9 bg-slate-950 text-white rounded-full flex items-center justify-center font-black text-sm shadow-md border-4 border-white">
                                                 {index + 1}
                                             </div>
-                                            <div className="flex-1 w-full space-y-2">
-                                                <label className="text-xs font-black text-slate-600 uppercase tracking-wide ml-1 flex justify-between">
+
+                                            <div className="flex-1 w-full space-y-3">
+                                                {/* ปรับ Label ข้อมูลสินค้าเป็น text-sm */}
+                                                <label className="text-sm font-black text-slate-600 uppercase tracking-wide ml-1 flex justify-between items-center">
                                                     <span>ข้อมูลสินค้า / รหัส (SKU) <span className="text-rose-500">*</span></span>
                                                     <button
                                                         type="button"
                                                         onClick={() => openNewProductModal(index)}
-                                                        className="text-[10px] text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2 py-1 rounded-md transition-colors border border-indigo-100"
+                                                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors border border-indigo-100"
                                                     >
-                                                        <PlusCircle className="w-3 h-3" /> สร้างรหัสใหม่
+                                                        <PlusCircle className="w-4 h-4" /> สร้างรหัสใหม่
                                                     </button>
                                                 </label>
                                                 <SearchableProductSelect
@@ -565,24 +584,26 @@ export default function CreatePurchaseRequisitionPage() {
                                             </div>
 
                                             <div className="flex gap-4 w-full xl:w-auto">
-                                                <div className="w-full xl:w-32 space-y-2">
-                                                    <label className="text-xs font-black text-slate-600 uppercase tracking-wide text-center block">จำนวน <span className="text-rose-500">*</span></label>
+                                                <div className="w-full xl:w-36 space-y-3">
+                                                    {/* ปรับ Label จำนวนเป็น text-sm */}
+                                                    <label className="text-sm font-black text-slate-600 uppercase tracking-wide text-center block">จำนวน <span className="text-rose-500">*</span></label>
                                                     <input
                                                         type="number"
                                                         min="1"
                                                         value={item.quantity}
                                                         onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
-                                                        className={`w-full border-2 rounded-xl p-3.5 text-center font-mono font-black text-lg outline-none transition-all ${errQuantity
-                                                                ? 'border-rose-400 bg-rose-50 text-rose-800 focus:border-rose-500 focus:ring-2 focus:ring-rose-100'
-                                                                : 'border-slate-300 bg-white text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-50'
+                                                        className={`w-full border-2 rounded-2xl p-4 text-center font-mono font-black text-xl outline-none transition-all ${errQuantity
+                                                            ? 'border-rose-400 bg-rose-50 text-rose-800 focus:border-rose-500 focus:ring-2 focus:ring-rose-100'
+                                                            : 'border-slate-300 bg-white text-slate-800 focus:border-sky-500 focus:ring-2 focus:ring-sky-50'
                                                             }`}
                                                         required
                                                     />
                                                     {errQuantity && <p className="text-xs font-bold text-rose-500 mt-1 text-center whitespace-nowrap">{errQuantity}</p>}
                                                 </div>
 
-                                                <div className="w-full xl:w-48 space-y-2">
-                                                    <label className="text-xs font-black text-slate-600 uppercase tracking-wide text-right flex justify-end gap-1">
+                                                <div className="w-full xl:w-56 space-y-3">
+                                                    {/* ปรับ Label ราคาประเมินเป็น text-sm */}
+                                                    <label className="text-sm font-black text-slate-600 uppercase tracking-wide text-right flex justify-end gap-1.5">
                                                         ราคาประเมิน
                                                         {isPriceReadOnly
                                                             ? <span className="text-slate-400 font-bold">(ดึงอัตโนมัติ)</span>
@@ -595,10 +616,10 @@ export default function CreatePurchaseRequisitionPage() {
                                                             value={item.estimatedPrice}
                                                             onChange={(e) => handleItemChange(index, "estimatedPrice", e.target.value)}
                                                             readOnly={isPriceReadOnly}
-                                                            className={`w-full border-2 rounded-xl p-3.5 text-right tabular-nums font-black text-sm outline-none transition-all pr-8 ${isPriceReadOnly ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' : 'border-slate-300 bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-50 text-slate-800'}`}
+                                                            className={`w-full border-2 rounded-2xl p-4 text-right tabular-nums font-black text-base outline-none transition-all pr-10 ${isPriceReadOnly ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed' : 'border-slate-300 bg-white focus:border-sky-500 focus:ring-2 focus:ring-sky-50 text-slate-800'}`}
                                                             placeholder="0.00"
                                                         />
-                                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">บาท</span>
+                                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">บาท</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -606,22 +627,23 @@ export default function CreatePurchaseRequisitionPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveItem(index)}
-                                                className="p-3.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-100 hover:text-rose-600 border border-slate-200 hover:border-rose-300 transition-colors w-full xl:w-auto flex justify-center items-center"
+                                                className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-rose-100 hover:text-rose-600 border border-slate-200 hover:border-rose-300 transition-colors w-full xl:w-auto flex justify-center items-center shadow-sm"
                                                 disabled={items.length === 1}
                                             >
-                                                <Trash2 className="w-5 h-5" />
+                                                <Trash2 className="w-6 h-6" />
                                             </button>
                                         </div>
                                     );
                                 })}
                             </div>
                         </div>
-
                         {/* --- ACTION BAR (Bottom of Document) --- */}
                         <div className="bg-white p-6 md:p-8 border-t-2 border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6 shadow-[inset_0_4px_6px_-4px_rgba(0,0,0,0.05)]">
                             <div className="flex items-center gap-6 border-l-4 border-indigo-500 pl-6 w-full md:w-auto">
                                 <div className="space-y-1">
-                                    <p className="text-slate-500 text-xs font-black uppercase tracking-wider">มูลค่าประเมินรวมทั้งสิ้น (Total Est. Valuation)</p>
+                                    <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em]">
+                                        มูลค่าประเมินรวมทั้งสิ้น (Total Est. Valuation)
+                                    </p>
                                     <p className="text-slate-950 text-4xl font-black tabular-nums tracking-tighter">
                                         {totalEstAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </p>
@@ -649,90 +671,166 @@ export default function CreatePurchaseRequisitionPage() {
                 </form>
 
             </div>
-
             {/* --- 📦 Quick Product Modal --- */}
             {isProductModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
-                        <div className="bg-slate-50 p-6 md:p-8 flex justify-between items-center border-b border-slate-200">
-                            <div className="flex items-center gap-4">
-                                <div className="p-3 bg-indigo-100 rounded-2xl">
-                                    <Database className="w-6 h-6 text-indigo-600" />
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)] w-full max-w-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+
+                        {/* 1. Header Section */}
+                        <div className="bg-slate-50/50 p-10 flex justify-between items-center border-b border-slate-100">
+                            <div className="flex items-center gap-5">
+                                <div className="p-4 bg-white rounded-[1.5rem] shadow-sm border border-slate-100">
+                                    <Database className="w-8 h-8 text-[#1F3B8B]" />
                                 </div>
                                 <div>
-                                    <h3 className="text-base font-black text-slate-950 tracking-wider">สร้างฐานข้อมูลสินค้าด่วน</h3>
-                                    <p className="text-xs text-slate-500 font-bold tracking-wide mt-1">เพิ่มพัสดุใหม่เข้าสู่ระบบส่วนกลาง</p>
+                                    <h3 className="text-xl font-black text-slate-900 tracking-tight">สร้างฐานข้อมูลสินค้าด่วน</h3>
+                                    <p className="text-sm text-slate-400 font-bold tracking-wide mt-1">เพิ่มพัสดุใหม่เข้าสู่ระบบส่วนกลาง</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsProductModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-700 bg-white rounded-full border border-slate-200 transition-colors shadow-sm">
-                                <X className="w-5 h-5" />
+                            <button
+                                onClick={() => {
+                                    setIsProductModalOpen(false);
+                                    setHasSubmittedForm(false); // <--- รีเซ็ต State เมื่อปิด Modal
+                                }}
+                                className="p-3 text-slate-400 hover:text-rose-500 bg-white rounded-full border border-slate-100 transition-all hover:rotate-90 shadow-sm"
+                            >
+                                <X className="w-6 h-6" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleCreateProduct} className="p-6 md:p-8 space-y-6">
-                            <div className="space-y-5">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-slate-600 uppercase tracking-wide ml-1">หมวดหมู่สินค้า (Category) <span className="text-rose-500">*</span></label>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault(); // <--- ป้องกันการ Submit ทันที
+                                setHasSubmittedForm(true); // <--- อัปเดต State ว่ากด Submit แล้ว
+
+                                // เช็คเงื่อนไขก่อนส่งข้อมูลจริง
+                                if (newProduct.categoryId && newProduct.name && newProduct.unitId) {
+                                    handleCreateProduct(e);
+                                }
+                            }}
+                            className="p-10 space-y-8"
+                            noValidate // <--- ปิด HTML5 Validation แบบ Default เพื่อใช้ Custom Alert ของเราแทน
+                        >
+                            <div className="space-y-7">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                                    {/* หมวดหมู่สินค้า */}
+                                    <div className="space-y-3 relative">
+                                        <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                            <Layout className="w-4 h-4 text-blue-500" /> หมวดหมู่สินค้า (Category) <span className="text-rose-500">*</span>
+                                        </label>
                                         <select
                                             value={newProduct.categoryId}
                                             onChange={(e) => setNewProduct({ ...newProduct, categoryId: e.target.value })}
-                                            className="w-full border-2 border-slate-300 rounded-2xl p-3.5 text-sm font-bold outline-none focus:bg-white focus:border-indigo-500 bg-slate-50 transition-all"
+                                            className={`w-full border-2 rounded-2xl p-4 text-sm font-bold outline-none transition-all shadow-sm ${hasSubmittedForm && !newProduct.categoryId
+                                                    ? 'border-rose-300 bg-rose-50 focus:border-rose-400'
+                                                    : 'border-slate-200 bg-slate-50 focus:border-blue-400 focus:bg-white'
+                                                }`}
                                             required
                                         >
                                             <option value="">-- เลือกหมวดหมู่ --</option>
                                             {categories.map(c => <option key={c.id} value={c.id}>{c.name} ({c.abbr})</option>)}
                                         </select>
+
+                                        {/* --- ส่วนข้อความเตือนเมื่อกดส่งแต่ยังไม่กรอก --- */}
+                                        {hasSubmittedForm && !newProduct.categoryId && (
+                                            <p className="text-[11px] font-bold text-rose-500 flex items-center gap-1.5 ml-1 mt-2 animate-in slide-in-from-top-1">
+                                                <AlertTriangle className="w-3.5 h-3.5" /> กรุณาเลือกหมวดหมู่สินค้า
+                                            </p>
+                                        )}
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-indigo-600 uppercase tracking-wide ml-1 flex items-center gap-1">
-                                            <Hash className="w-4 h-4" /> รหัส (SKU) สร้างอัตโนมัติ
+
+                                    {/* รหัส SKU (ไม่มีเตือนเพราะเป็น Auto-generate) */}
+                                    <div className="space-y-3">
+                                        <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                            <Hash className="w-4 h-4 text-amber-500" /> รหัส (SKU) สร้างอัตโนมัติ
                                         </label>
                                         <input
                                             type="text"
                                             value={getNextSequentialSku()}
-                                            className="w-full border-2 border-indigo-200 bg-indigo-50 text-indigo-700 rounded-2xl p-3.5 text-sm font-mono font-black text-center outline-none"
+                                            className="w-full border-2 border-amber-100 bg-amber-50/30 text-amber-600 rounded-2xl p-4 text-base font-mono font-black text-center outline-none shadow-inner cursor-default"
                                             readOnly
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-600 uppercase tracking-wide ml-1">ชื่อสินค้าใหม่ <span className="text-rose-500">*</span></label>
+                                {/* ชื่อสินค้าใหม่ */}
+                                <div className="space-y-3 relative">
+                                    <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                        <Tag className="w-4 h-4 text-rose-500" /> ชื่อสินค้าใหม่ <span className="text-rose-500">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         value={newProduct.name}
                                         onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                                        className="w-full border-2 border-slate-300 rounded-2xl p-4 text-sm font-bold outline-none focus:bg-white focus:border-indigo-500 bg-slate-50 transition-all"
+                                        className={`w-full border-2 rounded-2xl p-5 text-base font-bold outline-none transition-all shadow-sm placeholder:text-slate-300 ${hasSubmittedForm && !newProduct.name
+                                                ? 'border-rose-300 bg-rose-50 focus:border-rose-400'
+                                                : 'border-slate-200 bg-slate-50 focus:border-indigo-400 focus:bg-white'
+                                            }`}
                                         placeholder="เช่น Cisco Switch Catalyst 9200..."
                                         required
                                     />
+
+                                    {/* --- ส่วนข้อความเตือนเมื่อกดส่งแต่ยังไม่กรอก --- */}
+                                    {hasSubmittedForm && !newProduct.name && (
+                                        <p className="text-[11px] font-bold text-rose-500 flex items-center gap-1.5 ml-1 mt-2 animate-in slide-in-from-top-1">
+                                            <AlertTriangle className="w-3.5 h-3.5" /> กรุณาระบุชื่อสินค้า
+                                        </p>
+                                    )}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black text-slate-600 uppercase tracking-wide ml-1">หน่วยนับ (Unit) <span className="text-rose-500">*</span></label>
+                                {/* หน่วยนับ */}
+                                <div className="space-y-3 relative">
+                                    <label className="text-sm font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                                        <Ruler className="w-4 h-4 text-emerald-500" /> หน่วยนับ (Unit) <span className="text-rose-500">*</span>
+                                    </label>
                                     <select
                                         value={newProduct.unitId}
                                         onChange={(e) => setNewProduct({ ...newProduct, unitId: e.target.value })}
-                                        className="w-full border-2 border-slate-300 rounded-2xl p-3.5 text-sm font-bold outline-none focus:bg-white focus:border-indigo-500 bg-slate-50 transition-all"
+                                        className={`w-full border-2 rounded-2xl p-4 text-sm font-bold outline-none transition-all shadow-sm ${hasSubmittedForm && !newProduct.unitId
+                                                ? 'border-rose-300 bg-rose-50 focus:border-rose-400'
+                                                : 'border-slate-200 bg-slate-50 focus:border-emerald-400 focus:bg-white'
+                                            }`}
                                         required
                                     >
                                         <option value="">-- เลือกหน่วยนับ --</option>
                                         {units.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                     </select>
+
+                                    {/* --- ส่วนข้อความเตือนเมื่อกดส่งแต่ยังไม่กรอก --- */}
+                                    {hasSubmittedForm && !newProduct.unitId && (
+                                        <p className="text-[11px] font-bold text-rose-500 flex items-center gap-1.5 ml-1 mt-2 animate-in slide-in-from-top-1">
+                                            <AlertTriangle className="w-3.5 h-3.5" /> กรุณาเลือกหน่วยนับ
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="pt-6 border-t border-slate-100 flex gap-4">
-                                <button type="button" onClick={() => setIsProductModalOpen(false)} className="flex-1 py-4 text-xs font-black text-slate-600 bg-slate-100 border border-slate-200 rounded-2xl uppercase tracking-wider hover:bg-slate-200 transition-colors">ยกเลิก</button>
+                            {/* 2. Footer Buttons */}
+                            <div className="pt-8 border-t border-slate-50 flex gap-5">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsProductModalOpen(false);
+                                        setHasSubmittedForm(false); // <--- รีเซ็ต State เมื่อยกเลิก
+                                    }}
+                                    className="flex-1 py-4 text-sm font-black text-slate-400 bg-slate-50 border border-slate-100 rounded-[1.5rem] uppercase tracking-widest hover:bg-slate-100 hover:text-slate-600 transition-all active:scale-95 shadow-sm"
+                                >
+                                    ยกเลิก
+                                </button>
                                 <button
                                     type="submit"
                                     disabled={isCreatingProduct}
-                                    className="flex-1 bg-indigo-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-indigo-900/20 hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-[1.5] bg-emerald-600 text-white py-4 rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                                 >
                                     {isCreatingProduct ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    ) : 'ยืนยันการสร้างสินค้า'}
+                                        <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 className="w-5 h-5" />
+                                            ยืนยันการสร้างสินค้า
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </form>

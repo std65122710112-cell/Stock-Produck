@@ -230,15 +230,18 @@ export default function RequisitionApprovalPage() {
                 {/* --- LIST VIEW --- */}
                 {viewMode === 'LIST' && (
                     <section className="overflow-hidden rounded-[3rem] border-2 border-slate-100 bg-white shadow-xl animate-in slide-in-from-bottom-6 duration-700">
-                        <div className="p-8 md:p-10 bg-slate-50/80 border-b border-slate-200 flex justify-between items-center">
-                            <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-4 uppercase">
-                                <div className="p-3 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-900/20">
-                                    <FileText className="w-6 h-6" />
+                        <div className="p-6 md:p-8 bg-white border-b border-slate-100 flex justify-between items-center">
+                            <h2 className="text-base md:text-lg font-bold text-slate-600 tracking-tight flex items-center gap-4">
+                                {/* ส่วนของ Icon: เปลี่ยนจากสีน้ำเงินเข้มเป็นฟ้าพาสเทลนุ่มๆ */}
+                                <div className="p-2.5 bg-blue-50 text-blue-500 rounded-xl border border-blue-100/50">
+                                    <FileText className="w-5 h-5 md:w-6 h-6" />
                                 </div>
-                                รายการรอดำเนินการ (Pending Requests)
+                                <span className="uppercase tracking-wide">รายการรอดำเนินการ (Pending Requests)</span>
                             </h2>
-                            <div className="bg-blue-900 text-white border border-blue-800 text-sm px-6 py-2 rounded-2xl font-black uppercase tracking-widest shadow-md">
-                                {requisitions.length} รายการในระบบ
+
+                            {/* ส่วนของ Badge: เปลี่ยนจากสีเข้มเป็นโทนอ่อน (Soft Badge) */}
+                            <div className="hidden sm:block bg-slate-50 text-slate-500 border border-slate-200 text-[11px] px-4 py-1.5 rounded-full font-bold uppercase tracking-wider shadow-sm">
+                                <span className="text-blue-500 mr-1">{requisitions.length}</span> รายการในระบบ
                             </div>
                         </div>
                         <div className="overflow-x-auto">
@@ -256,13 +259,13 @@ export default function RequisitionApprovalPage() {
                                 </div>
                             ) : (
                                 <table className="min-w-full text-left border-collapse">
-                                    <thead className="bg-slate-50 border-b-2 border-slate-200">
-                                        <tr className="text-slate-900 font-black text-xs uppercase tracking-[0.2em]">
-                                            <th className="p-8">เลขที่ใบเบิก (SR)</th>
-                                            <th className="p-8">ชื่อผู้ขอเบิกพัสดุ</th>
-                                            <th className="p-8">แผนกต้นสังกัด</th>
-                                            <th className="p-8">วันที่ส่งคำขอ</th>
-                                            <th className="p-8 text-center">ดำเนินการ</th>
+                                    <thead className="bg-slate-50/80 border-b border-slate-200">
+                                        <tr className="text-slate-500 font-bold text-sm uppercase tracking-widest">
+                                            <th className="py-6 px-8 text-left">เลขที่ใบเบิก (SR)</th>
+                                            <th className="py-6 px-8 text-left">ชื่อผู้ขอเบิกพัสดุ</th>
+                                            <th className="py-6 px-8 text-left">แผนกต้นสังกัด</th>
+                                            <th className="py-6 px-8 text-left">วันที่ส่งคำขอ</th>
+                                            <th className="py-6 px-8 text-center">ดำเนินการ</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50 bg-white">
@@ -310,7 +313,9 @@ export default function RequisitionApprovalPage() {
                         <div className="bg-white p-8 md:p-10 text-slate-950 relative overflow-hidden border-b-2 border-slate-100">
                             <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                 <div>
-                                    <p className="text-slate-950 text-xs font-black uppercase tracking-[0.3em] mb-2">เลขที่อ้างอิงใบเบิก (SR Number)</p>
+                                    <p className="text-slate-400 text-sm font-bold uppercase tracking-[0.2em] mb-2">
+                                        เลขที่อ้างอิงใบเบิก (SR Number)
+                                    </p>
                                     <h2 className="text-2xl lg:text-3xl tabular-nums font-black tracking-tighter text-blue-950">{selectedSR.srNumber}</h2>
                                 </div>
                                 <div className="text-left md:text-right bg-slate-100 p-4 rounded-2xl border border-slate-300 shadow-sm">
@@ -328,28 +333,36 @@ export default function RequisitionApprovalPage() {
                             {/* Meta Data Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10 border-b-2 border-dashed border-slate-200">
                                 <div className="space-y-3">
-                                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] flex items-center gap-2.5">
-                                        <User className="w-5 h-5 text-blue-600" /> ผู้ขอเบิกพัสดุ
+                                    {/* แก้ไข: เปลี่ยนจาก <p> เป็น <div> */}
+                                    <div className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                                        <div className="p-2 bg-blue-50 rounded-xl"><User className="w-5 h-5 text-blue-500" /></div>
+                                        ผู้ขอเบิกพัสดุ
+                                    </div>
+                                    <p className="text-lg font-black text-slate-950 uppercase tracking-tight">
+                                        {selectedSR.user?.firstName} {selectedSR.user?.lastName}
                                     </p>
-                                    <p className="text-lg font-black text-slate-950 uppercase tracking-tight">{selectedSR.user?.firstName} {selectedSR.user?.lastName}</p>
                                     <p className="text-xs font-bold text-blue-800 bg-blue-100 border border-blue-200 w-fit px-3 py-1.5 rounded-lg uppercase tracking-wider">
                                         {selectedSR.department?.name || 'ส่วนกลาง'}
                                     </p>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] flex items-center gap-2.5">
-                                        <Hash className="w-5 h-5 text-amber-500" /> เลขอ้างอิงโครงการ
-                                    </p>
+                                    {/* แก้ไข: เปลี่ยนจาก <p> เป็น <div> */}
+                                    <div className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                                        <div className="p-2 bg-amber-50 rounded-xl"><Hash className="w-5 h-5 text-amber-500" /></div>
+                                        เลขอ้างอิงโครงการ
+                                    </div>
                                     <p className="text-lg font-black text-slate-950 uppercase tracking-tight">
                                         {selectedSR.referenceNo || 'ไม่มีระบุ'}
                                     </p>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-[0.2em] flex items-center gap-2.5">
-                                        <Clock className="w-5 h-5 text-blue-500" /> สถานะปัจจุบัน
-                                    </p>
+                                    {/* แก้ไข: เปลี่ยนจาก <p> เป็น <div> */}
+                                    <div className="text-sm font-black text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                                        <div className="p-2 bg-emerald-50 rounded-xl"><Clock className="w-5 h-5 text-emerald-500" /></div>
+                                        สถานะปัจจุบัน
+                                    </div>
                                     <p className="text-lg font-black text-blue-800 uppercase tracking-tight">
                                         รอการพิจารณาอนุมัติ
                                     </p>
@@ -357,20 +370,23 @@ export default function RequisitionApprovalPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="bg-slate-100 p-6 rounded-3xl border-2 border-slate-200 flex flex-col shadow-md">
-                                    <p className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                        <Briefcase className="w-5 h-5 text-sky-600" /> วัตถุประสงค์การใช้งาน
+                                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 flex flex-col shadow-sm">
+                                    {/* ปรับหัวข้อ (Label) ให้ใหญ่ขึ้นเป็น text-sm */}
+                                    <p className="text-sm font-black text-slate-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <Briefcase className="w-5 h-5 text-sky-500" /> วัตถุประสงค์การใช้งาน
                                     </p>
+                                    {/* ข้อมูล (Value) ขนาดเท่าเดิม: text-sm */}
                                     <p className="text-sm font-bold text-slate-800 leading-relaxed italic flex-1">
                                         "{selectedSR.purpose}"
                                     </p>
                                 </div>
 
-                                <div className={`${selectedSR.remarks ? 'bg-amber-100/60 border-amber-300' : 'bg-slate-100 border-slate-200'} p-6 rounded-3xl border-2 flex flex-col shadow-md`}>
-                                    <p className="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                        <MessageSquareText className={`w-5 h-5 ${selectedSR.remarks ? 'text-amber-600' : 'text-slate-500'}`} />
+                                <div className={`${selectedSR.remarks ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50 border-slate-200'} p-6 rounded-3xl border flex flex-col shadow-sm`}>
+                                    <p className="text-sm font-black text-slate-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <MessageSquareText className={`w-5 h-5 ${selectedSR.remarks ? 'text-amber-500' : 'text-slate-400'}`} />
                                         หมายเหตุเพิ่มเติมถึงผู้อนุมัติ
                                     </p>
+                                    {/* ข้อมูล (Value) ขนาดเท่าเดิม: text-sm */}
                                     <p className="text-sm font-bold text-slate-800 leading-relaxed flex-1">
                                         {selectedSR.remarks || "--- ไม่มีการระบุข้อมูลเพิ่มเติม ---"}
                                     </p>
@@ -387,14 +403,15 @@ export default function RequisitionApprovalPage() {
 
                                 <div className="border-2 border-slate-300 rounded-3xl overflow-hidden shadow-md">
                                     <table className="w-full text-left border-collapse">
-                                        <thead className="bg-slate-100 border-b-2 border-slate-300">
-                                            <tr className="text-sm font-black uppercase text-slate-900 tracking-wider">
-                                                <th className="p-5 w-16 text-center">ลำดับ</th>
-                                                <th className="p-5">รายละเอียดพัสดุ (Product Name / SKU)</th>
-                                                <th className="p-5 text-right">ราคา/หน่วย</th>
-                                                <th className="p-5 text-center">จำนวนเบิก</th>
-                                                <th className="p-5 text-right text-blue-900">รวมมูลค่า (Est.)</th>
-                                                <th className="p-5">หมายเหตุ</th>
+                                        <thead className="bg-slate-50/80 border-b border-slate-200">
+                                            <tr className="text-slate-500 font-bold text-sm uppercase tracking-widest">
+                                                <th className="py-5 px-6 w-16 text-center">ลำดับ</th>
+                                                <th className="py-5 px-6 text-left">รายละเอียดพัสดุ (Product Name / SKU)</th>
+                                                <th className="py-5 px-6 text-right font-semibold">ราคา/หน่วย</th>
+                                                <th className="py-5 px-6 text-center">จำนวนเบิก</th>
+                                                {/* สำหรับ "รวมมูลค่า" ใช้สีน้ำเงินอ่อนๆ ให้ดูเด่นแต่ไม่เข้มเกินไป */}
+                                                <th className="py-5 px-6 text-right text-[#1F3B8B]/70">รวมมูลค่า (Est.)</th>
+                                                <th className="py-5 px-6 text-left">หมายเหตุ</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-200 bg-white">
