@@ -398,7 +398,8 @@ export default function ProfessionalOutboundPage() {
                                                 <div className="p-2.5 bg-blue-50 rounded-xl">
                                                     <User className="w-6 h-6 text-blue-600" />
                                                 </div>
-                                                <p className="text-xs font-black text-slate-600 uppercase tracking-widest">ผู้ขอเบิกพัสดุ</p>
+                                                {/* 💡 ปรับหัวข้อใหญ่ขึ้น: text-sm font-bold text-slate-500 */}
+                                                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">ผู้ขอเบิกพัสดุ</p>
                                             </div>
                                             <p className="text-lg font-black text-black ml-1">{selectedSR.user?.firstName} {selectedSR.user?.lastName}</p>
                                         </div>
@@ -409,7 +410,8 @@ export default function ProfessionalOutboundPage() {
                                                 <div className="p-2.5 bg-emerald-50 rounded-xl">
                                                     <ShieldCheck className="w-6 h-6 text-emerald-600" />
                                                 </div>
-                                                <p className="text-xs font-black text-slate-600 uppercase tracking-widest">ผู้อนุมัติเบิก</p>
+                                                {/* 💡 ปรับหัวข้อใหญ่ขึ้น: text-sm font-bold text-slate-500 */}
+                                                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">ผู้อนุมัติเบิก</p>
                                             </div>
                                             <p className="text-lg font-black text-emerald-800 ml-1">{selectedSR.approver?.firstName} {selectedSR.approver?.lastName}</p>
                                         </div>
@@ -420,7 +422,8 @@ export default function ProfessionalOutboundPage() {
                                                 <div className="p-2.5 bg-fuchsia-50 rounded-xl">
                                                     <Building2 className="w-6 h-6 text-fuchsia-600" />
                                                 </div>
-                                                <p className="text-xs font-black text-slate-600 uppercase tracking-widest">แผนกที่เบิก</p>
+                                                {/* 💡 ปรับหัวข้อใหญ่ขึ้น: text-sm font-bold text-slate-500 */}
+                                                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">แผนกที่เบิก</p>
                                             </div>
                                             <p className="text-lg font-black text-black ml-1">{selectedSR.department?.name || 'ส่วนกลาง (General)'}</p>
                                         </div>
@@ -435,12 +438,14 @@ export default function ProfessionalOutboundPage() {
                                                     <div className="p-2.5 bg-sky-50 rounded-xl">
                                                         <Layers className="w-6 h-6 text-sky-600" />
                                                     </div>
-                                                    <p className="text-xs font-black text-slate-600 uppercase tracking-widest">วัตถุประสงค์ / โครงการ</p>
+                                                    {/* 💡 ปรับหัวข้อใหญ่ขึ้น: text-sm font-bold text-slate-500 */}
+                                                    <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">วัตถุประสงค์ / โครงการ</p>
                                                 </div>
                                                 {selectedSR.referenceNo && (
                                                     <div className="flex items-center gap-2 bg-indigo-50 px-4 py-1.5 rounded-xl border-2 border-indigo-100">
                                                         <Hash className="w-3.5 h-3.5 text-indigo-600" />
-                                                        <span className="text-xs font-black text-indigo-700 uppercase">Ref: {selectedSR.referenceNo}</span>
+                                                        {/* 💡 ปรับขนาด Ref ขึ้นนิดนึงให้สมดุล */}
+                                                        <span className="text-sm font-bold text-indigo-700 uppercase">Ref: {selectedSR.referenceNo}</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -452,20 +457,21 @@ export default function ProfessionalOutboundPage() {
                                         {/* หมายเหตุ */}
                                         <div className="lg:col-span-5 flex flex-col h-full">
                                             {selectedSR.remarks ? (
-                                                <div className="bg-amber-50 p-7 rounded-[2rem] border-2 border-amber-200 h-full flex flex-col gap-4 shadow-sm">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="p-2 bg-white rounded-lg shadow-sm">
-                                                            <MessageSquare className="w-5 h-5 text-amber-500" />
+                                                <div className="bg-white p-7 rounded-[2rem] border-2 border-slate-200 h-full flex flex-col shadow-sm transition-all hover:shadow-md">
+                                                    <div className="flex items-center gap-4 mb-5">
+                                                        {/* 💡 เพิ่มสีไอคอน: เปลี่ยนเป็นพื้นหลัง bg-violet-50 และตัวไอคอน text-violet-600 */}
+                                                        <div className="p-2.5 bg-violet-50 rounded-xl">
+                                                            <MessageSquare className="w-6 h-6 text-violet-600" />
                                                         </div>
-                                                        <p className="text-xs font-black text-amber-700 uppercase tracking-widest">หมายเหตุจากผู้เบิก (SR Note)</p>
+                                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">หมายเหตุจากผู้เบิก (SR Note)</p>
                                                     </div>
-                                                    <p className="text-sm font-bold text-amber-950/90 leading-relaxed italic px-1">
+                                                    <p className="text-base font-bold text-slate-800 leading-relaxed bg-slate-50 p-5 rounded-2xl border border-slate-200 italic flex-1">
                                                         "{selectedSR.remarks}"
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <div className="bg-white p-7 rounded-[2rem] border-2 border-dashed border-slate-300 h-full flex items-center justify-center">
-                                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest italic">ไม่มีหมายเหตุเพิ่มเติม</p>
+                                                <div className="bg-white p-7 rounded-[2rem] border-2 border-dashed border-slate-300 h-full flex items-center justify-center shadow-sm">
+                                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-widest italic">ไม่มีหมายเหตุเพิ่มเติม</p>
                                                 </div>
                                             )}
                                         </div>
