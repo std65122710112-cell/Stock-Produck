@@ -31,6 +31,7 @@ const menuGroups = [
         items: [
             { href: "/inbound", label: "รับสินค้าเข้า" },
             { href: "/outbound", label: "เบิกจ่ายสินค้า" },
+            { href: "/inventory/transfer", label: "ย้ายสินค้าระหว่างคลัง" },
             { href: "/inventory/adjust", label: "ปรับปรุงยอดสต๊อก" },
         ],
     },
