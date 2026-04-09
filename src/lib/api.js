@@ -18,10 +18,19 @@ async function tryRefresh() {
 
 export async function apiFetch(path, options = {}, { retry = true } = {}) {
     const token = getAccessToken();
-    const headers = {
-        ...(options.headers || {}),
-        "Content-Type": options.body ? "application/json" : (options.headers?.["Content-Type"] || undefined),
-    };
+    
+    // 1. เตรียม Headers
+    const headers = { ...(options.headers || {}) };
+
+    // 💡 2. จัดการ Content-Type ให้ฉลาดขึ้น
+    if (options.body instanceof FormData) {
+        // ถ้าเป็น FormData (อัปโหลดรูป) ห้ามเซต Content-Type เอง 
+        // เบราว์เซอร์จะจัดการใส่ multipart/form-data พร้อม boundary ให้โดยอัตโนมัติ
+        delete headers["Content-Type"];
+    } else if (options.body && !headers["Content-Type"]) {
+        // ถ้ามี body และไม่ใช่ FormData (เช่น JSON ทั่วไป) ให้เซตเป็น application/json
+        headers["Content-Type"] = "application/json";
+    }
 
     if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -40,6 +49,7 @@ export async function apiFetch(path, options = {}, { retry = true } = {}) {
     // parse json ถ้าเป็น json
     const ct = res.headers.get("content-type") || "";
     const data = ct.includes("application/json") ? await res.json().catch(() => null) : await res.text().catch(() => "");
+    
     if (!res.ok) {
         const msg = data?.message || `HTTP ${res.status}`;
         const err = new Error(msg);

@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, API_BASE } from "@/lib/api"; // 💡 ดึง API_BASE มาใช้
 import { clearAccessToken } from "@/lib/auth";
-import { LogOut, ChevronRight, LayoutGrid } from "lucide-react"; // เพิ่ม icon เพื่อความสวยงาม
+import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera } from "lucide-react";
+
+// ... (menuGroups เหมือนเดิม) ...
 
 const menuGroups = [
     {
@@ -69,21 +71,20 @@ function MenuButton({ href, label, isActive, onNavigate, isPending }) {
         <button
             type="button"
             onClick={() => onNavigate(href)}
-            className={`group relative flex w-full items-center justify-between overflow-hidden rounded-[1.25rem] px-4 py-3 text-left text-sm
-                transition-all duration-200 ease-out active:scale-[0.98]
+            className={`group relative flex w-full items-center justify-between overflow-hidden rounded-2xl px-4 py-3 text-left text-sm font-medium
+                transition-all duration-300 ease-out active:scale-[0.98]
                 ${isActive
-                    ? "bg-[#1e3b8a] text-white shadow-lg shadow-blue-900/20 font-bold"
-                    : "text-slate-600 hover:bg-blue-50 hover:text-[#1e3b8a]"
+                    ? "bg-gradient-to-r from-[#1e3b8a] to-[#2563eb] text-white shadow-md shadow-blue-900/20"
+                    : "text-slate-600 hover:bg-blue-50/80 hover:text-[#1e3b8a]"
                 }
-                ${isPending && !isActive ? "opacity-60" : "opacity-100"}
+                ${isPending && !isActive ? "opacity-50" : "opacity-100"}
             `}
         >
             <div className="flex items-center gap-3 relative z-10">
-                <div className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${isActive ? "bg-white scale-125" : "bg-slate-300 group-hover:bg-[#1e3b8a]"}`} />
-                <span className="leading-5">{label}</span>
+                <div className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${isActive ? "bg-white scale-110 shadow-sm" : "bg-slate-300 group-hover:bg-[#2563eb]"}`} />
+                <span className="leading-5 tracking-wide">{label}</span>
             </div>
-
-            {isActive && <ChevronRight className="w-4 h-4 text-white/70 relative z-10" />}
+            <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isActive ? "text-white/80 translate-x-1" : "text-slate-300 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"}`} />
         </button>
     );
 }
@@ -92,9 +93,30 @@ export default function AppShell({ children }) {
     const path = usePathname();
     const router = useRouter();
     const sidebarRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     const [isPending, startTransition] = useTransition();
     const [pendingHref, setPendingHref] = useState(null);
+    const [userFullName, setUserFullName] = useState("");
+    const [userAvatar, setUserAvatar] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    useEffect(() => {
+        if (window.location.pathname === "/login") return;
+        async function fetchUserProfile() {
+            try {
+                const res = await apiFetch("/auth/me");
+                if (res) {
+                    if (res.firstName) setUserFullName(`${res.firstName} ${res.lastName || ''}`.trim());
+                    if (res.avatarUrl) setUserAvatar(res.avatarUrl);
+                }
+            } catch (error) {
+                clearAccessToken();
+                router.push("/login");
+            }
+        }
+        fetchUserProfile();
+    }, [router]);
 
     useEffect(() => {
         const savedScrollPos = sessionStorage.getItem("sidebar-scroll");
@@ -107,15 +129,6 @@ export default function AppShell({ children }) {
         setPendingHref(null);
     }, [path]);
 
-    useEffect(() => {
-        const warmupRoutes = menuGroups.flatMap((group) =>
-            group.items.map((item) => item.href)
-        );
-        for (const href of warmupRoutes) {
-            router.prefetch?.(href);
-        }
-    }, [router]);
-
     const handleScroll = () => {
         if (sidebarRef.current) {
             sessionStorage.setItem("sidebar-scroll", String(sidebarRef.current.scrollTop));
@@ -125,10 +138,40 @@ export default function AppShell({ children }) {
     const handleNavigate = (href) => {
         if (href === path) return;
         setPendingHref(href);
-
         startTransition(() => {
             router.push(href);
         });
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert("ไฟล์รูปภาพต้องมีขนาดไม่เกิน 2MB");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("avatar", file);
+
+        try {
+            setIsUploading(true);
+            const res = await apiFetch("/auth/avatar", {
+                method: "POST",
+                body: formData
+            });
+
+            if (res && res.avatarUrl) {
+                setUserAvatar(res.avatarUrl);
+                alert("อัปโหลดรูปโปรไฟล์สำเร็จ");
+            }
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("อัปโหลดรูปภาพล้มเหลว: " + error.message);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     async function logout() {
@@ -142,108 +185,125 @@ export default function AppShell({ children }) {
         window.location.href = "/login";
     }
 
-    if (path === "/login") {
-        return <>{children}</>;
-    }
+    // 💡 ฟังก์ชันช่วยจัดรูปแบบ URL รูปภาพให้ถูกต้อง
+    const getAvatarSrc = () => {
+        if (!userAvatar) return null;
+        // ถ้าเป็น URL เต็มอยู่แล้ว (เช่นขึ้นด้วย http) ให้ส่งกลับเลย
+        if (userAvatar.startsWith('http')) return userAvatar;
+        // ถ้าเป็น Path (เช่น /uploads/...) ให้เอา URL ของ Backend มาต่อข้างหน้า
+        const baseUrl = API_BASE.replace('/api', ''); // ลบ /api ออกถ้ามีเพื่อให้ได้ URL หลักของ Server
+        return `${baseUrl}${userAvatar}`;
+    };
+
+    if (path === "/login") return <>{children}</>;
+
+    const avatarSrc = getAvatarSrc();
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-800">
+        <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900">
             <div className="flex min-h-screen">
                 <aside
                     ref={sidebarRef}
                     onScroll={handleScroll}
-                    className="sticky top-0 h-screen w-80 overflow-y-auto border-r border-slate-200 bg-white print:hidden shadow-sm"
+                    className="sticky top-0 h-screen w-[300px] overflow-y-auto border-r border-slate-200/60 bg-white/80 backdrop-blur-xl print:hidden flex-shrink-0 custom-scrollbar flex flex-col"
                 >
-                    <div className="flex h-full flex-col px-5 py-6">
-                        {/* LOGO SECTION - THEME NAVY */}
-                        <div className="mb-8">
-                            <div className="relative overflow-hidden rounded-[2rem] bg-[#1e3b8a] p-5 shadow-xl shadow-blue-900/20">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-10 -mt-10" />
-                                <div className="relative flex items-center gap-3">
-                                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#1e3b8a] shadow-inner font-black text-sm">
-                                        TJC
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-200/70 mb-0.5">
+                    <div className="flex-1 flex flex-col px-5 py-6">
+
+                        {/* BRAND LOGO */}
+                        <div className="mb-8 space-y-5">
+                            <div className="flex items-center gap-3 px-1">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-[0.85rem] bg-gradient-to-br from-[#1e3b8a] to-[#2563eb] text-white shadow-md font-black text-sm tracking-wider">
+                                    TJC
+                                </div>
+                                <div className="min-w-0">
+                                    <h1 className="text-base font-black text-slate-800 tracking-tight uppercase">
+                                        Stock System
+                                    </h1>
+                                    <div className="flex items-center gap-1">
+                                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
                                             Enterprise Portal
                                         </p>
-                                        <h1 className="truncate text-base font-black text-white tracking-tight uppercase">
-                                            TJC Stock System
-                                        </h1>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* USER PROFILE CARD */}
+                            <div className="flex items-center gap-3 rounded-2xl bg-white p-3 border border-blue-100 shadow-sm shadow-blue-900/5">
+                                <div
+                                    onClick={() => !isUploading && fileInputRef.current.click()}
+                                    className={`relative group flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1e3b8a] overflow-hidden border border-blue-100/50 cursor-pointer transition-all hover:ring-2 hover:ring-blue-400/50 ${isUploading ? "animate-pulse opacity-50" : ""}`}
+                                >
+                                    {avatarSrc ? (
+                                        <img
+                                            src={avatarSrc}
+                                            alt="Profile"
+                                            className="h-full w-full object-cover"
+                                            onError={(e) => {
+                                                // ถ้าโหลดรูปไม่ขึ้น ให้กลับไปโชว์ไอคอน default
+                                                e.target.style.display = 'none';
+                                                e.target.parentElement.classList.add('flex-col');
+                                            }}
+                                        />
+                                    ) : (
+                                        <UserCircle className="w-5 h-5" />
+                                    )}
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Camera className="w-4 h-4 text-white" />
+                                    </div>
+                                </div>
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-bold text-[#1e3b8a] truncate tracking-wide">
+                                        {userFullName || "กำลังโหลดข้อมูล..."}
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
                         {/* NAVIGATION SECTION */}
-                        <nav className="flex-1 space-y-7">
+                        <nav className="flex-1 space-y-8">
                             {menuGroups.map((group) => (
-                                <section key={group.title} className="space-y-2">
-                                    <div className="px-4">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400/80">
-                                            {group.title}
-                                        </p>
+                                <section key={group.title} className="space-y-3">
+                                    <div className="px-2 flex items-center gap-2">
+                                        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{group.title}</p>
+                                        <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
                                     </div>
-
                                     <div className="space-y-1">
                                         {group.items.map((n) => {
-                                            const isActive =
-                                                path === n.href ||
-                                                (n.href !== "/dashboard" &&
-                                                    path.startsWith(n.href + "/") &&
-                                                    !(n.href === "/inventory/requisition" && path.startsWith("/inventory/requisition/approval")) &&
-                                                    !(n.href === "/purchase/pr" && path.startsWith("/purchase/pr/approval"))
-                                                );
-
+                                            const isActive = path === n.href || (n.href !== "/dashboard" && path.startsWith(n.href + "/") && !(n.href === "/inventory/requisition" && path.startsWith("/inventory/requisition/approval")) && !(n.href === "/purchase/pr" && path.startsWith("/purchase/pr/approval")));
                                             const itemPending = isPending && pendingHref === n.href;
-
-                                            return (
-                                                <MenuButton
-                                                    key={n.href}
-                                                    href={n.href}
-                                                    label={n.label}
-                                                    isActive={isActive}
-                                                    isPending={itemPending}
-                                                    onNavigate={handleNavigate}
-                                                />
-                                            );
+                                            return <MenuButton key={n.href} href={n.href} label={n.label} isActive={isActive} isPending={itemPending} onNavigate={handleNavigate} />;
                                         })}
                                     </div>
                                 </section>
                             ))}
                         </nav>
+                    </div>
 
-                        {/* BOTTOM ACTIONS */}
-                        <div className="mt-8 pt-6 border-t border-slate-100 space-y-3">
-                            <div className="rounded-2xl bg-slate-50 px-4 py-3 border border-slate-100">
-                                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                    System Mode
-                                </p>
-                                <p className="mt-0.5 text-xs font-bold text-[#1e3b8a] flex items-center gap-2">
-                                    <LayoutGrid className="w-3 h-3" /> Internal Control
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={logout}
-                                className="group flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-100 bg-white px-4 py-3 text-sm font-black text-rose-600 shadow-sm transition-all hover:bg-rose-600 hover:text-white active:scale-95"
-                            >
-                                <LogOut className="w-4 h-4" />
-                                <span>ออกจากระบบ</span>
-                            </button>
-                        </div>
+                    <div className="px-5 pb-6 pt-4 sticky bottom-0 bg-white/80 backdrop-blur-xl border-t border-slate-100/60">
+                        <button
+                            onClick={logout}
+                            className="group relative flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-100 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-500 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600 hover:shadow-sm active:scale-95"
+                        >
+                            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                            <span>ออกจากระบบ</span>
+                        </button>
                     </div>
                 </aside>
 
-                <main className="flex-1 p-4 md:p-8 bg-slate-50/50">
-                    <div
-                        className={`w-full rounded-[2.5rem] border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 md:p-10 ${isPending ? "opacity-50 grayscale" : "opacity-100"
-                            }`}
-                    >
+                <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+                    <div className={`w-full min-h-[calc(100vh-4rem)] rounded-[2rem] border border-slate-200/60 bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-500 md:p-10 ${isPending ? "opacity-50 blur-[2px] grayscale-[20%]" : "opacity-100"}`}>
                         {children}
                     </div>
                 </main>
             </div>
+
+            <style jsx global>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            `}</style>
         </div>
     );
 }

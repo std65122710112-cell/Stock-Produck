@@ -1,9 +1,5 @@
 @import "tailwindcss";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-/* --- เพิ่มโค้ดส่วนนี้ --- */
 @layer base {
   /* บังคับไม่ให้เลขศูนย์มีขีดตรงกลาง ทั้งฟอนต์ปกติและฟอนต์ mono */
   html, body, *, .font-mono {
@@ -27,6 +23,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --font-sans: 'Prompt', Arial, sans-serif;
  
 }
 
