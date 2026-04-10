@@ -1,617 +1,793 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from "react";
 import AuthGate from "@/components/AuthGate";
 import { apiFetch } from "@/lib/api";
 import toast, { Toaster } from "react-hot-toast";
 import {
-    FileSignature, Database, ArrowLeft,
-    CheckCircle2, ShieldCheck, Building2,
-    ClipboardList, MessageSquare, AlertCircle, Upload, PenTool, FileText, Clock, XCircle, Package, FileCheck,
-    UserCheck,
-    BadgeCheck,
-    Truck,
-    User
+  ArrowLeft,
+  CheckCircle2,
+  Building2,
+  ClipboardList,
+  MessageSquare,
+  AlertCircle,
+  Upload,
+  PenTool,
+  FileText,
+  Clock,
+  XCircle,
+  FileCheck,
+  UserCheck,
+  BadgeCheck,
+  Truck,
+  User,
 } from "lucide-react";
 import { getAccessToken } from "@/lib/auth";
 
 export default function ApprovePRPage() {
-    const router = useRouter();
-    const [viewMode, setViewMode] = useState('LIST');
-    const [filterTab, setFilterTab] = useState('PENDING');
-    const [isLoading, setIsLoading] = useState(false);
+  const [viewMode, setViewMode] = useState("LIST");
+  const [filterTab, setFilterTab] = useState("PENDING");
+  const [isLoading, setIsLoading] = useState(false);
 
-    const [prList, setPrList] = useState([]);
-    const [selectedPRData, setSelectedPRData] = useState(null);
-    const [approvalComment, setApprovalComment] = useState('');
-    const [signatureImage, setSignatureImage] = useState(null);
+  const [prList, setPrList] = useState([]);
+  const [selectedPRData, setSelectedPRData] = useState(null);
+  const [approvalComment, setApprovalComment] = useState("");
+  const [signatureImage, setSignatureImage] = useState(null);
 
-    // 💡 State สำหรับควบคุม Popup
-    const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
-    const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 
-    useEffect(() => {
-        async function loadData() {
-            setIsLoading(true);
+  useEffect(() => {
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const data = await apiFetch(`/api/purchase/pr?status=${filterTab}`);
+        setPrList(data || []);
+      } catch (error) {
+        toast.error("ไม่สามารถโหลดข้อมูลได้");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, [filterTab, viewMode]);
+
+  const handleSelectPRFromList = async (pr) => {
+    setIsLoading(true);
+    try {
+      const prDetail = await apiFetch(`/api/purchase/pr/${pr.id}`);
+      if (prDetail) {
+        setSelectedPRData(prDetail);
+        setApprovalComment("");
+        setSignatureImage(null);
+        setViewMode("FORM");
+      }
+    } catch (error) {
+      toast.error("ไม่สามารถดึงข้อมูลรายละเอียดได้");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignatureUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => setSignatureImage(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const getBackendBaseUrl = () =>
+    process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
+
+  const postJsonWithAuth = async (path, payload) => {
+    const token = typeof getAccessToken === "function" ? getAccessToken() : null;
+    if (!token) {
+      throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+    }
+
+    const backendUrl = getBackendBaseUrl();
+    const response = await fetch(`${backendUrl}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    let data = null;
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { message: text };
+    }
+
+    if (!response.ok) {
+      throw new Error(data?.message || `เกิดข้อผิดพลาด (${response.status})`);
+    }
+
+    return data;
+  };
+
+  const handleApproveAndGeneratePDF = async (e) => {
+    if (e) e.preventDefault();
+    setIsApproveModalOpen(false);
+
+    if (!signatureImage) {
+        return toast.error("กรุณาลงนามกำกับเอกสารก่อนทำการอนุมัติ");
+    }
+
+    if (!selectedPRData?.id) {
+        return toast.error("ไม่พบข้อมูล PR ที่เลือก");
+    }
+
+    setIsLoading(true);
+    try {
+        toast.loading("กำลังประมวลผล สร้างเอกสารอนุมัติ PR (PDF)...", { id: "pr-approve" });
+
+        const token = typeof getAccessToken === "function" ? getAccessToken() : null;
+        if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+
+        const backendUrl =
+            process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
+
+        const response = await fetch(
+            `${backendUrl}/api/purchase/pr/${selectedPRData.id}/approve-pdf`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    status: "APPROVED",
+                    comments: approvalComment || "",
+                    signatureBase64: signatureImage,
+                }),
+            }
+        );
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(result?.message || `เกิดข้อผิดพลาด (${response.status})`);
+        }
+
+        toast.success("อนุมัติและสร้างเอกสาร PDF สำเร็จ!", { id: "pr-approve" });
+
+        if (result?.pdfUrl) {
+            await handleViewPDF(result.pdfUrl);
+        }
+
+        setTimeout(() => {
+            setViewMode("LIST");
+            setFilterTab("APPROVED");
+        }, 1200);
+    } catch (error) {
+        toast.error(error.message || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์", { id: "pr-approve" });
+    } finally {
+        setIsLoading(false);
+    }
+};
+
+  const handleReject = async (e) => {
+    if (e) e.preventDefault();
+    setIsRejectModalOpen(false);
+
+    if (!approvalComment.trim()) {
+        return toast.error("กรุณาระบุเหตุผลในการไม่อนุมัติในช่องหมายเหตุ");
+    }
+
+    if (!selectedPRData?.id) {
+        return toast.error("ไม่พบข้อมูล PR ที่เลือก");
+    }
+
+    setIsLoading(true);
+    try {
+        const token = typeof getAccessToken === "function" ? getAccessToken() : null;
+        if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+
+        const backendUrl =
+            process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
+
+        const response = await fetch(
+            `${backendUrl}/api/purchase/pr/${selectedPRData.id}/approve`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    status: "REJECTED",
+                    comments: approvalComment.trim(),
+                }),
+            }
+        );
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(result?.message || `เกิดข้อผิดพลาด (${response.status})`);
+        }
+
+        toast.success("ปฏิเสธคำขอเรียบร้อยแล้ว");
+        setViewMode("LIST");
+        setFilterTab("PENDING");
+    } catch (error) {
+        toast.error(error.message || "ไม่สามารถปฏิเสธคำขอได้");
+    } finally {
+        setIsLoading(false);
+    }
+};
+
+  const handleViewPDF = async (pdfPath) => {
+    if (!pdfPath) {
+        return toast.error("ไม่พบไฟล์เอกสาร PDF สำหรับรายการนี้");
+    }
+
+    setIsLoading(true);
+    toast.loading("กำลังเปิดเอกสาร...", { id: "pdf-load" });
+
+    try {
+        const backendUrl =
+            process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
+
+        const token = typeof getAccessToken === "function" ? getAccessToken() : null;
+        if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+
+        const rawPath = String(pdfPath).trim();
+        let url = "";
+
+        // ถ้า backend ส่ง secure route มาอยู่แล้ว
+        if (rawPath.includes("/api/purchase/pr/document/")) {
+            url = rawPath.startsWith("http") ? rawPath : `${backendUrl}${rawPath}`;
+        } else {
+            // รองรับทั้ง / และ \ จาก full file path
+            const filename = rawPath.split(/[/\\\\]/).pop();
+
+            if (!filename) {
+                throw new Error("ไม่สามารถระบุชื่อไฟล์เอกสารได้");
+            }
+
+            url = `${backendUrl}/api/purchase/pr/document/${encodeURIComponent(filename)}`;
+        }
+
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            let msg = "คุณไม่มีสิทธิ์เข้าถึง หรือเอกสารสูญหาย";
             try {
-                // ดึงรายการ PR ตาม Tab ที่เลือก
-                const data = await apiFetch(`/api/purchase/pr?status=${filterTab}`);
-                setPrList(data || []);
-            } catch (error) {
-                toast.error("ไม่สามารถโหลดข้อมูลได้");
-            } finally {
-                setIsLoading(false);
-            }
+                const err = await response.json();
+                msg = err?.message || msg;
+            } catch {}
+            throw new Error(msg);
         }
-        loadData();
-    }, [filterTab, viewMode]);
 
-    const handleSelectPRFromList = async (pr) => {
-        setIsLoading(true);
-        try {
-            const prDetail = await apiFetch(`/api/purchase/pr/${pr.id}`);
-            if (prDetail) {
-                setSelectedPRData(prDetail);
-                setApprovalComment('');
-                setSignatureImage(null);
-                setViewMode('FORM');
-            }
-        } catch (error) {
-            toast.error("ไม่สามารถดึงข้อมูลรายละเอียดได้");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        const blob = await response.blob();
+        const fileURL = window.URL.createObjectURL(blob);
+        window.open(fileURL, "_blank");
+        toast.success("เปิดเอกสารสำเร็จ", { id: "pdf-load" });
 
-    const handleSignatureUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => setSignatureImage(reader.result);
-            reader.readAsDataURL(file);
-        }
-    };
+        setTimeout(() => {
+            window.URL.revokeObjectURL(fileURL);
+        }, 60000);
+    } catch (error) {
+        toast.error(error.message || "เปิดเอกสารไม่สำเร็จ", { id: "pdf-load" });
+    } finally {
+        setIsLoading(false);
+    }
+};
+  const totalAmount =
+    selectedPRData?.items?.reduce(
+      (sum, item) => sum + Number(item.quantity) * Number(item.estimatedPrice),
+      0
+    ) || 0;
 
-    // 💡 ฟังก์ชันอนุมัติและสร้าง PR PDF
-    const handleApproveAndGeneratePDF = async (e) => {
-        if (e) e.preventDefault();
-        setIsApproveModalOpen(false); // ปิด Popup
+  return (
+    <AuthGate>
+      <Toaster position="top-right" />
+      <div className="max-w-[1440px] mx-auto space-y-8 py-8 px-4 md:px-10 animate-in fade-in duration-500">
+        <div className="w-full pt-10 mb-6 print:hidden">
+          <div className="w-full flex flex-col gap-6">
+            {viewMode === "FORM" && (
+              <div>
+                <button
+                  onClick={() => setViewMode("LIST")}
+                  className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm w-fit"
+                >
+                  <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-[#1F3B8B] transition-colors" />
+                  ย้อนกลับ
+                </button>
+              </div>
+            )}
 
-        if (!signatureImage) return toast.error("กรุณาลงนามกำกับเอกสารก่อนทำการอนุมัติ");
-
-        setIsLoading(true);
-        try {
-            toast.loading("กำลังประมวลผล สร้างเอกสารอนุมัติ PR (PDF)...", { id: "pr-approve" });
-
-            const payload = {
-                status: 'APPROVED',
-                comments: approvalComment,
-                signatureBase64: signatureImage
-            };
-
-            const response = await apiFetch(`/api/purchase/pr/${selectedPRData.id}/approve-pdf`, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            });
-
-            toast.success("อนุมัติและสร้างเอกสาร PDF สำเร็จ!", { id: "pr-approve" });
-
-            if (response && response.pdfUrl) {
-                handleViewPDF(response.pdfUrl);
-            }
-
-            setTimeout(() => {
-                setViewMode('LIST');
-                setFilterTab('APPROVED');
-            }, 1500);
-
-        } catch (error) {
-            toast.error(error.message || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์", { id: "pr-approve" });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleReject = async (e) => {
-        if (e) e.preventDefault();
-        setIsRejectModalOpen(false); // ปิด Popup
-
-        if (!approvalComment.trim()) return toast.error("กรุณาระบุเหตุผลในการไม่อนุมัติในช่องหมายเหตุ");
-
-        setIsLoading(true);
-        try {
-            await apiFetch(`/api/purchase/pr/approve`, {
-                method: "POST",
-                body: JSON.stringify({ id: selectedPRData.id, status: 'REJECTED', comments: approvalComment })
-            });
-            toast.success("ปฏิเสธคำขอเรียบร้อยแล้ว");
-            setViewMode('LIST');
-        } catch (error) {
-            toast.error("ไม่สามารถปฏิเสธคำขอได้");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleViewPDF = async (pdfPath) => {
-        if (!pdfPath) return toast.error("ไม่พบไฟล์เอกสาร PDF สำหรับรายการนี้");
-
-        setIsLoading(true);
-        toast.loading("กำลังเปิดเอกสาร...", { id: "pdf-load" });
-
-        try {
-            const filename = pdfPath.split('/').pop();
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
-            const url = `${backendUrl}/api/purchase/pr/document/${filename}`;
-
-            const token = typeof getAccessToken === 'function' ? getAccessToken() : null;
-            if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
-
-            const response = await fetch(url, {
-                method: "GET",
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-
-            if (!response.ok) throw new Error("คุณไม่มีสิทธิ์เข้าถึง หรือเอกสารสูญหาย");
-
-            const blob = await response.blob();
-            const fileURL = window.URL.createObjectURL(blob);
-            window.open(fileURL, '_blank');
-            toast.success("เปิดเอกสารสำเร็จ", { id: "pdf-load" });
-
-            setTimeout(() => { window.URL.revokeObjectURL(fileURL); }, 60000);
-        } catch (error) {
-            toast.error(error.message, { id: "pdf-load" });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const totalAmount = selectedPRData?.items?.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.estimatedPrice)), 0) || 0;
-
-    return (
-        <AuthGate>
-            <Toaster position="top-right" />
-            {/* 💡 ปรับขยายความกว้างคอนเทนเนอร์หลักเป็น max-w-[1440px] */}
-            <div className="max-w-[1440px] mx-auto space-y-8 py-8 px-4 md:px-10 animate-in fade-in duration-500">
-
-                {/* HEADER SECTION */}
-                <div className="w-full pt-10 mb-6 print:hidden">
-                    <div className="w-full flex flex-col gap-6">
-
-                        {/* 💡 แถวบน: ปุ่มย้อนกลับ (ตามคอนเซปต์) */}
-                        {viewMode === 'FORM' && (
-                            <div>
-                                <button
-                                    onClick={() => setViewMode('LIST')}
-                                    className="group flex items-center gap-3 bg-white border-2 border-slate-100 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 shadow-sm w-fit"
-                                >
-                                    <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-[#1F3B8B] transition-colors" />
-                                    ย้อนกลับ
-                                </button>
-                            </div>
-                        )}
-
-                        {/* แถวล่าง: หัวข้อและ Tab ตัวกรอง */}
-                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                                    <FileCheck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
-                                </div>
-                                <div className="flex flex-col">
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <UserCheck className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                            Executive Purchase Requisition Approval
-                                        </p>
-                                    </div>
-                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                                        {viewMode === 'LIST' ? "อนุมัติใบขอซื้อ (PR)" : "พิจารณาอนุมัติเอกสาร"}
-                                    </h1>
-                                    <div className="flex items-center gap-2 pt-1 opacity-90">
-                                        <BadgeCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                            ระบบตรวจสอบและอนุมัติการจัดซื้อสำหรับผู้บริหาร
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* แสดง Tabs เฉพาะในหน้า LIST */}
-                            {viewMode === 'LIST' && (
-                                <div className="flex bg-white p-2 rounded-[2.5rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
-                                    <button
-                                        onClick={() => setFilterTab("PENDING")}
-                                        className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'PENDING'
-                                            ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
-                                            : 'border-transparent text-slate-400 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        <Clock className="w-5 h-5" /> รอพิจารณาอนุมัติ
-                                    </button>
-                                    <button
-                                        onClick={() => setFilterTab("APPROVED")}
-                                        className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'APPROVED'
-                                            ? 'bg-[#1F3B8B]/5 text-[#1F3B8B] border-[#1F3B8B]/20 shadow-sm'
-                                            : 'border-transparent text-slate-400 hover:bg-slate-50'
-                                            }`}
-                                    >
-                                        <CheckCircle2 className="w-5 h-5" /> ประวัติการอนุมัติแล้ว
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
+                  <FileCheck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
                 </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <UserCheck className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
+                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+                      Executive Purchase Requisition Approval
+                    </p>
+                  </div>
+                  <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                    {viewMode === "LIST" ? "อนุมัติใบขอซื้อ (PR)" : "พิจารณาอนุมัติเอกสาร"}
+                  </h1>
+                  <div className="flex items-center gap-2 pt-1 opacity-90">
+                    <BadgeCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+                      ระบบตรวจสอบและอนุมัติการจัดซื้อสำหรับผู้บริหาร
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                {/* --- VIEW 1: LIST --- */}
-                {viewMode === 'LIST' && (
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <div className={`p-3 rounded-2xl shadow-sm border ${filterTab === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                                    {filterTab === 'PENDING' ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
-                                </div>
-                                <div>
-                                    {/* ปรับขนาดจาก text-sm เป็น text-lg (และขยายเป็น text-xl ในหน้าจอใหญ่) */}
-                                    <h2 className="text-lg md:text-xl font-bold text-slate-800 tracking-wide">
-                                        {filterTab === 'PENDING' ? 'รายการคำขอที่รอการดำเนินการ' : 'รายการเอกสารที่ผ่านการอนุมัติแล้ว'}
-                                    </h2>
-                                </div>
-                            </div>
+              {viewMode === "LIST" && (
+                <div className="flex bg-white p-2 rounded-[2.5rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
+                  <button
+                    onClick={() => setFilterTab("PENDING")}
+                    className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${
+                      filterTab === "PENDING"
+                        ? "bg-amber-50 text-amber-700 border-amber-200 shadow-sm"
+                        : "border-transparent text-slate-400 hover:bg-slate-50"
+                    }`}
+                  >
+                    <Clock className="w-5 h-5" /> รอพิจารณาอนุมัติ
+                  </button>
+                  <button
+                    onClick={() => setFilterTab("APPROVED")}
+                    className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${
+                      filterTab === "APPROVED"
+                        ? "bg-[#1F3B8B]/5 text-[#1F3B8B] border-[#1F3B8B]/20 shadow-sm"
+                        : "border-transparent text-slate-400 hover:bg-slate-50"
+                    }`}
+                  >
+                    <CheckCircle2 className="w-5 h-5" /> ประวัติการอนุมัติแล้ว
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {viewMode === "LIST" && (
+          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`p-3 rounded-2xl shadow-sm border ${
+                    filterTab === "PENDING"
+                      ? "bg-amber-50 text-amber-600 border-amber-100"
+                      : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                  }`}
+                >
+                  {filterTab === "PENDING" ? (
+                    <AlertCircle className="w-5 h-5" />
+                  ) : (
+                    <FileText className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-slate-800 tracking-wide">
+                    {filterTab === "PENDING"
+                      ? "รายการคำขอที่รอการดำเนินการ"
+                      : "รายการเอกสารที่ผ่านการอนุมัติแล้ว"}
+                  </h2>
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr className="text-sm font-black uppercase text-slate-600 tracking-wider">
+                    <th className="p-6">วันที่ส่งคำขอ</th>
+                    <th className="p-6">เลขที่ใบขอซื้อ (PR)</th>
+                    <th className="p-6">ผู้ขอซื้อ / แผนก</th>
+                    <th className="p-6 text-center">สถานะ</th>
+                    <th className="p-6 text-right">ดำเนินการ</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white/50">
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan="5" className="p-24 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                          <p className="text-slate-500 font-black text-sm tracking-wide">
+                            กำลังโหลดข้อมูล...
+                          </p>
                         </div>
-
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="bg-slate-50 border-b border-slate-200">
-                                    <tr className="text-sm font-black uppercase text-slate-600 tracking-wider">
-                                        <th className="p-6">วันที่ส่งคำขอ</th>
-                                        <th className="p-6">เลขที่ใบขอซื้อ (PR)</th>
-                                        <th className="p-6">ผู้ขอซื้อ / แผนก</th>
-                                        <th className="p-6 text-center">สถานะ</th>
-                                        <th className="p-6 text-right">ดำเนินการ</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 bg-white/50">
-                                    {isLoading ? (
-                                        <tr>
-                                            <td colSpan="5" className="p-24 text-center">
-                                                <div className="flex flex-col items-center gap-3">
-                                                    <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                                                    <p className="text-slate-500 font-black text-sm tracking-wide">กำลังโหลดข้อมูล...</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ) : prList.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="5" className="p-32 text-center">
-                                                <div className="flex flex-col items-center gap-3">
-                                                    <ClipboardList className="w-14 h-14 text-slate-200 mx-auto mb-4" />
-                                                    <p className="text-slate-500 font-black text-sm tracking-wide">ไม่มีข้อมูลในหมวดหมู่นี้</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ) : prList.map((pr) => (
-                                        <tr key={pr.id} className="hover:bg-blue-50 transition-colors group">
-                                            <td className="p-6 font-bold text-slate-500 text-sm">{new Date(pr.createdAt).toLocaleDateString('th-TH')}</td>
-                                            <td className="p-6">
-                                                <div className="flex flex-col gap-1.5">
-                                                    <span className="font-black text-[#1e3b8a] uppercase text-base tracking-tight">{pr.prNumber}</span>
-                                                    <span className="text-xs font-bold text-slate-600 truncate max-w-[250px]">"{pr.purpose}"</span>
-                                                </div>
-                                            </td>
-                                            <td className="p-6">
-                                                <span className="font-black text-slate-800 text-sm block">{pr.user?.firstName} {pr.user?.lastName}</span>
-                                                <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mt-1"><Building2 className="w-3.5 h-3.5" /> {pr.department?.name || 'General'}</span>
-                                            </td>
-                                            <td className="p-6 text-center">
-                                                <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border shadow-sm ${pr.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : pr.status === 'REJECTED' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-amber-50 text-amber-600 border-amber-200'}`}>
-                                                    {pr.status === 'PENDING' ? 'รออนุมัติ' : pr.status === 'APPROVED' ? 'อนุมัติแล้ว' : 'ปฏิเสธ'}
-                                                </span>
-                                            </td>
-                                            <td className="p-6 text-right">
-                                                {filterTab === 'PENDING' ? (
-                                                    <button
-                                                        onClick={() => handleSelectPRFromList(pr)}
-                                                        className="bg-white text-[#1F3B8B] border-2 border-slate-200 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm hover:shadow-md active:scale-95 inline-flex items-center justify-center"
-                                                    >
-                                                        ตรวจสอบและอนุมัติ
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => handleViewPDF(pr.pdfPath)}
-                                                        disabled={!pr.pdfPath}
-                                                        className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm ${pr.pdfPath
-                                                            ? 'bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white hover:shadow-md active:scale-95'
-                                                            : 'bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed'
-                                                            }`}
-                                                    >
-                                                        <FileText className="w-4 h-4" /> {pr.pdfPath ? "ดูเอกสาร PDF" : "ไม่มีเอกสาร"}
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                      </td>
+                    </tr>
+                  ) : prList.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="p-32 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <ClipboardList className="w-14 h-14 text-slate-200 mx-auto mb-4" />
+                          <p className="text-slate-500 font-black text-sm tracking-wide">
+                            ไม่มีข้อมูลในหมวดหมู่นี้
+                          </p>
                         </div>
-                    </div>
-                )}
+                      </td>
+                    </tr>
+                  ) : (
+                    prList.map((pr) => (
+                      <tr key={pr.id} className="hover:bg-blue-50 transition-colors group">
+                        <td className="p-6 font-bold text-slate-500 text-sm">
+                          {new Date(pr.createdAt).toLocaleDateString("th-TH")}
+                        </td>
+                        <td className="p-6">
+                          <div className="flex flex-col gap-1.5">
+                            <span className="font-black text-[#1e3b8a] uppercase text-base tracking-tight">
+                              {pr.prNumber}
+                            </span>
+                            <span className="text-xs font-bold text-slate-600 truncate max-w-[250px]">
+                              "{pr.purpose}"
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-6">
+                          <span className="font-black text-slate-800 text-sm block">
+                            {pr.user?.firstName} {pr.user?.lastName}
+                          </span>
+                          <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mt-1">
+                            <Building2 className="w-3.5 h-3.5" /> {pr.department?.name || "General"}
+                          </span>
+                        </td>
+                        <td className="p-6 text-center">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border shadow-sm ${
+                              pr.status === "APPROVED"
+                                ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                : pr.status === "REJECTED"
+                                ? "bg-rose-50 text-rose-600 border-rose-200"
+                                : "bg-amber-50 text-amber-600 border-amber-200"
+                            }`}
+                          >
+                            {pr.status === "PENDING"
+                              ? "รออนุมัติ"
+                              : pr.status === "APPROVED"
+                              ? "อนุมัติแล้ว"
+                              : "ปฏิเสธ"}
+                          </span>
+                        </td>
+                        <td className="p-6 text-right">
+                          {filterTab === "PENDING" ? (
+                            <button
+                              onClick={() => handleSelectPRFromList(pr)}
+                              className="bg-white text-[#1F3B8B] border-2 border-slate-200 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm hover:shadow-md active:scale-95 inline-flex items-center justify-center"
+                            >
+                              ตรวจสอบและอนุมัติ
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleViewPDF(pr.pdfPath)}
+                              disabled={!pr.pdfPath}
+                              className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm ${
+                                pr.pdfPath
+                                  ? "bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white hover:shadow-md active:scale-95"
+                                  : "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed"
+                              }`}
+                            >
+                              <FileText className="w-4 h-4" /> {pr.pdfPath ? "ดูเอกสาร PDF" : "ไม่มีเอกสาร"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
-                {/* --- VIEW 2: APPROVAL FORM --- */}
-{viewMode === 'FORM' && selectedPRData && (
-    <div className="w-full max-w-[1440px] mx-auto animate-in slide-in-from-bottom-4 duration-500 relative">
-        
-        {/* 💡 ปรับตรงนี้: เปลี่ยนเงาให้เข้มขึ้น (opacity 0.15) และเพิ่มขอบให้หนาขึ้น (border-2 border-slate-200) เพื่อให้กล่องคมชัด ไม่จมไปกับพื้นหลังสีขาว */}
-        <form className="bg-white rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] border-2 border-slate-200 overflow-hidden flex flex-col">
-
-            {/* 1. ส่วนหัวเอกสาร (Document Identity) */}
-            <div className="p-8 md:p-10 border-b border-slate-200 border-dashed flex flex-col md:flex-row justify-between items-start gap-6 bg-white">
+        {viewMode === "FORM" && selectedPRData && (
+          <div className="w-full max-w-[1440px] mx-auto animate-in slide-in-from-bottom-4 duration-500 relative">
+            <form className="bg-white rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.15)] border-2 border-slate-200 overflow-hidden flex flex-col">
+              <div className="p-8 md:p-10 border-b border-slate-200 border-dashed flex flex-col md:flex-row justify-between items-start gap-6 bg-white">
                 <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3 text-indigo-900">
-                        <FileText className="w-6 h-6 text-indigo-600" />
-                        <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">เอกสารใบขออนุมัติจัดซื้อ (PR)</span>
-                    </div>
-                    <h2 className="text-3xl md:text-4xl font-black text-[#1F3B8B] tracking-tighter">
-                        {selectedPRData.prNumber}
-                    </h2>
+                  <div className="flex items-center gap-3 text-indigo-900">
+                    <FileText className="w-6 h-6 text-indigo-600" />
+                    <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-900">
+                      เอกสารใบขออนุมัติจัดซื้อ (PR)
+                    </span>
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-black text-[#1F3B8B] tracking-tighter">
+                    {selectedPRData.prNumber}
+                  </h2>
                 </div>
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 md:p-6 flex flex-col items-center justify-center min-w-[200px] shadow-sm">
-                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 text-center">วันที่ส่งคำขอ</span>
-                    <p className="text-base md:text-lg font-bold text-slate-900 flex items-center justify-center gap-2.5">
-                        <Clock className="w-5 h-5 text-blue-600" /> {new Date(selectedPRData.createdAt).toLocaleDateString('th-TH')}
+                  <span className="text-xs font-black text-slate-500 uppercase tracking-widest mb-1.5 text-center">
+                    วันที่ส่งคำขอ
+                  </span>
+                  <p className="text-base md:text-lg font-bold text-slate-900 flex items-center justify-center gap-2.5">
+                    <Clock className="w-5 h-5 text-blue-600" />{" "}
+                    {new Date(selectedPRData.createdAt).toLocaleDateString("th-TH")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-8 md:px-10 py-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-slate-50 border border-slate-200 p-6 rounded-[1.5rem] space-y-6 shadow-sm">
+                  <div className="space-y-1.5">
+                    <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-3">
+                      <div className="p-2 bg-blue-100/50 rounded-xl">
+                        <User className="w-5 h-5 text-blue-600" />
+                      </div>
+                      ผู้ขอซื้อ (Requester)
+                    </div>
+                    <p className="text-lg md:text-xl font-black text-slate-900 pl-1">
+                      {selectedPRData.user?.firstName} {selectedPRData.user?.lastName}
                     </p>
-                </div>
-            </div>
+                  </div>
 
-            {/* 2. แผงข้อมูลสรุป (General Information) */}
-            <div className="px-8 md:px-10 py-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* กล่องที่ 1: ผู้ขอซื้อ & แผนก */}
+                  <div className="space-y-1.5">
+                    <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-3">
+                      <div className="p-2 bg-emerald-100/50 rounded-xl">
+                        <Building2 className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      แผนก (Cost Center)
+                    </div>
+                    <p className="text-lg md:text-xl font-black text-slate-900 pl-1">
+                      {selectedPRData.department?.name || "ไม่ระบุแผนก"}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="bg-slate-50 border border-slate-200 p-6 rounded-[1.5rem] space-y-6 shadow-sm">
-                    <div className="space-y-1.5">
-                        <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-3">
-                            <div className="p-2 bg-blue-100/50 rounded-xl">
-                                <User className="w-5 h-5 text-blue-600" />
-                            </div>
-                            ผู้ขอซื้อ (Requester)
-                        </div>
-                        <p className="text-lg md:text-xl font-black text-slate-900 pl-1">
-                            {selectedPRData.user?.firstName} {selectedPRData.user?.lastName}
-                        </p>
+                  <div className="space-y-1.5">
+                    <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-3">
+                      <div className="p-2 bg-orange-100/50 rounded-xl">
+                        <Truck className="w-5 h-5 text-orange-500" />
+                      </div>
+                      แนะนำคู่ค้า (Suggested Vendor)
                     </div>
+                    <p className="text-lg md:text-xl font-black text-slate-900 pl-1">
+                      {selectedPRData.supplier?.name ||
+                        "ไม่ได้ระบุ (ให้จัดซื้อดำเนินการหาคู่ค้าเอง)"}
+                    </p>
+                  </div>
 
-                    <div className="space-y-1.5">
-                        <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-3">
-                            <div className="p-2 bg-emerald-100/50 rounded-xl">
-                                <Building2 className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            แผนก (Cost Center)
-                        </div>
-                        <p className="text-lg md:text-xl font-black text-slate-900 pl-1">
-                            {selectedPRData.department?.name || 'ไม่ระบุแผนก'}
-                        </p>
+                  <div className="space-y-1.5">
+                    <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-3">
+                      <div className="p-2 bg-rose-100/50 rounded-xl">
+                        <AlertCircle className="w-5 h-5 text-rose-500" />
+                      </div>
+                      วัตถุประสงค์โครงการ (Purpose)
                     </div>
+                    <p className="text-lg md:text-xl font-black text-slate-900 leading-snug pl-1">
+                      {selectedPRData.purpose || "-"}
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                {/* กล่องที่ 2: คู่ค้า & วัตถุประสงค์ */}
-                <div className="bg-slate-50 border border-slate-200 p-6 rounded-[1.5rem] space-y-6 shadow-sm">
-                    <div className="space-y-1.5">
-                        <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-3">
-                            <div className="p-2 bg-orange-100/50 rounded-xl">
-                                <Truck className="w-5 h-5 text-orange-500" />
-                            </div>
-                            แนะนำคู่ค้า (Suggested Vendor)
-                        </div>
-                        <p className="text-lg md:text-xl font-black text-slate-900 pl-1">
-                            {selectedPRData.supplier?.name || 'ไม่ได้ระบุ (ให้จัดซื้อดำเนินการหาคู่ค้าเอง)'}
-                        </p>
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-3">
-                            <div className="p-2 bg-rose-100/50 rounded-xl">
-                                <AlertCircle className="w-5 h-5 text-rose-500" />
-                            </div>
-                            วัตถุประสงค์โครงการ (Purpose)
-                        </div>
-                        <p className="text-lg md:text-xl font-black text-slate-900 leading-snug pl-1">
-                            {selectedPRData.purpose || '-'}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* 3. ตารางรายการสินค้า (Items Table) */}
-            <div className="px-8 md:px-10 py-4 flex-1">
+              <div className="px-8 md:px-10 py-4 flex-1">
                 <div className="border-2 border-slate-200 rounded-[1.5rem] overflow-hidden shadow-sm bg-white">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50 border-b-2 border-slate-100">
-                            <tr className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-                                <th className="px-6 py-6">รายการพัสดุ</th>
-                                <th className="px-6 py-6 text-center">จำนวน</th>
-                                <th className="px-6 py-6 text-right">ราคาประเมิน/หน่วย</th>
-                                <th className="px-6 py-6 text-right">รวม (บาท)</th>
-                            </tr>
-                        </thead>
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-50 border-b-2 border-slate-100">
+                      <tr className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                        <th className="px-6 py-6">รายการพัสดุ</th>
+                        <th className="px-6 py-6 text-center">จำนวน</th>
+                        <th className="px-6 py-6 text-right">ราคาประเมิน/หน่วย</th>
+                        <th className="px-6 py-6 text-right">รวม (บาท)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y-2 divide-slate-50 bg-white">
+                      {selectedPRData.items.map((item, index) => (
+                        <tr key={index} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="px-6 py-5">
+                            <div className="flex flex-col">
+                              <span className="text-[11px] text-slate-400 mb-1 font-bold tracking-wider">
+                                #{item.product?.sku || "N/A"}
+                              </span>
+                              <span className="text-slate-900 font-black text-sm md:text-base">
+                                {item.product?.name || "ไม่ทราบชื่อสินค้า"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-5 text-center font-black text-lg text-slate-900">
+                            {item.quantity}
+                          </td>
+                          <td className="px-6 py-5 text-right font-bold text-slate-600 tabular-nums text-sm md:text-base">
+                            ฿
+                            {Number(item.estimatedPrice).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            })}
+                          </td>
+                          <td className="px-6 py-5 text-right font-black text-[#1e3b8a] text-base md:text-lg tabular-nums">
+                            ฿
+                            {(item.quantity * item.estimatedPrice).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
 
-                        <tbody className="divide-y-2 divide-slate-50 bg-white">
-                            {selectedPRData.items.map((item, index) => (
-                                <tr key={index} className="hover:bg-slate-50/80 transition-colors">
-                                    <td className="px-6 py-5">
-                                        <div className="flex flex-col">
-                                            <span className="text-[11px] text-slate-400 mb-1 font-bold tracking-wider">#{item.product?.sku || 'N/A'}</span>
-                                            <span className="text-slate-900 font-black text-sm md:text-base">{item.product?.name || "ไม่ทราบชื่อสินค้า"}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5 text-center font-black text-lg text-slate-900">{item.quantity}</td>
-                                    <td className="px-6 py-5 text-right font-bold text-slate-600 tabular-nums text-sm md:text-base">
-                                        ฿{Number(item.estimatedPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </td>
-                                    <td className="px-6 py-5 text-right font-black text-[#1e3b8a] text-base md:text-lg tabular-nums">
-                                        ฿{(item.quantity * item.estimatedPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-
-                        <tfoot className="bg-slate-50/80 border-t-2 border-slate-100">
-                            <tr>
-                                <td colSpan="3" className="px-6 py-6 text-right text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
-                                    มูลค่าประเมินรวมทั้งสิ้น (Total Amount)
-                                </td>
-                                <td className="px-6 py-6 text-right font-black text-2xl md:text-3xl text-[#1e3b8a] tracking-tighter tabular-nums">
-                                    ฿{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                    <tfoot className="bg-slate-50/80 border-t-2 border-slate-100">
+                      <tr>
+                        <td
+                          colSpan="3"
+                          className="px-6 py-6 text-right text-sm font-bold uppercase tracking-[0.2em] text-slate-500"
+                        >
+                          มูลค่าประเมินรวมทั้งสิ้น (Total Amount)
+                        </td>
+                        <td className="px-6 py-6 text-right font-black text-2xl md:text-3xl text-[#1e3b8a] tracking-tighter tabular-nums">
+                          ฿
+                          {totalAmount.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                          })}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
-            </div>
+              </div>
 
-            {/* 4. ส่วนการอนุมัติและลายเซ็น (Approval Sign-off) */}
-            <div className="p-8 md:p-12 bg-slate-50/80 border-t border-slate-200 flex flex-col gap-10 mt-6">
+              <div className="p-8 md:p-12 bg-slate-50/80 border-t border-slate-200 flex flex-col gap-10 mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                      <div className="p-2 bg-violet-100/50 rounded-xl">
+                        <MessageSquare className="w-5 h-5 text-violet-600" />
+                      </div>
+                      ความเห็น/หมายเหตุเพิ่มเติม (ผู้อนุมัติ)
+                    </label>
+                    <textarea
+                      className="w-full bg-white border border-slate-200 rounded-[1.5rem] p-6 text-base font-medium text-slate-700 outline-none focus:border-violet-400 min-h-[160px] transition-all shadow-sm placeholder:text-slate-300"
+                      placeholder="ระบุข้อความถึงฝ่ายจัดซื้อ หรือเหตุผลที่ไม่อนุมัติ..."
+                      value={approvalComment}
+                      onChange={(e) => setApprovalComment(e.target.value)}
+                    />
+                  </div>
 
-                    {/* หมายเหตุ */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-3">
-                            <div className="p-2 bg-violet-100/50 rounded-xl">
-                                <MessageSquare className="w-5 h-5 text-violet-600" />
-                            </div>
-                            ความเห็น/หมายเหตุเพิ่มเติม (ผู้อนุมัติ)
-                        </label>
-                        <textarea
-                            className="w-full bg-white border border-slate-200 rounded-[1.5rem] p-6 text-base font-medium text-slate-700 outline-none focus:border-violet-400 min-h-[160px] transition-all shadow-sm placeholder:text-slate-300"
-                            placeholder="ระบุข้อความถึงฝ่ายจัดซื้อ หรือเหตุผลที่ไม่อนุมัติ..."
-                            value={approvalComment}
-                            onChange={(e) => setApprovalComment(e.target.value)}
-                        />
-                    </div>
-
-                    {/* ลายเซ็น */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-3">
-                            <div className="p-2 bg-sky-100/50 rounded-xl">
-                                <PenTool className="w-5 h-5 text-sky-600" />
-                            </div>
-                            ลายเซ็นผู้อนุมัติ (Signature) <span className="text-rose-500 ml-1">*</span>
-                        </label>
-                        <div className="relative h-[160px]">
-                            {signatureImage ? (
-                                <div className="w-full h-full border-2 border-dashed border-emerald-400 rounded-[1.5rem] bg-white p-4 flex items-center justify-center relative overflow-hidden group shadow-sm">
-                                    <img src={signatureImage} alt="Signature" className="max-h-full object-contain mix-blend-multiply" />
-                                    <button
-                                        type="button"
-                                        onClick={() => setSignatureImage(null)}
-                                        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 bg-rose-500 text-white text-[11px] px-4 py-2 rounded-full font-black uppercase transition-all shadow-lg"
-                                    >
-                                        ลบทิ้ง
-                                    </button>
-                                </div>
-                            ) : (
-                                <label className="w-full h-full border-2 border-dashed border-slate-200 rounded-[1.5rem] bg-white flex flex-col items-center justify-center cursor-pointer hover:border-sky-400 hover:bg-sky-50/50 transition-all group shadow-sm">
-                                    <Upload className="w-7 h-7 text-slate-300 group-hover:text-sky-500 mb-3 transition-colors" />
-                                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-sky-600">อัปโหลดลายเซ็น</span>
-                                    <input type="file" accept="image/*" onChange={handleSignatureUpload} className="hidden" />
-                                </label>
-                            )}
+                  <div className="space-y-3">
+                    <label className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-3">
+                      <div className="p-2 bg-sky-100/50 rounded-xl">
+                        <PenTool className="w-5 h-5 text-sky-600" />
+                      </div>
+                      ลายเซ็นผู้อนุมัติ (Signature){" "}
+                      <span className="text-rose-500 ml-1">*</span>
+                    </label>
+                    <div className="relative h-[160px]">
+                      {signatureImage ? (
+                        <div className="w-full h-full border-2 border-dashed border-emerald-400 rounded-[1.5rem] bg-white p-4 flex items-center justify-center relative overflow-hidden group shadow-sm">
+                          <img
+                            src={signatureImage}
+                            alt="Signature"
+                            className="max-h-full object-contain mix-blend-multiply"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setSignatureImage(null)}
+                            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 bg-rose-500 text-white text-[11px] px-4 py-2 rounded-full font-black uppercase transition-all shadow-lg"
+                          >
+                            ลบทิ้ง
+                          </button>
                         </div>
+                      ) : (
+                        <label className="w-full h-full border-2 border-dashed border-slate-200 rounded-[1.5rem] bg-white flex flex-col items-center justify-center cursor-pointer hover:border-sky-400 hover:bg-sky-50/50 transition-all group shadow-sm">
+                          <Upload className="w-7 h-7 text-slate-300 group-hover:text-sky-500 mb-3 transition-colors" />
+                          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-sky-600">
+                            อัปโหลดลายเซ็น
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleSignatureUpload}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
                     </div>
+                  </div>
                 </div>
 
-                {/* ปุ่มดำเนินการ */}
                 <div className="flex flex-col md:flex-row justify-end gap-5 pt-4 mt-2">
-                    <button
-                        type="button"
-                        onClick={() => setIsRejectModalOpen(true)}
-                        disabled={isLoading}
-                        className="px-10 bg-white border-2 border-rose-100 hover:border-rose-200 hover:bg-rose-50 text-rose-500 py-4 rounded-[1.5rem] font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
-                    >
-                        ไม่อนุมัติ (REJECT)
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setIsApproveModalOpen(true)}
-                        disabled={isLoading || !signatureImage}
-                        className="px-10 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-md shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2.5"
-                    >
-                        <CheckCircle2 className="w-5 h-5" /> ยืนยันการอนุมัติพัสดุ
-                    </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsRejectModalOpen(true)}
+                    disabled={isLoading}
+                    className="px-10 bg-white border-2 border-rose-100 hover:border-rose-200 hover:bg-rose-50 text-rose-500 py-4 rounded-[1.5rem] font-black text-sm uppercase tracking-widest transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    ไม่อนุมัติ (REJECT)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsApproveModalOpen(true)}
+                    disabled={isLoading || !signatureImage}
+                    className="px-10 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-[1.5rem] font-black text-sm uppercase tracking-widest shadow-md shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98] flex items-center justify-center gap-2.5"
+                  >
+                    <CheckCircle2 className="w-5 h-5" /> ยืนยันการอนุมัติพัสดุ
+                  </button>
                 </div>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
+
+      {isApproveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200 px-4">
+          <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center gap-4 mb-8">
+              <div className="p-4 bg-emerald-50 text-emerald-600 rounded-full">
+                <CheckCircle2 className="w-10 h-10" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">ยืนยันการอนุมัติ</h3>
+                <p className="text-sm font-bold text-slate-500">
+                  คุณต้องการอนุมัติคำขอจัดซื้อนี้และสร้างเอกสาร PDF ใช่หรือไม่?
+                  การกระทำนี้ไม่สามารถย้อนกลับได้
+                </p>
+              </div>
             </div>
-        </form>
-    </div>
-)}
-
+            <div className="flex gap-4">
+              <button
+                onClick={() => setIsApproveModalOpen(false)}
+                className="flex-1 px-4 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm uppercase tracking-widest transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleApproveAndGeneratePDF}
+                className="flex-1 px-4 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-colors shadow-lg shadow-emerald-600/20"
+              >
+                ยืนยันอนุมัติ
+              </button>
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* --- POPUP ยืนยันการอนุมัติ --- */}
-            {isApproveModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200 px-4">
-                    <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200">
-                        <div className="flex flex-col items-center text-center gap-4 mb-8">
-                            <div className="p-4 bg-emerald-50 text-emerald-600 rounded-full">
-                                <CheckCircle2 className="w-10 h-10" />
-                            </div>
-                            <div>
-                                <h3 className="text-2xl font-black text-slate-900 mb-2">ยืนยันการอนุมัติ</h3>
-                                <p className="text-sm font-bold text-slate-500">
-                                    คุณต้องการอนุมัติคำขอจัดซื้อนี้และสร้างเอกสาร PDF ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => setIsApproveModalOpen(false)}
-                                className="flex-1 px-4 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm uppercase tracking-widest transition-colors"
-                            >
-                                ยกเลิก
-                            </button>
-                            <button
-                                onClick={handleApproveAndGeneratePDF}
-                                className="flex-1 px-4 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-colors shadow-lg shadow-emerald-600/20"
-                            >
-                                ยืนยันอนุมัติ
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* --- POPUP ยืนยันปฏิเสธคำขอ --- */}
-            {isRejectModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200 px-4">
-                    <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200">
-                        <div className="flex flex-col items-center text-center gap-4 mb-8">
-                            <div className="p-4 bg-rose-50 text-rose-600 rounded-full">
-                                <XCircle className="w-10 h-10" />
-                            </div>
-                            <div>
-                                <h3 className="text-2xl font-black text-slate-900 mb-2">ปฏิเสธคำขอ</h3>
-                                <p className="text-sm font-bold text-slate-500">
-                                    คุณแน่ใจหรือไม่ที่จะปฏิเสธใบคำขอนี้? กรุณาตรวจสอบให้แน่ใจว่าคุณได้กรอกเหตุผลในช่องหมายเหตุแล้ว
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => setIsRejectModalOpen(false)}
-                                className="flex-1 px-4 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm uppercase tracking-widest transition-colors"
-                            >
-                                ยกเลิก
-                            </button>
-                            <button
-                                onClick={handleReject}
-                                className="flex-1 px-4 py-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-colors shadow-lg shadow-rose-600/20"
-                            >
-                                ยืนยันปฏิเสธ
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-        </AuthGate>
-    );
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200 px-4">
+          <div className="bg-white p-8 rounded-[2rem] shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center gap-4 mb-8">
+              <div className="p-4 bg-rose-50 text-rose-600 rounded-full">
+                <XCircle className="w-10 h-10" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 mb-2">ปฏิเสธคำขอ</h3>
+                <p className="text-sm font-bold text-slate-500">
+                  คุณแน่ใจหรือไม่ที่จะปฏิเสธใบคำขอนี้?
+                  กรุณาตรวจสอบให้แน่ใจว่าคุณได้กรอกเหตุผลในช่องหมายเหตุแล้ว
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setIsRejectModalOpen(false)}
+                className="flex-1 px-4 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm uppercase tracking-widest transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleReject}
+                className="flex-1 px-4 py-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest transition-colors shadow-lg shadow-rose-600/20"
+              >
+                ยืนยันปฏิเสธ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </AuthGate>
+  );
 }

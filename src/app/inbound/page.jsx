@@ -95,11 +95,15 @@ export default function CreateGoodsReceiptPage() {
                 .filter((pi) => Number(pi.receivedQuantity) < Number(pi.orderedQuantity))
                 .map((pi) => ({
                     id: pi.id || `${Date.now()}-${Math.random()}`,
-                    productId: pi.productId || "", warehouseId: "", zoneId: "", locationId: "",
+                    productId: pi.productId || "",
+                    warehouseId: "",
+                    zoneId: "",
+                    locationId: "",
                     quantity: Number(pi.orderedQuantity) - Number(pi.receivedQuantity),
                     remainingQuantity: Number(pi.orderedQuantity) - Number(pi.receivedQuantity),
                     unitCost: Number(pi.unitPrice) || 0,
-                    sku: pi.product?.sku || "", name: pi.product?.name || "",
+                    sku: pi.product?.sku || "",
+                    name: pi.product?.name || "",
                     orderedQuantity: Number(pi.orderedQuantity) || 0,
                     receivedQuantity: Number(pi.receivedQuantity) || 0,
                 }));
@@ -107,15 +111,30 @@ export default function CreateGoodsReceiptPage() {
             setItems(matchedItems.length > 0 ? matchedItems : [createDefaultItem()]);
 
             if (po.pdfPath) {
-                const filename = po.pdfPath.split('/').pop();
-                const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
-                const url = `${backendUrl}/api/purchase/po/document/${filename}`;
-                const token = typeof getAccessToken === 'function' ? getAccessToken() : null;
+                const rawPath = String(po.pdfPath).trim();
+                const backendUrl =
+                    process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
 
-                fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
-                    .then(res => res.ok ? res.blob() : Promise.reject())
-                    .then(blob => setPdfBlobUrl(window.URL.createObjectURL(blob)))
-                    .catch(() => console.error("Error loading inline PDF"));
+                let url = '';
+                if (rawPath.includes('/api/purchase/po/document/')) {
+                    url = rawPath.startsWith('http') ? rawPath : `${backendUrl}${rawPath}`;
+                } else {
+                    const filename = rawPath.split(/[/\\\\]/).pop();
+                    if (filename) {
+                        url = `${backendUrl}/api/purchase/po/document/${encodeURIComponent(filename)}`;
+                    }
+                }
+
+                if (url) {
+                    const token = typeof getAccessToken === 'function' ? getAccessToken() : null;
+
+                    fetch(url, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                        .then((res) => (res.ok ? res.blob() : Promise.reject(new Error("โหลด PDF ไม่สำเร็จ"))))
+                        .then((blob) => setPdfBlobUrl(window.URL.createObjectURL(blob)))
+                        .catch(() => console.error("Error loading inline PDF"));
+                }
             }
 
             setViewMode('FORM');
@@ -129,26 +148,49 @@ export default function CreateGoodsReceiptPage() {
 
     const handleViewPDF = async (pdfPath, type = 'PO') => {
         if (!pdfPath) return toast.error("ไม่พบข้อมูลไฟล์เอกสาร");
+
         const toastId = toast.loading(`กำลังเปิดเอกสาร ${type}...`);
 
         try {
-            const filename = pdfPath.split('/').pop();
-            const backendUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace('/api', '');
+            const rawPath = String(pdfPath).trim();
+            const backendUrl =
+                (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace('/api', '');
 
             let url = '';
-            if (type === 'PO') {
-                url = `${backendUrl}/api/purchase/po/document/${filename}`;
+
+            // ถ้า backend ส่ง secure route มาอยู่แล้ว
+            if (rawPath.includes('/api/purchase/po/document/') || rawPath.includes('/inventory/receipt/document/')) {
+                url = rawPath.startsWith('http') ? rawPath : `${backendUrl}${rawPath}`;
             } else {
-                url = `${backendUrl}/inventory/receipt/document/${filename}`;
+                const filename = rawPath.split(/[/\\\\]/).pop();
+
+                if (!filename) {
+                    throw new Error("ไม่สามารถระบุชื่อไฟล์เอกสารได้");
+                }
+
+                if (type === 'PO') {
+                    url = `${backendUrl}/api/purchase/po/document/${encodeURIComponent(filename)}`;
+                } else {
+                    url = `${backendUrl}/inventory/receipt/document/${encodeURIComponent(filename)}`;
+                }
             }
 
             const token = typeof getAccessToken === 'function' ? getAccessToken() : null;
+            if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+
             const response = await fetch(url, {
                 method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` }
             });
 
-            if (!response.ok) throw new Error("เข้าถึงเอกสารไม่ได้ (อาจยังไม่มีไฟล์บนเซิร์ฟเวอร์)");
+            if (!response.ok) {
+                let msg = "เข้าถึงเอกสารไม่ได้ (อาจยังไม่มีไฟล์บนเซิร์ฟเวอร์)";
+                try {
+                    const err = await response.json();
+                    msg = err?.message || msg;
+                } catch {}
+                throw new Error(msg);
+            }
 
             const blob = await response.blob();
             const fileUrl = window.URL.createObjectURL(blob);
@@ -157,7 +199,7 @@ export default function CreateGoodsReceiptPage() {
 
             setTimeout(() => window.URL.revokeObjectURL(fileUrl), 60000);
         } catch (error) {
-            toast.error(error.message, { id: toastId });
+            toast.error(error.message || "เปิดเอกสารไม่สำเร็จ", { id: toastId });
         }
     };
 

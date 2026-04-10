@@ -2,11 +2,9 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { apiFetch, API_BASE } from "@/lib/api"; // 💡 ดึง API_BASE มาใช้
+import { apiFetch, API_BASE } from "@/lib/api"; 
 import { clearAccessToken } from "@/lib/auth";
 import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera } from "lucide-react";
-
-// ... (menuGroups เหมือนเดิม) ...
 
 const menuGroups = [
     {
@@ -97,26 +95,35 @@ export default function AppShell({ children }) {
 
     const [isPending, startTransition] = useTransition();
     const [pendingHref, setPendingHref] = useState(null);
-    const [userFullName, setUserFullName] = useState("");
+    
+    // 💡 แก้ไข: ใช้ null เป็นค่าเริ่มต้นเพื่อแยกสถานะ "กำลังโหลด" ออกจาก "ข้อมูลว่าง"
+    const [userFullName, setUserFullName] = useState(null);
     const [userAvatar, setUserAvatar] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
-        if (window.location.pathname === "/login") return;
+        if (path === "/login") return;
+
         async function fetchUserProfile() {
             try {
                 const res = await apiFetch("/auth/me");
                 if (res) {
-                    if (res.firstName) setUserFullName(`${res.firstName} ${res.lastName || ''}`.trim());
+                    // 💡 แก้ไข Logic: ถ้าไม่มี firstName ให้ใช้ username เป็นค่าสำรอง (Fallback)
+                    const fullName = res.firstName 
+                        ? `${res.firstName} ${res.lastName || ''}`.trim() 
+                        : (res.username || "User");
+                    
+                    setUserFullName(fullName);
                     if (res.avatarUrl) setUserAvatar(res.avatarUrl);
                 }
             } catch (error) {
+                console.error("Fetch profile failed", error);
                 clearAccessToken();
-                router.push("/login");
+                router.replace("/login");
             }
         }
         fetchUserProfile();
-    }, [router]);
+    }, [path, router]); // 💡 เพิ่ม path เข้าไปเพื่อให้ตรวจสอบสิทธิ์ทุกครั้งที่เปลี่ยนหน้า
 
     useEffect(() => {
         const savedScrollPos = sessionStorage.getItem("sidebar-scroll");
@@ -177,7 +184,7 @@ export default function AppShell({ children }) {
     async function logout() {
         if (!confirm("ยืนยันการออกจากระบบ?")) return;
         try {
-            await apiFetch("/api/auth/logout", { method: "POST" });
+            await apiFetch("/auth/logout", { method: "POST" });
         } catch (e) {
             console.error("Logout error", e);
         }
@@ -185,13 +192,10 @@ export default function AppShell({ children }) {
         window.location.href = "/login";
     }
 
-    // 💡 ฟังก์ชันช่วยจัดรูปแบบ URL รูปภาพให้ถูกต้อง
     const getAvatarSrc = () => {
         if (!userAvatar) return null;
-        // ถ้าเป็น URL เต็มอยู่แล้ว (เช่นขึ้นด้วย http) ให้ส่งกลับเลย
         if (userAvatar.startsWith('http')) return userAvatar;
-        // ถ้าเป็น Path (เช่น /uploads/...) ให้เอา URL ของ Backend มาต่อข้างหน้า
-        const baseUrl = API_BASE.replace('/api', ''); // ลบ /api ออกถ้ามีเพื่อให้ได้ URL หลักของ Server
+        const baseUrl = API_BASE.replace('/api', ''); 
         return `${baseUrl}${userAvatar}`;
     };
 
@@ -240,7 +244,6 @@ export default function AppShell({ children }) {
                                             alt="Profile"
                                             className="h-full w-full object-cover"
                                             onError={(e) => {
-                                                // ถ้าโหลดรูปไม่ขึ้น ให้กลับไปโชว์ไอคอน default
                                                 e.target.style.display = 'none';
                                                 e.target.parentElement.classList.add('flex-col');
                                             }}
@@ -255,7 +258,12 @@ export default function AppShell({ children }) {
                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                                 <div className="min-w-0 flex-1">
                                     <p className="text-sm font-bold text-[#1e3b8a] truncate tracking-wide">
-                                        {userFullName || "กำลังโหลดข้อมูล..."}
+                                        {/* 💡 ปรับปรุงการแสดงผล Loading ให้ดูเป็นธรรมชาติ */}
+                                        {userFullName === null ? (
+                                            <span className="animate-pulse text-slate-400">กำลังโหลด...</span>
+                                        ) : (
+                                            userFullName
+                                        )}
                                     </p>
                                 </div>
                             </div>
@@ -281,7 +289,7 @@ export default function AppShell({ children }) {
                         </nav>
                     </div>
 
-                    <div className="px-5 pb-6 pt-4 sticky bottom-0 bg-white/80 backdrop-blur-xl border-t border-slate-100/60">
+                    <div className="px-5 pb-6 pt-4 bottom-0 bg-white/80 backdrop-blur-xl border-t border-slate-100/60">
                         <button
                             onClick={logout}
                             className="group relative flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-100 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-500 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600 hover:shadow-sm active:scale-95"
@@ -293,7 +301,7 @@ export default function AppShell({ children }) {
                 </aside>
 
                 <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
-                    <div className={`w-full min-h-[calc(100vh-4rem)] rounded-[2rem] border border-slate-200/60 bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-500 md:p-10 ${isPending ? "opacity-50 blur-[2px] grayscale-[20%]" : "opacity-100"}`}>
+                    <div className={`w-full min-h-[calc(100vh-4rem)] rounded-4xl border border-slate-200/60 bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-500 md:p-10 ${isPending ? "opacity-50 blur-[2px] grayscale-[20%]" : "opacity-100"}`}>
                         {children}
                     </div>
                 </main>

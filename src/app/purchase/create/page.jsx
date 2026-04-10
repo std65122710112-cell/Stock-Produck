@@ -63,38 +63,59 @@ export default function CreatePurchaseOrderPage() {
         loadInitialData();
     }, [viewMode, filterTab]);
 
-    const handleViewPDF = async (pdfPath, type = 'PO') => {
-        if (!pdfPath || pdfPath === 'PENDING') return toast.error("ไม่พบไฟล์เอกสาร PDF");
+    const handleViewPDF = async (pdfPath) => {
+        if (!pdfPath) {
+            return toast.error("ไม่พบไฟล์เอกสาร PDF สำหรับรายการนี้");
+        }
 
         setIsLoading(true);
-        toast.loading(`กำลังเปิดเอกสาร ${type}...`, { id: "pdf-load" });
+        toast.loading("กำลังเปิดเอกสาร...", { id: "pdf-load" });
 
         try {
-            const filename = pdfPath.split('/').pop();
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
+            const backendUrl =
+                process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
 
-            const url = type === 'PR'
-                ? `${backendUrl}/api/purchase/pr/document/${filename}`
-                : `${backendUrl}/api/purchase/po/document/${filename}`;
+            const token = typeof getAccessToken === "function" ? getAccessToken() : null;
+            if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
 
-            const token = typeof getAccessToken === 'function' ? getAccessToken() : null;
-            if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่");
+            const rawPath = String(pdfPath).trim();
+            const filename = rawPath.split(/[/\\\\]/).pop();
 
-            const response = await fetch(url, {
+            if (!filename) {
+                throw new Error("ไม่สามารถระบุชื่อไฟล์เอกสารได้");
+            }
+
+            const isPO = filename.toUpperCase().startsWith("PO-");
+            const route = isPO
+                ? `/api/purchase/po/document/${encodeURIComponent(filename)}`
+                : `/api/purchase/pr/document/${encodeURIComponent(filename)}`;
+
+            const response = await fetch(`${backendUrl}${route}`, {
                 method: "GET",
-                headers: { "Authorization": `Bearer ${token}` }
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
-            if (!response.ok) throw new Error("คุณไม่มีสิทธิ์เข้าถึง หรือเอกสารสูญหาย");
+            if (!response.ok) {
+                let msg = "คุณไม่มีสิทธิ์เข้าถึง หรือเอกสารสูญหาย";
+                try {
+                    const err = await response.json();
+                    msg = err?.message || msg;
+                } catch {}
+                throw new Error(msg);
+            }
 
             const blob = await response.blob();
             const fileURL = window.URL.createObjectURL(blob);
-            window.open(fileURL, '_blank');
-            toast.success("เปิดสำเร็จ", { id: "pdf-load" });
+            window.open(fileURL, "_blank");
+            toast.success("เปิดเอกสารสำเร็จ", { id: "pdf-load" });
 
-            setTimeout(() => { window.URL.revokeObjectURL(fileURL); }, 60000);
+            setTimeout(() => {
+                window.URL.revokeObjectURL(fileURL);
+            }, 60000);
         } catch (error) {
-            toast.error(error.message, { id: "pdf-load" });
+            toast.error(error.message || "เปิดเอกสารไม่สำเร็จ", { id: "pdf-load" });
         } finally {
             setIsLoading(false);
         }

@@ -9,59 +9,64 @@ import {
     Trash2, Database, CheckCircle2, RefreshCw, X,
     Lock, ChevronRight, Save, Shield, Briefcase, Activity,
     AlertTriangle, Type, UserSquare, Key,
-    Truck, Package, ShoppingCart, ClipboardList, Monitor, Loader2
+    Truck, Package, ShoppingCart, ClipboardList, Monitor, Loader2, PieChart
 } from "lucide-react";
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
-const AVAILABLE_ROLES = ["Admin", "Manager", "Staff"];
+const AVAILABLE_ROLES = ["Admin", "Executive", "Purchasing", "Warehouse", "Staff"];
+
 
 const PERMISSION_MAP = {
-    "INBOUND_READ": { label: "รายการรับเข้า", desc: "เรียกดูใบรับสินค้า" },
-    "INBOUND_CREATE": { label: "บันทึกรับเข้า", desc: "ลงทะเบียนสินค้าใหม่" },
-    "OUTBOUND_READ": { label: "รายการจ่ายออก", desc: "เรียกดูใบเบิกจ่าย" },
-    "OUTBOUND_CREATE": { label: "บันทึกจ่ายออก", desc: "ตัดสต็อกออกจากคลัง" },
-    "INVENTORY_VIEW": { label: "ยอดคงเหลือ", desc: "เช็คจำนวนสินค้าจริง" },
-    "INVENTORY_READ": { label: "ความเคลื่อนไหว", desc: "ดูประวัติสต็อก Card" },
-    "INVENTORY_TRANSFER": { label: "โอนย้ายสินค้า", desc: "ย้ายระหว่างคลัง/โซน" },
-    "INVENTORY_ADJUST": { label: "ปรับปรุงยอด", desc: "แก้ไขยอดตรวจนับจริง" },
-    "PURCHASE_CREATE": { label: "เปิดใบสั่งซื้อ", desc: "สร้างเอกสาร PO" },
-    "PR_READ": { label: "ดูใบขอซื้อ", desc: "รายการ PR ทั้งหมด" },
-    "PR_CREATE": { label: "สร้างใบขอซื้อ", desc: "เปิดขอซื้อสินค้าใหม่" },
-    "PR_APPROVE": { label: "อนุมัติขอซื้อ", desc: "สิทธิ์อนุมัติงบประมาณ" },
-    "REQUISITION_CREATE": { label: "สร้างใบเบิก", desc: "ขอเบิกพัสดุใช้งาน" },
-    "REQUISITION_APPROVE": { label: "อนุมัติเบิก", desc: "ยืนยันการจ่ายพัสดุ" },
-    "MASTER_DATA_READ": { label: "ดูฐานข้อมูล", desc: "รายการสินค้า/คลัง" },
-    "MASTER_DATA_CREATE": { label: "จัดการข้อมูล", desc: "เพิ่ม/แก้ข้อมูลพื้นฐาน" },
-    "MASTER_EDITx": { label: "ตั้งค่าขั้นสูง", desc: "สิทธิ์แก้โครงสร้างระบบ" },
-    "AUDIT_LOG_VIEW": { label: "ประวัติการใช้งาน", desc: "ตรวจสอบ Log พนักงาน" }
+    "SYSTEM_SETTINGS_MANAGE": { label: "ตั้งค่าบริษัท", desc: "แก้ไขโลโก้และข้อมูลองค์กร" },
+    "USER_MANAGE": { label: "จัดการผู้ใช้", desc: "เพิ่ม/ลด และกำหนดสิทธิ์พนักงาน" },
+    "AUDIT_LOG_VIEW": { label: "ดูประวัติระบบ", desc: "ตรวจสอบ Log การใช้งานทั้งหมด" },
+    "MASTER_DATA_READ": { label: "ดูฐานข้อมูลหลัก", desc: "รายการสินค้า หมวดหมู่ คู่ค้า" },
+    "MASTER_DATA_MANAGE": { label: "จัดการฐานข้อมูล", desc: "เพิ่ม/แก้ไข สินค้าและคู่ค้า" },
+    "WAREHOUSE_MANAGE": { label: "จัดการคลัง", desc: "สร้างและแก้ไขโครงสร้างคลัง/โซน" },
+    "PR_READ": { label: "รายการใบขอซื้อ", desc: "ดูใบ PR ทั้งหมด" },
+    "PR_CREATE": { label: "สร้างใบขอซื้อ", desc: "เปิดใบ PR เพื่อขออนุมัติซื้อ" },
+    "PR_APPROVE": { label: "อนุมัติขอซื้อ", desc: "พิจารณาอนุมัติ/ปฏิเสธ PR" },
+    "PO_MANAGE": { label: "จัดการใบสั่งซื้อ", desc: "สร้างและจัดการเอกสาร PO" },
+    "INBOUND_READ": { label: "รายการรับเข้า", desc: "เรียกดูใบรับสินค้า (GR)" },
+    "INBOUND_CREATE": { label: "บันทึกรับเข้า", desc: "สร้างใบรับสินค้าเข้าคลัง" },
+    "OUTBOUND_READ": { label: "รายการจ่ายออก", desc: "เรียกดูใบเบิกจ่าย (DO)" },
+    "OUTBOUND_CREATE": { label: "บันทึกจ่ายออก", desc: "สร้างใบจ่ายและตัดสต๊อก" },
+    "REQUISITION_READ": { label: "รายการใบเบิก", desc: "ดูประวัติการขอเบิกภายใน" },
+    "REQUISITION_CREATE": { label: "สร้างใบเบิก", desc: "ขอเบิกพัสดุหรือสินค้าไปใช้งาน" },
+    "REQUISITION_APPROVE": { label: "อนุมัติเบิก", desc: "ตรวจสอบและอนุมัติการจ่ายของ" },
+    "INVENTORY_READ": { label: "ยอดคงเหลือ", desc: "ดูสต๊อกและประวัติความเคลื่อนไหว" },
+    "TRANSFER_MANAGE": { label: "โอนย้ายสินค้า", desc: "สร้างใบส่งและรับสินค้าข้ามคลัง" },
+    "ADJUSTMENT_MANAGE": { label: "ปรับปรุงยอด", desc: "แก้ไขยอด กรณีสินค้าเกิน/ขาดหาย" },
+    "COUNT_TASK_MANAGE": { label: "ตรวจนับสต๊อก", desc: "สร้างและอนุมัติใบสั่งนับ (Count)" },
+    "DASHBOARD_VIEW": { label: "หน้าภาพรวม", desc: "ดู Dashboard และกราฟสรุป" },
+    "REPORT_EXPORT": { label: "ออกรายงาน", desc: "ดาวน์โหลดไฟล์ Excel และ PDF" }
 };
 
+// 💡 2. จัดกลุ่มใหม่ให้สวยงามและเป็นระเบียบ
 const PERMISSION_GROUPS = {
-    "โลจิสติกส์": ["INBOUND_READ", "INBOUND_CREATE", "OUTBOUND_READ", "OUTBOUND_CREATE"],
-    "คลังสินค้า": ["INVENTORY_VIEW", "INVENTORY_READ", "INVENTORY_TRANSFER", "INVENTORY_ADJUST"],
-    "จัดซื้อ": ["PURCHASE_CREATE", "PR_READ", "PR_CREATE", "PR_APPROVE"],
-    "เบิกของ": ["REQUISITION_CREATE", "REQUISITION_APPROVE"],
-    "ระบบ": ["MASTER_DATA_READ", "MASTER_DATA_CREATE", "MASTER_EDITx", "AUDIT_LOG_VIEW"]
+    "ระบบและข้อมูลหลัก": ["SYSTEM_SETTINGS_MANAGE", "USER_MANAGE", "AUDIT_LOG_VIEW", "MASTER_DATA_READ", "MASTER_DATA_MANAGE", "WAREHOUSE_MANAGE"],
+    "จัดซื้อ": ["PR_READ", "PR_CREATE", "PR_APPROVE", "PO_MANAGE"],
+    "รับและจ่ายสินค้า": ["INBOUND_READ", "INBOUND_CREATE", "OUTBOUND_READ", "OUTBOUND_CREATE"],
+    "เบิกภายใน": ["REQUISITION_READ", "REQUISITION_CREATE", "REQUISITION_APPROVE"],
+    "คลังสินค้า": ["INVENTORY_READ", "TRANSFER_MANAGE", "ADJUSTMENT_MANAGE", "COUNT_TASK_MANAGE"],
+    "รายงาน": ["DASHBOARD_VIEW", "REPORT_EXPORT"]
 };
 
-// 💡 ดึง Icon ให้ตรงกับหมวดหมู่ภาษาอังกฤษเป๊ะๆ
+// 💡 3. เพิ่ม Icon ให้รองรับกลุ่มใหม่
 const getGroupIconInfo = (group) => {
     switch (group) {
-        case "โลจิสติกส์":
+        case "รับและจ่ายสินค้า":
             return { icon: <Truck className="w-5 h-5 text-emerald-600" />, bg: "bg-emerald-100" };
-
         case "คลังสินค้า":
             return { icon: <Package className="w-5 h-5 text-amber-600" />, bg: "bg-amber-100" };
-
         case "จัดซื้อ":
             return { icon: <ShoppingCart className="w-5 h-5 text-sky-600" />, bg: "bg-sky-100" };
-
-        case "เบิกของ":
+        case "เบิกภายใน":
             return { icon: <ClipboardList className="w-5 h-5 text-rose-600" />, bg: "bg-rose-100" };
-
-        case "ระบบ":
+        case "ระบบและข้อมูลหลัก":
             return { icon: <Monitor className="w-5 h-5 text-slate-600" />, bg: "bg-slate-200" };
-
+        case "รายงาน":
+            return { icon: <PieChart className="w-5 h-5 text-violet-600" />, bg: "bg-violet-100" };
         default:
             return { icon: <Activity className="w-5 h-5 text-[#1F3B8B]" />, bg: "bg-[#1F3B8B]/10" };
     }
@@ -153,27 +158,22 @@ export default function UserAndDeptManagementPage() {
     const saveEditUser = async (id) => {
         setLoading(true);
         try {
-            // 1. เช็คว่าชื่อ-นามสกุลไม่ได้ถูกลบจนเป็นค่าว่าง
             if (!editUserForm.firstName?.trim() || !editUserForm.lastName?.trim()) {
                 throw new Error("กรุณาระบุชื่อและนามสกุลให้ครบถ้วน");
             }
 
-            // 2. จัดเตรียมข้อมูล (Payload)
             const payload = {
                 firstName: editUserForm.firstName.trim(),
                 lastName: editUserForm.lastName.trim(),
                 isActive: editUserForm.isActive,
-                // 💡 [จุดสำคัญ] ถ้าไม่ได้เลือกแผนก (ค่าว่าง) ให้ส่งเป็น null แทน "" Backend จะได้ไม่ฟ้อง 400
                 departmentId: editUserForm.departmentId ? editUserForm.departmentId : null
             };
 
-            // 3. ส่ง Request อัปเดตข้อมูลส่วนตัว (PATCH)
             await apiFetch(`/users/${id}`, {
                 method: "PATCH",
                 body: JSON.stringify(payload)
             });
 
-            // 4. ส่ง Request อัปเดตสิทธิ์การใช้งาน (POST)
             if (editUserForm.role) {
                 await apiFetch(`/users/${id}/roles`, {
                     method: "POST",
@@ -186,7 +186,7 @@ export default function UserAndDeptManagementPage() {
             loadUsers();
 
         } catch (err) {
-            toast.error(err.message || "ระบบปฏิเสธคำขอ (Bad Request) โปรดตรวจสอบข้อมูล");
+            toast.error(err.message || "ระบบปฏิเสธคำขอ โปรดตรวจสอบข้อมูล");
         } finally {
             setLoading(false);
         }
@@ -229,7 +229,7 @@ export default function UserAndDeptManagementPage() {
         setConfirmSavePerms(false);
         try {
             await apiFetch(`/users/roles/${selectedRoleId}/permissions`, { method: "POST", body: JSON.stringify({ permissions: rolePerms }) });
-            toast.success("อัปเดตสิทธิ์สำเร็จ (มีผลเมื่อเข้าสู่ระบบใหม่)");
+            toast.success("อัปเดตสิทธิ์สำเร็จ (มีผลเมื่อพนักงานเข้าสู่ระบบใหม่)");
         } catch (err) { toast.error(err.message); } finally { setLoading(false); }
     };
 
@@ -280,7 +280,7 @@ export default function UserAndDeptManagementPage() {
                 </div>
             )}
 
-            {/* 3. Modal บันทึก Permission (โทนสีน้ำเงิน #1F3B8B ตามตัวอย่าง) */}
+            {/* 3. Modal บันทึก Permission */}
             {confirmSavePerms && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full mx-4 shadow-2xl border-2 border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
@@ -314,7 +314,7 @@ export default function UserAndDeptManagementPage() {
                             </p>
                         </div>
                     </div>
-                    <div className="flex bg-white p-1.5 rounded-[2rem] shadow-sm border-2 border-slate-100">
+                    <div className="flex bg-white p-1.5 rounded-[2rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
                         <TabItem active={activeTab === 'users'} onClick={() => setActiveTab("users")} icon={Users} label="บัญชีผู้ใช้" />
                         <TabItem active={activeTab === 'depts'} onClick={() => setActiveTab("depts")} icon={Building2} label="แผนก" color="emerald" />
                         <TabItem active={activeTab === 'security'} onClick={() => setActiveTab("security")} icon={Lock} label="สิทธิ์การใช้งาน" color="rose" />
@@ -327,7 +327,6 @@ export default function UserAndDeptManagementPage() {
                             {!showAddForm ? (
                                 <button onClick={() => setShowAddForm(true)} className="group w-full bg-white border-2 border-slate-100 p-8 rounded-[2.5rem] flex items-center justify-between hover:border-[#1F3B8B]/50 hover:shadow-xl transition-all">
                                     <div className="flex items-center gap-6">
-                                        {/* 💡 เปลี่ยน bg-slate-950 เป็น bg-[#1F3B8B] และเปลี่ยน text-sky-400 ของไอคอนเป็น text-white */}
                                         <div className="w-16 h-16 bg-[#1F3B8B] rounded-3xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg shadow-[#1F3B8B]/20">
                                             <UserPlus className="w-8 h-8 text-white" />
                                         </div>
@@ -454,7 +453,6 @@ export default function UserAndDeptManagementPage() {
                                                                 <div className="flex justify-end gap-2">
                                                                     <button
                                                                         onClick={() => startEditUser(u)}
-
                                                                         className="p-3 text-slate-400 hover:text-amber-500 bg-slate-50 hover:bg-amber-50 rounded-xl transition-all font-black text-xs uppercase tracking-widest border border-transparent hover:border-amber-200 active:scale-95"
                                                                     >
                                                                         แก้ไข
@@ -478,15 +476,13 @@ export default function UserAndDeptManagementPage() {
                             {/* ส่วนบน: กลุ่มสิทธิ์การใช้งาน (เรียงแนวนอน) */}
                             <div className="w-full space-y-6">
                                 <h3 className="text-sm font-black uppercase text-slate-950 ml-10 tracking-widest flex items-center gap-2">
-                                    <Users className="w-5 h-5 text-[#1F3B8B]" /> กลุ่มสิทธิ์การใช้งาน
+                                    <Users className="w-5 h-5 text-[#1F3B8B]" /> กลุ่มผู้ใช้งาน
                                 </h3>
-                                {/* 💡 ปรับเป็น Grid แนวนอน แบ่งคอลัมน์อัตโนมัติตามขนาดจอ */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                                     {systemRoles.map(r => {
                                         const isSelected = selectedRoleId === r.id;
                                         const roleName = r.name.toLowerCase();
 
-                                        // 💡 กำหนดไอคอนให้แตกต่างกันตามชื่อกลุ่ม
                                         let RoleIcon = Shield; // Default
                                         if (roleName.includes('admin')) RoleIcon = Key;
                                         else if (roleName.includes('manager')) RoleIcon = Briefcase;
@@ -496,35 +492,28 @@ export default function UserAndDeptManagementPage() {
                                             <button
                                                 key={r.id}
                                                 onClick={() => setSelectedRoleId(r.id)}
-                                                /* 💡 ปรับ p-4 เป็น p-3 และ rounded-[1.5rem] เป็น rounded-2xl */
                                                 className={`group relative w-full flex items-center justify-between p-3 rounded-2xl transition-all duration-300 border-2 overflow-hidden outline-none ${isSelected
                                                     ? 'bg-gradient-to-br from-[#1F3B8B] to-[#2A4B9F] text-white border-transparent shadow-xl shadow-[#1F3B8B]/30 scale-[1.03] z-10'
                                                     : 'bg-white text-slate-600 border-slate-100 hover:border-[#1F3B8B]/30 hover:shadow-md hover:bg-slate-50/80'
                                                     }`}
                                             >
-                                                {/* 💡 เอฟเฟกต์แสงเงาด้านหลัง ปรับให้เล็กลง (w-20 h-20) */}
                                                 {isSelected && (
                                                     <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full blur-xl pointer-events-none" />
                                                 )}
 
-                                                {/* 💡 ปรับ gap-4 เป็น gap-3 */}
                                                 <div className="flex items-center gap-3 relative z-10">
-                                                    {/* 💡 ปรับกล่องไอคอนจาก w-12 h-12 เป็น w-10 h-10 และลดความโค้งเป็น rounded-xl */}
                                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${isSelected
                                                         ? 'bg-white/20 text-white shadow-inner backdrop-blur-sm ring-1 ring-white/30'
                                                         : 'bg-slate-100 text-slate-400 group-hover:bg-[#1F3B8B]/10 group-hover:text-[#1F3B8B] group-hover:scale-110'
                                                         }`}>
-                                                        {/* 💡 ลดขนาดไอคอนเหลือ 18 */}
                                                         <RoleIcon size={18} />
                                                     </div>
-                                                    {/* 💡 ลดฟอนต์เป็น text-xs ให้ดูคลีนขึ้น */}
                                                     <span className={`font-black text-xs uppercase tracking-wide transition-colors ${isSelected ? 'text-white' : 'text-slate-800 group-hover:text-[#1F3B8B]'
                                                         }`}>
                                                         {r.name}
                                                     </span>
                                                 </div>
 
-                                                {/* 💡 ไอคอนลูกศรลดขนาดเหลือ 18 */}
                                                 <div className={`relative z-10 flex items-center justify-center transition-all duration-300 ${isSelected
                                                     ? 'text-white translate-x-0 opacity-100'
                                                     : 'text-slate-300 -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[#1F3B8B]'
@@ -542,11 +531,9 @@ export default function UserAndDeptManagementPage() {
                                 <div className="bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden hover:shadow-lg transition-all">
                                     <div className="p-8 border-b-2 border-slate-50 flex flex-col md:flex-row justify-between items-center bg-white sticky top-0 z-20 gap-4">
                                         <div>
-                                            {/* 💡 ปรับขนาดฟอนต์เป็น text-sm, ไอคอนเป็น w-5 h-5 และเพิ่ม ml-2 ให้ตรงกับหัวข้อด้านบน */}
                                             <h2 className="text-sm font-black uppercase text-slate-950 ml-2 tracking-widest flex items-center gap-2">
                                                 <Lock className="w-5 h-5 text-[#1F3B8B]" /> ตารางสิทธิ์การใช้งาน (Matrix Control)
                                             </h2>
-                                            {/* 💡 ปรับขนาดป้ายกำกับให้เล็กลงเป็น text-xs เพื่อให้สมดุลกับหัวข้อ */}
                                             <p className="text-xs text-[#1F3B8B] font-bold uppercase mt-2 ml-9 tracking-widest bg-[#1F3B8B]/10 inline-block px-3 py-1.5 rounded-lg">
                                                 กลุ่มที่เลือก: {systemRoles.find(r => r.id === selectedRoleId)?.name}
                                             </p>
@@ -556,7 +543,7 @@ export default function UserAndDeptManagementPage() {
                                             disabled={loading}
                                             className="w-full md:w-auto bg-emerald-600 text-white hover:bg-emerald-700 px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
                                         >
-                                            {loading ? <RefreshCw className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />} บันทึกสิทธิ์การใช้งาน
+                                            {loading ? <RefreshCw className="animate-spin w-4 h-4" /> : <Save className="w-4 h-4" />} บันทึกสิทธิ์
                                         </button>
                                     </div>
                                     <div className="p-8 md:p-12 space-y-16 bg-slate-50/30">
@@ -571,7 +558,6 @@ export default function UserAndDeptManagementPage() {
                                                         <span className="text-base font-black text-slate-950 uppercase tracking-[0.2em]">{group}</span>
                                                         <div className="h-[2px] flex-1 bg-slate-100 ml-4 rounded-full" />
                                                     </div>
-                                                    {/* 💡 ปรับ Grid ภายในให้กระจายตัวเต็มหน้าจออย่างสวยงาม (ใช้ถึง 3 คอลัมน์บนจอใหญ่) */}
                                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-5">
                                                         {perms.map(code => (
                                                             <PermissionToggle key={code} code={code} active={rolePerms.includes(code)} onToggle={() => togglePermission(code)} />
@@ -606,7 +592,6 @@ export default function UserAndDeptManagementPage() {
                                 {deptRows.map(d => (
                                     <div key={d.id} className="p-6 border-b-2 border-slate-50 flex justify-between items-center hover:bg-slate-50/80 transition-colors px-10 group">
                                         <div className="flex items-center gap-5">
-                                            {/* 💡 เปลี่ยน group-hover จากสีน้ำเงินเป็นสีเขียว (emerald-100 และ emerald-600) */}
                                             <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-emerald-100 group-hover:text-emerald-600 transition-colors"><Briefcase className="w-5 h-5" /></div>
                                             <span className="font-black text-slate-950 uppercase text-sm">{d.name}</span>
                                         </div>
@@ -646,12 +631,11 @@ function PermissionToggle({ code, active, onToggle }) {
 }
 
 function TabItem({ active, onClick, icon: Icon, label, color }) {
-    // 💡 เพิ่มเงื่อนไขสีเขียว (emerald) สำหรับแท็บแผนก
-    let style = "bg-[#1F3B8B] shadow-[#1F3B8B]/30"; // สี Default (น้ำเงิน)
-    if (color === 'rose') style = "bg-rose-600 shadow-rose-600/30"; // สีแดง
-    if (color === 'emerald') style = "bg-emerald-600 shadow-emerald-600/30"; // สีเขียว
+    let style = "bg-[#1F3B8B] shadow-[#1F3B8B]/30";
+    if (color === 'rose') style = "bg-rose-600 shadow-rose-600/30";
+    if (color === 'emerald') style = "bg-emerald-600 shadow-emerald-600/30";
     return (
-        <button onClick={onClick} className={`flex items-center gap-3 px-8 py-4 rounded-[1.8rem] transition-all font-black text-sm uppercase tracking-widest ${active ? `${style} text-white shadow-xl` : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
+        <button onClick={onClick} className={`flex items-center gap-3 px-8 py-4 rounded-[1.8rem] transition-all whitespace-nowrap font-black text-sm uppercase tracking-widest ${active ? `${style} text-white shadow-xl` : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'}`}>
             <Icon size={18} />{label}
         </button>
     );
