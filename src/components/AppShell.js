@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { apiFetch, API_BASE } from "@/lib/api"; 
+import { apiFetch, API_BASE } from "@/lib/api";
 import { clearAccessToken } from "@/lib/auth";
 import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera } from "lucide-react";
 
@@ -95,7 +95,7 @@ export default function AppShell({ children }) {
 
     const [isPending, startTransition] = useTransition();
     const [pendingHref, setPendingHref] = useState(null);
-    
+
     // 💡 แก้ไข: ใช้ null เป็นค่าเริ่มต้นเพื่อแยกสถานะ "กำลังโหลด" ออกจาก "ข้อมูลว่าง"
     const [userFullName, setUserFullName] = useState(null);
     const [userAvatar, setUserAvatar] = useState(null);
@@ -109,10 +109,10 @@ export default function AppShell({ children }) {
                 const res = await apiFetch("/auth/me");
                 if (res) {
                     // 💡 แก้ไข Logic: ถ้าไม่มี firstName ให้ใช้ username เป็นค่าสำรอง (Fallback)
-                    const fullName = res.firstName 
-                        ? `${res.firstName} ${res.lastName || ''}`.trim() 
+                    const fullName = res.firstName
+                        ? `${res.firstName} ${res.lastName || ''}`.trim()
                         : (res.username || "User");
-                    
+
                     setUserFullName(fullName);
                     if (res.avatarUrl) setUserAvatar(res.avatarUrl);
                 }
@@ -195,7 +195,7 @@ export default function AppShell({ children }) {
     const getAvatarSrc = () => {
         if (!userAvatar) return null;
         if (userAvatar.startsWith('http')) return userAvatar;
-        const baseUrl = API_BASE.replace('/api', ''); 
+        const baseUrl = API_BASE.replace('/api', '');
         return `${baseUrl}${userAvatar}`;
     };
 
