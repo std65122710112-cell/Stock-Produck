@@ -9,7 +9,7 @@ import {
     Database, Search, MapPin, Clock, X,
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
     Loader2, Wallet, Tag, Package, Download, Boxes,
-    ChevronDown // 💡 เพิ่ม ChevronDown สำหรับทำไอคอนลูกศรตกแต่ง Dropdown
+    ChevronDown
 } from "lucide-react";
 
 export default function BalancesPage() {
@@ -103,7 +103,8 @@ export default function BalancesPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="max-w-6xl mx-auto space-y-6 pb-10">
+            {/* 💡 เปลี่ยนจาก max-w-6xl เป็น w-full max-w-[1600px] เพื่อให้ขยายออกกว้างขึ้น */}
+            <div className="w-full max-w-[1600px] mx-auto space-y-6 pb-10">
 
                 {/* HEADER SECTION */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4 print:hidden pt-8">
@@ -149,10 +150,8 @@ export default function BalancesPage() {
                     </div>
                 </div>
 
-                {/* 🎨 FILTER SECTION (RE-DESIGNED) */}
+                {/* FILTER SECTION */}
                 <div className="bg-white/80 backdrop-blur-md p-5 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col gap-4 mx-2 md:mx-0 print:hidden">
-
-                    {/* แถวบน: ค้นหา & ปุ่มล้าง */}
                     <div className="flex flex-col sm:flex-row items-center gap-3">
                         <div className="flex-1 w-full relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -182,10 +181,8 @@ export default function BalancesPage() {
                         )}
                     </div>
 
-                    {/* แถวล่าง: Dropdowns จัดแบบ Grid 4 คอลัมน์ */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-
-                        {/* 1. หมวดหมู่ */}
+                        {/* หมวดหมู่ */}
                         <div className="relative">
                             <select
                                 className="w-full appearance-none bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none cursor-pointer transition-colors"
@@ -198,7 +195,7 @@ export default function BalancesPage() {
                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                         </div>
 
-                        {/* 2. คลังสินค้า */}
+                        {/* คลังสินค้า */}
                         <div className="relative">
                             <select
                                 className="w-full appearance-none bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-500 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none cursor-pointer transition-colors"
@@ -216,7 +213,7 @@ export default function BalancesPage() {
                             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                         </div>
 
-                        {/* 3. โซน */}
+                        {/* โซน */}
                         <div className="relative">
                             <select
                                 className="w-full appearance-none bg-white border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none cursor-pointer transition-colors disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
@@ -241,7 +238,7 @@ export default function BalancesPage() {
                             <ChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${!selectedWarehouse ? 'text-slate-300' : 'text-slate-400'}`} />
                         </div>
 
-                        {/* 4. ตำแหน่งจัดเก็บ */}
+                        {/* ตำแหน่งจัดเก็บ */}
                         <div className="relative">
                             <select
                                 className="w-full appearance-none bg-white border border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 outline-none cursor-pointer transition-colors disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
@@ -274,12 +271,12 @@ export default function BalancesPage() {
                         <table className="min-w-full text-base text-left border-collapse">
                             <thead className="bg-slate-50 border-b border-slate-200">
                                 <tr className="text-slate-800 font-black text-sm tracking-wide">
-                                    <th className="p-5 pl-8">ข้อมูลสินค้า</th>
-                                    <th className="p-5">ตำแหน่งจัดเก็บ</th>
-                                    <th className="p-5 text-center">ยอดคงเหลือ</th>
-                                    <th className="p-5 text-center">บาร์โค้ด</th>
-                                    <th className="p-5 text-right">มูลค่ารวม</th>
-                                    <th className="p-5 text-center pr-8">อัปเดตล่าสุด</th>
+                                    <th className="py-4 px-4 pl-6 w-1/4">ข้อมูลสินค้า</th>
+                                    <th className="py-4 px-4 w-1/4">ตำแหน่งจัดเก็บ</th>
+                                    <th className="py-4 px-4 text-center">ยอดคงเหลือ</th>
+                                    <th className="py-4 px-4 text-center">บาร์โค้ด</th>
+                                    <th className="py-4 px-4 text-right">มูลค่ารวม</th>
+                                    <th className="py-4 px-4 text-center pr-6">อัปเดตล่าสุด</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 bg-white">
@@ -301,57 +298,71 @@ export default function BalancesPage() {
                                     </tr>
                                 ) : balances.map((b, i) => (
                                     <tr key={i} className="hover:bg-slate-50/80 group transition-colors">
-                                        <td className="p-5 pl-8">
+                                        <td className="py-4 px-4 pl-6 align-top">
                                             <div className="flex flex-col">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="tabular-nums font-black text-blue-700 uppercase tracking-tight">
+                                                <div className="flex items-center flex-wrap gap-2 mb-1">
+                                                    <span className="tabular-nums font-black text-blue-700 uppercase tracking-tight text-sm">
                                                         {b?.product?.sku}
                                                     </span>
                                                     {b?.product?.category?.name && (
-                                                        <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md uppercase">
+                                                        <span className="text-[9px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md uppercase">
                                                             {b.product.category.name}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="font-semibold text-slate-700 text-sm truncate max-w-[280px]">
+                                                <p className="font-semibold text-slate-700 text-sm line-clamp-2 leading-relaxed">
                                                     {b?.product?.name}
                                                 </p>
                                             </div>
                                         </td>
-                                        <td className="p-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600 flex-shrink-0">
+                                        
+                                        <td className="py-4 px-4 align-top">
+                                            <div className="flex items-start gap-3">
+                                                <div className="bg-emerald-50 p-2 rounded-lg text-emerald-600 flex-shrink-0 mt-0.5">
                                                     <MapPin className="w-4 h-4" />
                                                 </div>
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-black text-slate-800 tracking-wide">
-                                                        {b?.location?.warehouse?.name || b?.location?.warehouse?.code || '-'}
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-sm font-black text-slate-800 tracking-wide mb-1.5 leading-tight">
+                                                        {b?.location?.warehouse?.name ? `${b.location.warehouse.name} (${b.location.warehouse.code})` : b?.location?.warehouse?.code || '-'}
                                                     </span>
-                                                    <div className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 mt-0.5">
-                                                        <span>Z: {b?.location?.zone?.code || '-'}</span>
-                                                        <span className="text-slate-300">•</span>
-                                                        <span>L: {b?.location?.code || '-'}</span>
+                                                    <div className="text-[11.5px] font-semibold text-slate-600 flex flex-col gap-1.5">
+                                                        <div className="flex items-start gap-2">
+                                                            <span className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-bold uppercase tracking-wider text-[9px] shrink-0 mt-0.5">Zone</span>
+                                                            <span className="leading-tight">
+                                                                {b?.location?.zone?.name ? `${b.location.zone.name} (${b.location.zone.code})` : b?.location?.zone?.code || '-'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-start gap-2">
+                                                            <span className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-500 font-bold uppercase tracking-wider text-[9px] shrink-0 mt-0.5">Loc</span>
+                                                            <span className="leading-tight">
+                                                                {b?.location?.name ? `${b.location.name} (${b.location.code})` : b?.location?.code || '-'}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="p-5 text-center">
-                                            <span className={`text-sm inline-block min-w-[50px] font-black px-3 py-1 rounded-lg tabular-nums ${b.quantity <= 5
-                                                ? 'bg-rose-50 text-rose-600 border border-rose-100'
-                                                : 'bg-slate-100 text-slate-700'
-                                                }`}>
-                                                {b?.quantity?.toLocaleString()}
-                                            </span>
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">
-                                                {b?.product?.unit?.name || 'PCS'}
-                                            </p>
+
+                                        <td className="py-4 px-4 text-center align-top">
+                                            <div className="flex flex-col items-center justify-center h-full pt-1">
+                                                <span className={`text-sm inline-block min-w-[50px] font-black px-3 py-1 rounded-lg tabular-nums ${b.quantity <= 5
+                                                    ? 'bg-rose-50 text-rose-600 border border-rose-100'
+                                                    : 'bg-slate-100 text-slate-700'
+                                                    }`}>
+                                                    {b?.quantity?.toLocaleString()}
+                                                </span>
+                                                <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">
+                                                    {b?.product?.unit?.name || 'PCS'}
+                                                </p>
+                                            </div>
                                         </td>
-                                        <td className="p-5">
-                                            <div className="flex flex-col items-center gap-1.5">
+
+                                        <td className="py-4 px-4 align-top">
+                                            <div className="flex flex-col items-center gap-2 pt-0.5">
                                                 <button
                                                     onClick={() => handleBarcode(b.product, "view")}
                                                     disabled={busyId === b.product.id}
-                                                    className="w-[100px] bg-white border border-slate-200 text-slate-700 hover:text-blue-700 hover:border-blue-200 hover:bg-blue-50 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 disabled:opacity-50"
+                                                    className="w-[90px] bg-white border border-slate-200 text-slate-700 hover:text-blue-700 hover:border-blue-200 hover:bg-blue-50 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 disabled:opacity-50"
                                                 >
                                                     ดูบาร์โค้ด <ChevronRight className="w-3 h-3" />
                                                 </button>
@@ -364,14 +375,18 @@ export default function BalancesPage() {
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className="p-5 text-right">
-                                            <span className="text-base font-black text-slate-800 tabular-nums">
-                                                {Number(b?.totalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                            </span>
+
+                                        <td className="py-4 px-4 text-right align-top">
+                                            <div className="pt-1.5">
+                                                <span className="text-base font-black text-slate-800 tabular-nums">
+                                                    {Number(b?.totalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </span>
+                                            </div>
                                         </td>
-                                        <td className="p-5 text-center pr-8">
-                                            <div className="text-xs font-bold text-slate-500 flex items-center justify-center gap-1.5">
-                                                <Clock className="w-3.5 h-3.5 text-slate-400" />
+
+                                        <td className="py-4 px-4 text-center pr-6 align-top">
+                                            <div className="text-xs font-bold text-slate-500 flex items-center justify-center gap-1.5 pt-2">
+                                                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                                 {new Date(b.updatedAt).toLocaleDateString('th-TH')}
                                             </div>
                                         </td>
