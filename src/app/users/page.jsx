@@ -15,7 +15,6 @@ import {
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 const AVAILABLE_ROLES = ["Admin", "Executive", "Purchasing", "Warehouse", "Staff"];
 
-
 const PERMISSION_MAP = {
     "SYSTEM_SETTINGS_MANAGE": { label: "ตั้งค่าบริษัท", desc: "แก้ไขโลโก้และข้อมูลองค์กร" },
     "USER_MANAGE": { label: "จัดการผู้ใช้", desc: "เพิ่ม/ลด และกำหนดสิทธิ์พนักงาน" },
@@ -34,7 +33,8 @@ const PERMISSION_MAP = {
     "REQUISITION_READ": { label: "รายการใบเบิก", desc: "ดูประวัติการขอเบิกภายใน" },
     "REQUISITION_CREATE": { label: "สร้างใบเบิก", desc: "ขอเบิกพัสดุหรือสินค้าไปใช้งาน" },
     "REQUISITION_APPROVE": { label: "อนุมัติเบิก", desc: "ตรวจสอบและอนุมัติการจ่ายของ" },
-    "INVENTORY_READ": { label: "ยอดคงเหลือ", desc: "ดูสต๊อกและประวัติความเคลื่อนไหว" },
+    "INVENTORY_READ": { label: "ยอดคงเหลือ", desc: "ดูยอดสต๊อกสินค้าคงเหลือ" },
+    "MOVEMENT_READ": { label: "ประวัติความเคลื่อนไหว", desc: "ตรวจสอบความเคลื่อนไหว IN/OUT" },
     "TRANSFER_MANAGE": { label: "โอนย้ายสินค้า", desc: "สร้างใบส่งและรับสินค้าข้ามคลัง" },
     "ADJUSTMENT_MANAGE": { label: "ปรับปรุงยอด", desc: "แก้ไขยอด กรณีสินค้าเกิน/ขาดหาย" },
     "COUNT_TASK_MANAGE": { label: "ตรวจนับสต๊อก", desc: "สร้างและอนุมัติใบสั่งนับ (Count)" },
@@ -42,17 +42,15 @@ const PERMISSION_MAP = {
     "REPORT_EXPORT": { label: "ออกรายงาน", desc: "ดาวน์โหลดไฟล์ Excel และ PDF" }
 };
 
-// 💡 2. จัดกลุ่มใหม่ให้สวยงามและเป็นระเบียบ
 const PERMISSION_GROUPS = {
     "ระบบและข้อมูลหลัก": ["SYSTEM_SETTINGS_MANAGE", "USER_MANAGE", "AUDIT_LOG_VIEW", "MASTER_DATA_READ", "MASTER_DATA_MANAGE", "WAREHOUSE_MANAGE"],
     "จัดซื้อ": ["PR_READ", "PR_CREATE", "PR_APPROVE", "PO_MANAGE"],
     "รับและจ่ายสินค้า": ["INBOUND_READ", "INBOUND_CREATE", "OUTBOUND_READ", "OUTBOUND_CREATE"],
     "เบิกภายใน": ["REQUISITION_READ", "REQUISITION_CREATE", "REQUISITION_APPROVE"],
-    "คลังสินค้า": ["INVENTORY_READ", "TRANSFER_MANAGE", "ADJUSTMENT_MANAGE", "COUNT_TASK_MANAGE"],
+    "คลังสินค้า": ["INVENTORY_READ", "MOVEMENT_READ", "TRANSFER_MANAGE", "ADJUSTMENT_MANAGE", "COUNT_TASK_MANAGE"],
     "รายงาน": ["DASHBOARD_VIEW", "REPORT_EXPORT"]
 };
 
-// 💡 3. เพิ่ม Icon ให้รองรับกลุ่มใหม่
 const getGroupIconInfo = (group) => {
     switch (group) {
         case "รับและจ่ายสินค้า":
@@ -95,7 +93,6 @@ export default function UserAndDeptManagementPage() {
     const [selectedRoleId, setSelectedRoleId] = useState(null);
     const [rolePerms, setRolePerms] = useState([]);
 
-    // --- Modal States ---
     const [confirmDeleteUser, setConfirmDeleteUser] = useState(null);
     const [confirmDeleteDept, setConfirmDeleteDept] = useState(null);
     const [confirmSavePerms, setConfirmSavePerms] = useState(false);
@@ -149,8 +146,11 @@ export default function UserAndDeptManagementPage() {
     const startEditUser = (u) => {
         setEditingUserId(u.id);
         setEditUserForm({
-            firstName: u.firstName, lastName: u.lastName,
-            password: "", role: getUserRole(u), isActive: u.isActive,
+            firstName: u.firstName, 
+            lastName: u.lastName,
+            password: "", // ค่าเริ่มต้นว่างเปล่า
+            role: getUserRole(u), 
+            isActive: u.isActive,
             departmentId: u.departmentId || ""
         });
     };
@@ -168,6 +168,11 @@ export default function UserAndDeptManagementPage() {
                 isActive: editUserForm.isActive,
                 departmentId: editUserForm.departmentId ? editUserForm.departmentId : null
             };
+
+            // 💡 ตรวจสอบรหัสผ่าน: ถ้ามีการพิมพ์อะไรมา ให้ส่งไปอัปเดตด้วย
+            if (editUserForm.password && editUserForm.password.trim() !== "") {
+                payload.password = editUserForm.password.trim();
+            }
 
             await apiFetch(`/users/${id}`, {
                 method: "PATCH",
@@ -237,9 +242,6 @@ export default function UserAndDeptManagementPage() {
         <AuthGate>
             <Toaster position="top-right" />
 
-            {/* --- Modals / Popups --- */}
-
-            {/* 1. Modal ลบ User */}
             {confirmDeleteUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full mx-4 shadow-2xl border-2 border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
@@ -257,7 +259,6 @@ export default function UserAndDeptManagementPage() {
                 </div>
             )}
 
-            {/* 2. Modal ลบ Dept */}
             {confirmDeleteDept && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full mx-4 shadow-2xl border-2 border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
@@ -280,7 +281,6 @@ export default function UserAndDeptManagementPage() {
                 </div>
             )}
 
-            {/* 3. Modal บันทึก Permission */}
             {confirmSavePerms && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full mx-4 shadow-2xl border-2 border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
@@ -297,7 +297,6 @@ export default function UserAndDeptManagementPage() {
                     </div>
                 </div>
             )}
-            {/* --- End Modals --- */}
 
 
             <div className="max-w-[1400px] mx-auto p-4 md:p-8 space-y-10 min-h-screen bg-slate-50/30 pb-20">
@@ -395,6 +394,14 @@ export default function UserAndDeptManagementPage() {
                                                                     <div className="flex flex-col gap-2 w-full max-w-[250px]">
                                                                         <input className="border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-black focus:border-[#1F3B8B] outline-none shadow-inner text-[#1F3B8B]" value={editUserForm.firstName} onChange={e => setEditUserForm({ ...editUserForm, firstName: e.target.value })} placeholder="ชื่อจริง" />
                                                                         <input className="border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-black focus:border-[#1F3B8B] outline-none shadow-inner text-[#1F3B8B]" value={editUserForm.lastName} onChange={e => setEditUserForm({ ...editUserForm, lastName: e.target.value })} placeholder="นามสกุล" />
+                                                                        {/* 💡 เพิ่มช่องกรอกรหัสผ่านใหม่ (ถ้าเว้นว่าง = ไม่เปลี่ยนรหัสผ่าน) */}
+                                                                        <input 
+                                                                            type="text" 
+                                                                            className="border-2 border-slate-200 rounded-xl px-4 py-2.5 text-sm font-black focus:border-[#1F3B8B] outline-none shadow-inner text-[#1F3B8B]" 
+                                                                            value={editUserForm.password} 
+                                                                            onChange={e => setEditUserForm({ ...editUserForm, password: e.target.value })} 
+                                                                            placeholder="รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)" 
+                                                                        />
                                                                     </div>
                                                                 ) : (
                                                                     <div>
@@ -473,7 +480,6 @@ export default function UserAndDeptManagementPage() {
 
                     {activeTab === "security" && (
                         <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            {/* ส่วนบน: กลุ่มสิทธิ์การใช้งาน (เรียงแนวนอน) */}
                             <div className="w-full space-y-6">
                                 <h3 className="text-sm font-black uppercase text-slate-950 ml-10 tracking-widest flex items-center gap-2">
                                     <Users className="w-5 h-5 text-[#1F3B8B]" /> กลุ่มผู้ใช้งาน
@@ -526,7 +532,6 @@ export default function UserAndDeptManagementPage() {
                                 </div>
                             </div>
 
-                            {/* ส่วนล่าง: ตารางสิทธิ์การใช้งาน (เต็มจอ) */}
                             <div className="w-full">
                                 <div className="bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden hover:shadow-lg transition-all">
                                     <div className="p-8 border-b-2 border-slate-50 flex flex-col md:flex-row justify-between items-center bg-white sticky top-0 z-20 gap-4">

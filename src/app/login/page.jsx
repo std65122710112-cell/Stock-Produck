@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 
 export default function LoginPage() {
-    const [username, setUsername] = useState("admin");
-    const [password, setPassword] = useState("Admin12345!");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -83,12 +83,44 @@ export default function LoginPage() {
                 }),
             });
 
+            // บันทึก Token ลงระบบ
             setAccessToken(res.accessToken);
+
+            // 💡 [SECURITY & UX] วิเคราะห์ JWT เพื่อหาว่าควรพา User ไปหน้าไหน
+            let targetRoute = "/dashboard"; // หน้า Default
+            
+            try {
+                if (res.accessToken) {
+                    const base64Url = res.accessToken.split('.')[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                    const payload = JSON.parse(jsonPayload);
+                    const userPerms = payload.perms || [];
+
+                    // ถ้าไม่มีสิทธิ์ดูหน้า Dashboard ให้ไล่หาหน้าที่ตรงกับสิทธิ์การทำงาน
+                    if (!userPerms.includes("DASHBOARD_VIEW") && userPerms.length > 0) {
+                        if (userPerms.includes("REQUISITION_READ") || userPerms.includes("REQUISITION_CREATE")) targetRoute = "/inventory/requisition";
+                        else if (userPerms.includes("PR_READ") || userPerms.includes("PR_CREATE")) targetRoute = "/purchase/pr";
+                        else if (userPerms.includes("INBOUND_READ") || userPerms.includes("INBOUND_CREATE")) targetRoute = "/inbound";
+                        else if (userPerms.includes("OUTBOUND_READ") || userPerms.includes("OUTBOUND_MANAGE")) targetRoute = "/outbound";
+                        else if (userPerms.includes("INVENTORY_READ")) targetRoute = "/inventory/balances";
+                        else if (userPerms.includes("MASTER_DATA_READ")) targetRoute = "/master/products";
+                        else if (userPerms.includes("USER_MANAGE")) targetRoute = "/users";
+                    }
+                }
+            } catch (decodeError) {
+                console.error("Token decoding failed", decodeError);
+                // ถ้าแกะ Token ไม่ได้ ให้ลองไปหน้าเบสิคก่อน
+                targetRoute = "/inventory/requisition";
+            }
+
             toast.success(
                 (t) => (
                     <div className="flex flex-col gap-1">
                         <p className="font-bold text-[#1E3A8A] text-sm">เข้าสู่ระบบสำเร็จ</p>
-                        <p className="text-xs text-slate-500 font-medium">กำลังพายูสเซอร์ {username} ไปยังหน้าจัดการสต๊อค...</p>
+                        <p className="text-xs text-slate-500 font-medium">กำลังพายูสเซอร์ {username} เข้าสู่ระบบ...</p>
                     </div>
                 ),
                 {
@@ -106,14 +138,21 @@ export default function LoginPage() {
                 }
             );
 
-            router.replace("/dashboard");
+            // 💡 สั่งเปลี่ยนหน้าไปยัง Route ที่วิเคราะห์แล้วว่าเข้าได้แน่นอน
+            router.replace(targetRoute);
+
         } catch (err) {
+            // ดึงข้อความแจ้งเตือนที่แท้จริงจาก Backend มาแสดงผล
+            const errorMessage = (err.message === "Unauthorized") 
+                ? "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" 
+                : (err.message || "ไม่สามารถเชื่อมต่อกับระบบได้ในขณะนี้");
+
             toast.error(
                 (t) => (
                     <div className="flex flex-col gap-1">
                         <p className="font-bold text-rose-700 text-sm">การยืนยันตัวตนล้มเหลว</p>
                         <p className="text-xs text-rose-500/80 font-medium">
-                            {err.message === "Unauthorized" ? "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" : "ไม่สามารถเชื่อมต่อกับระบบได้ในขณะนี้"}
+                            {errorMessage}
                         </p>
                     </div>
                 ),
@@ -225,6 +264,8 @@ export default function LoginPage() {
                             <div className="relative group">
                                 <input
                                     type="text"
+                                    // 💡 ป้องกันการใส่ข้อมูลยาวเกินไปจนแอปค้าง
+                                    maxLength={50} 
                                     className="w-full border border-gray-200 bg-gray-50/50 rounded-xl p-3 sm:p-3.5 text-xs sm:text-sm font-medium text-gray-900 outline-none focus:bg-white focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 disabled:opacity-50 transition-all pl-10 sm:pl-11 duration-300"
                                     placeholder="กรอกชื่อผู้ใช้งาน..."
                                     value={username}
@@ -243,6 +284,8 @@ export default function LoginPage() {
                             <div className="relative group">
                                 <input
                                     type={showPassword ? "text" : "password"}
+                                    // 💡 ป้องกันการใส่ข้อมูลยาวเกินไป
+                                    maxLength={100} 
                                     className="w-full border border-gray-200 bg-gray-50/50 rounded-xl p-3 sm:p-3.5 text-xs sm:text-sm font-medium text-gray-900 outline-none focus:bg-white focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 disabled:opacity-50 transition-all pl-10 sm:pl-11 pr-10 sm:pr-11 duration-300"
                                     placeholder="••••••••••••"
                                     value={password}

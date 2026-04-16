@@ -1,65 +1,66 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { apiFetch, API_BASE } from "@/lib/api";
 import { clearAccessToken } from "@/lib/auth";
-import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera } from "lucide-react";
+import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera, ShieldAlert } from "lucide-react";
 
+// 💡 1. กำหนดสิทธิ์ให้เข้มงวด และแยก MOVEMENT_READ ออกมา
 const menuGroups = [
     {
         title: "ภาพรวมระบบ",
-        items: [{ href: "/dashboard", label: "Dashboard" }],
+        items: [{ href: "/dashboard", label: "Dashboard", permissions: ["DASHBOARD_VIEW"] }],
     },
     {
         title: "ระบบใบเบิกภายใน",
         items: [
-            { href: "/inventory/requisition", label: "รายการใบขอเบิกสินค้า" },
-            { href: "/inventory/requisition/approval", label: "อนุมัติใบเบิก" },
+            { href: "/inventory/requisition", label: "รายการใบขอเบิกสินค้า", permissions: ["REQUISITION_READ", "REQUISITION_CREATE"] },
+            { href: "/inventory/requisition/approval", label: "อนุมัติใบเบิก", permissions: ["REQUISITION_APPROVE"] },
         ],
     },
     {
         title: "ระบบงานจัดซื้อ",
         items: [
-            { href: "/purchase/pr", label: "รายการใบขอซื้อ (PR)" },
-            { href: "/purchase/pr/approval", label: "อนุมัติใบขอซื้อ" },
-            { href: "/purchase/create", label: "สร้างใบสั่งซื้อ (PO)" },
+            { href: "/purchase/pr", label: "รายการใบขอซื้อ (PR)", permissions: ["PR_READ", "PR_MANAGE"] },
+            { href: "/purchase/pr/approval", label: "อนุมัติใบขอซื้อ", permissions: ["PR_APPROVE"] },
+            { href: "/purchase/create", label: "สร้างใบสั่งซื้อ (PO)", permissions: ["PO_MANAGE"] },
         ],
     },
     {
         title: "การจัดการคลังสินค้า",
         items: [
-            { href: "/inbound", label: "รับสินค้าเข้า" },
-            { href: "/outbound", label: "เบิกจ่ายสินค้า" },
-            { href: "/inventory/transfer", label: "ย้ายสินค้าระหว่างคลัง" },
-            { href: "/inventory/adjust", label: "ปรับปรุงยอดสต๊อก" },
+            { href: "/inbound", label: "รับสินค้าเข้า", permissions: ["INBOUND_CREATE"] },
+            { href: "/outbound", label: "เบิกจ่ายสินค้า", permissions: ["OUTBOUND_MANAGE"] },
+            { href: "/inventory/transfer", label: "ย้ายสินค้าระหว่างคลัง", permissions: ["TRANSFER_MANAGE"] },
+            { href: "/inventory/adjust", label: "ปรับปรุงยอดสต๊อก", permissions: ["ADJUSTMENT_MANAGE"] },
         ],
     },
     {
         title: "สต๊อกและรายงาน",
         items: [
-            { href: "/inventory/balances", label: "ยอดสินค้าคงเหลือ" },
-            { href: "/inventory/low-stock", label: "สินค้าใกล้หมด" },
-            { href: "/inventory/agedstock", label: "สินค้าค้างสต๊อก" },
-            { href: "/history", label: "ประวัติความเคลื่อนไหว" },
-            { href: "/reports", label: "รายงานสรุปผล" },
+            { href: "/inventory/balances", label: "ยอดสินค้าคงเหลือ", permissions: ["INVENTORY_READ"] },
+            { href: "/inventory/low-stock", label: "สินค้าใกล้หมด", permissions: ["INVENTORY_READ"] },
+            { href: "/inventory/agedstock", label: "สินค้าค้างสต๊อก", permissions: ["INVENTORY_READ"] },
+            { href: "/history", label: "ประวัติความเคลื่อนไหว", permissions: ["MOVEMENT_READ"] },
+            { href: "/reports", label: "รายงานสรุปผล", permissions: ["REPORT_EXPORT"] },
         ],
     },
     {
         title: "ข้อมูลหลัก",
         items: [
-            { href: "/master/products", label: "ฐานข้อมูลสินค้า" },
-            { href: "/master/suppliers", label: "ฐานข้อมูลคู่ค้า" },
-            { href: "/master/categoriesandunits", label: "หมวดหมู่และหน่วยนับ" },
-            { href: "/master/warehousessettings", label: "ตั้งค่าคลังและจุดจัดเก็บ" },
+            { href: "/master/products", label: "ฐานข้อมูลสินค้า", permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"] },
+            { href: "/master/suppliers", label: "ฐานข้อมูลคู่ค้า", permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"] },
+            { href: "/master/categoriesandunits", label: "หมวดหมู่และหน่วยนับ", permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"] },
+            { href: "/master/warehousessettings", label: "ตั้งค่าคลังและจุดจัดเก็บ", permissions: ["WAREHOUSE_MANAGE"] }, 
         ],
     },
     {
         title: "ความปลอดภัยและระบบ",
         items: [
-            { href: "/users", label: "จัดการสิทธิ์ผู้ใช้งาน" },
-            { href: "/company", label: "จัดการข้อมูลบริษัท" },
-            { href: "/audit", label: "ประวัติการใช้งาน (Audit)" },
+            { href: "/users", label: "จัดการสิทธิ์ผู้ใช้งาน", permissions: ["USER_MANAGE"] },
+            { href: "/company", label: "จัดการข้อมูลบริษัท", permissions: ["SYSTEM_SETTINGS_MANAGE"] },
+            { href: "/audit", label: "ประวัติการใช้งาน (Audit)", permissions: ["AUDIT_LOG_VIEW"] },
         ],
     },
 ];
@@ -96,25 +97,38 @@ export default function AppShell({ children }) {
     const [isPending, startTransition] = useTransition();
     const [pendingHref, setPendingHref] = useState(null);
 
-    // 💡 แก้ไข: ใช้ null เป็นค่าเริ่มต้นเพื่อแยกสถานะ "กำลังโหลด" ออกจาก "ข้อมูลว่าง"
     const [userFullName, setUserFullName] = useState(null);
+    const [userRole, setUserRole] = useState(null);
     const [userAvatar, setUserAvatar] = useState(null);
+    
+    const [userPerms, setUserPerms] = useState(null); 
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [accessModal, setAccessModal] = useState({ isOpen: false, message: "", shouldRedirect: false });
+
     const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
-        if (path === "/login") return;
+        if (path === "/login") {
+            setIsAuthorized(true);
+            return;
+        }
 
-        async function fetchUserProfile() {
+        async function fetchUserProfileAndCheckAccess() {
             try {
                 const res = await apiFetch("/auth/me");
                 if (res) {
-                    // 💡 แก้ไข Logic: ถ้าไม่มี firstName ให้ใช้ username เป็นค่าสำรอง (Fallback)
                     const fullName = res.firstName
                         ? `${res.firstName} ${res.lastName || ''}`.trim()
                         : (res.username || "User");
 
                     setUserFullName(fullName);
+                    setUserRole(res.roleName || "Member");
                     if (res.avatarUrl) setUserAvatar(res.avatarUrl);
+                    
+                    const perms = Array.isArray(res.perms) ? res.perms : [];
+                    setUserPerms(perms);
+
+                    checkRouteAccess(path, perms);
                 }
             } catch (error) {
                 console.error("Fetch profile failed", error);
@@ -122,8 +136,44 @@ export default function AppShell({ children }) {
                 router.replace("/login");
             }
         }
-        fetchUserProfile();
-    }, [path, router]); // 💡 เพิ่ม path เข้าไปเพื่อให้ตรวจสอบสิทธิ์ทุกครั้งที่เปลี่ยนหน้า
+        
+        setIsAuthorized(false);
+        fetchUserProfileAndCheckAccess();
+    }, [path, router]);
+
+    const checkRouteAccess = (currentPath, perms) => {
+        let matchedItem = null;
+        
+        for (const group of menuGroups) {
+            for (const item of group.items) {
+                if (item.href === "/dashboard") {
+                    if (currentPath === "/dashboard") matchedItem = item;
+                } else if (currentPath.startsWith(item.href)) {
+                     if (!matchedItem || item.href.length > matchedItem.href.length) {
+                         matchedItem = item;
+                     }
+                }
+            }
+        }
+
+        if (matchedItem) {
+            const requiredPerms = matchedItem.permissions;
+            if (requiredPerms && requiredPerms.length > 0) {
+                const hasAccess = requiredPerms.some(p => perms.includes(p));
+                
+                if (!hasAccess) {
+                    setAccessModal({
+                        isOpen: true,
+                        message: "บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้านี้ ระบบจะพาคุณกลับไปยังหน้าหลัก",
+                        shouldRedirect: true
+                    });
+                    return;
+                }
+            }
+        }
+        
+        setIsAuthorized(true);
+    };
 
     useEffect(() => {
         const savedScrollPos = sessionStorage.getItem("sidebar-scroll");
@@ -144,6 +194,27 @@ export default function AppShell({ children }) {
 
     const handleNavigate = (href) => {
         if (href === path) return;
+        
+        if (userPerms) {
+           let targetItem = null;
+           for (const group of menuGroups) {
+               targetItem = group.items.find(item => item.href === href);
+               if(targetItem) break;
+           }
+           
+           if(targetItem && targetItem.permissions.length > 0) {
+               const hasAccess = targetItem.permissions.some(p => userPerms.includes(p));
+               if(!hasAccess) {
+                   setAccessModal({
+                       isOpen: true,
+                       message: "คุณไม่มีสิทธิ์เข้าถึงเมนูนี้ กรุณาติดต่อผู้ดูแลระบบ",
+                       shouldRedirect: false
+                   });
+                   return; 
+               }
+           }
+        }
+
         setPendingHref(href);
         startTransition(() => {
             router.push(href);
@@ -199,12 +270,60 @@ export default function AppShell({ children }) {
         return `${baseUrl}${userAvatar}`;
     };
 
+    const filteredMenuGroups = useMemo(() => {
+        if (!userPerms) return [];
+        return menuGroups
+            .map(group => ({
+                ...group,
+                items: group.items.filter(item => {
+                    if (item.permissions.length === 0) return true;
+                    return item.permissions.some(p => userPerms.includes(p)); 
+                })
+            }))
+            .filter(group => group.items.length > 0); 
+    }, [userPerms]);
+
+    const handleCloseModal = () => {
+        setAccessModal({ ...accessModal, isOpen: false });
+        if (accessModal.shouldRedirect) {
+            router.replace("/dashboard");
+        }
+    };
+
     if (path === "/login") return <>{children}</>;
 
     const avatarSrc = getAvatarSrc();
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900">
+        <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900 relative">
+            
+            {/* Modal แจ้งเตือนสิทธิ์ */}
+            {accessModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl shadow-rose-900/20 transform transition-all animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center">
+                                <ShieldAlert className="w-8 h-8 text-rose-600" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-black text-slate-800 tracking-tight">การเข้าถึงถูกปฏิเสธ</h3>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    {accessModal.message}
+                                </p>
+                            </div>
+                            <div className="w-full pt-4">
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-sm font-bold rounded-2xl transition-all shadow-md shadow-slate-900/20"
+                                >
+                                    รับทราบ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex min-h-screen">
                 <aside
                     ref={sidebarRef}
@@ -257,35 +376,58 @@ export default function AppShell({ children }) {
                                 </div>
                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-[#1e3b8a] truncate tracking-wide">
-                                        {/* 💡 ปรับปรุงการแสดงผล Loading ให้ดูเป็นธรรมชาติ */}
-                                        {userFullName === null ? (
-                                            <span className="animate-pulse text-slate-400">กำลังโหลด...</span>
-                                        ) : (
-                                            userFullName
+                                    <div className="flex flex-col">
+                                        <p className="text-sm font-bold text-[#1e3b8a] truncate tracking-wide">
+                                            {userFullName === null ? (
+                                                <span className="animate-pulse text-slate-400">กำลังโหลด...</span>
+                                            ) : (
+                                                userFullName
+                                            )}
+                                        </p>
+                                        {userRole && (
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 truncate">
+                                                {userRole}
+                                            </p>
                                         )}
-                                    </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* NAVIGATION SECTION */}
                         <nav className="flex-1 space-y-8">
-                            {menuGroups.map((group) => (
-                                <section key={group.title} className="space-y-3">
-                                    <div className="px-2 flex items-center gap-2">
-                                        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{group.title}</p>
-                                        <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        {group.items.map((n) => {
-                                            const isActive = path === n.href || (n.href !== "/dashboard" && path.startsWith(n.href + "/") && !(n.href === "/inventory/requisition" && path.startsWith("/inventory/requisition/approval")) && !(n.href === "/purchase/pr" && path.startsWith("/purchase/pr/approval")));
-                                            const itemPending = isPending && pendingHref === n.href;
-                                            return <MenuButton key={n.href} href={n.href} label={n.label} isActive={isActive} isPending={itemPending} onNavigate={handleNavigate} />;
-                                        })}
-                                    </div>
-                                </section>
-                            ))}
+                            {userPerms === null ? (
+                                <div className="animate-pulse space-y-4 opacity-50 px-2">
+                                    <div className="h-4 bg-slate-200 rounded w-1/3"></div>
+                                    <div className="h-10 bg-slate-200 rounded-xl"></div>
+                                    <div className="h-10 bg-slate-200 rounded-xl"></div>
+                                </div>
+                            ) : (
+                                filteredMenuGroups.map((group) => (
+                                    <section key={group.title} className="space-y-3">
+                                        <div className="px-2 flex items-center gap-2">
+                                            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{group.title}</p>
+                                            <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            {group.items.map((n) => {
+                                                // 💡 แก้ไข Logic ตรงนี้: ตรวจสอบหน้า Active ให้แม่นยำขึ้น
+                                                // ถ้าเป็นหน้าเป๊ะๆ (===) ให้สว่างเลย
+                                                // แต่ถ้าไปหน้าย่อย (เช่น /123) จะเช็ค startsWith + "/" เพื่อไม่ให้เมนูอื่นที่ชื่อคล้ายกัน (เช่น /approval) สว่างไปด้วย
+                                                const isActive = 
+                                                    path === n.href || 
+                                                    (n.href !== "/dashboard" && 
+                                                     path.startsWith(n.href + "/") && 
+                                                     !path.startsWith(n.href + "/approval"));
+                                                     
+                                                const itemPending = isPending && pendingHref === n.href;
+                                                
+                                                return <MenuButton key={n.href} href={n.href} label={n.label} isActive={isActive} isPending={itemPending} onNavigate={handleNavigate} />;
+                                            })}
+                                        </div>
+                                    </section>
+                                ))
+                            )}
                         </nav>
                     </div>
 
@@ -302,7 +444,11 @@ export default function AppShell({ children }) {
 
                 <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
                     <div className={`w-full min-h-[calc(100vh-4rem)] rounded-4xl border border-slate-200/60 bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-500 md:p-10 ${isPending ? "opacity-50 blur-[2px] grayscale-[20%]" : "opacity-100"}`}>
-                        {children}
+                        {isAuthorized ? children : (
+                            <div className="flex h-full items-center justify-center">
+                                <span className="animate-pulse text-slate-400 font-bold">ตรวจสอบสิทธิ์ความปลอดภัย...</span>
+                            </div>
+                        )}
                     </div>
                 </main>
             </div>
