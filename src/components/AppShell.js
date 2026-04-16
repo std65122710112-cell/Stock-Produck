@@ -42,8 +42,10 @@ const menuGroups = [
             { href: "/inventory/balances", label: "ยอดสินค้าคงเหลือ", permissions: ["INVENTORY_READ"] },
             { href: "/inventory/low-stock", label: "สินค้าใกล้หมด", permissions: ["INVENTORY_READ"] },
             { href: "/inventory/agedstock", label: "สินค้าค้างสต๊อก", permissions: ["INVENTORY_READ"] },
+            { href: "/reports/expiry", label: "ตรวจสอบวันหมดอายุ", permissions: ["REPORT_EXPORT"] },
             { href: "/history", label: "ประวัติความเคลื่อนไหว", permissions: ["MOVEMENT_READ"] },
             { href: "/reports", label: "รายงานสรุปผล", permissions: ["REPORT_EXPORT"] },
+            
         ],
     },
     {
