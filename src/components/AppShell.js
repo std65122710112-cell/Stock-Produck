@@ -6,7 +6,7 @@ import { apiFetch, API_BASE } from "@/lib/api";
 import { clearAccessToken } from "@/lib/auth";
 import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera, ShieldAlert } from "lucide-react";
 
-// 💡 1. กำหนดสิทธิ์ให้เข้มงวด และแยก MOVEMENT_READ ออกมา
+// 💡 กำหนดสิทธิ์และโครงสร้างเมนู
 const menuGroups = [
     {
         title: "ภาพรวมระบบ",
@@ -31,7 +31,7 @@ const menuGroups = [
         title: "การจัดการคลังสินค้า",
         items: [
             { href: "/inbound", label: "รับสินค้าเข้า", permissions: ["INBOUND_CREATE"] },
-            { href: "/outbound", label: "เบิกจ่ายสินค้า", permissions: ["OUTBOUND_MANAGE"] },
+            { href: "/outbound", label: "เบิกจ่ายสินค้า", permissions: ["OUTBOUND_CREATE"] },
             { href: "/inventory/transfer", label: "ย้ายสินค้าระหว่างคลัง", permissions: ["TRANSFER_MANAGE"] },
             { href: "/inventory/adjust", label: "ปรับปรุงยอดสต๊อก", permissions: ["ADJUSTMENT_MANAGE"] },
         ],
@@ -40,12 +40,11 @@ const menuGroups = [
         title: "สต๊อกและรายงาน",
         items: [
             { href: "/inventory/balances", label: "ยอดสินค้าคงเหลือ", permissions: ["INVENTORY_READ"] },
+            { href: "/reports/expiry", label: "ตรวจสอบวันหมดอายุสินค้า", permissions: ["REPORT_EXPORT"] },
             { href: "/inventory/low-stock", label: "สินค้าใกล้หมด", permissions: ["INVENTORY_READ"] },
             { href: "/inventory/agedstock", label: "สินค้าค้างสต๊อก", permissions: ["INVENTORY_READ"] },
-            { href: "/reports/expiry", label: "ตรวจสอบวันหมดอายุ", permissions: ["REPORT_EXPORT"] },
             { href: "/history", label: "ประวัติความเคลื่อนไหว", permissions: ["MOVEMENT_READ"] },
             { href: "/reports", label: "รายงานสรุปผล", permissions: ["REPORT_EXPORT"] },
-            
         ],
     },
     {
@@ -108,6 +107,9 @@ export default function AppShell({ children }) {
     const [accessModal, setAccessModal] = useState({ isOpen: false, message: "", shouldRedirect: false });
 
     const [isUploading, setIsUploading] = useState(false);
+
+    // สร้าง List เมนูทั้งหมดแบบราบ (Flat) เพื่อใช้เช็คความซ้ำซ้อนของ Path
+    const allMenuItems = useMemo(() => menuGroups.flatMap(g => g.items), []);
 
     useEffect(() => {
         if (path === "/login") {
@@ -413,14 +415,18 @@ export default function AppShell({ children }) {
                                         </div>
                                         <div className="space-y-1">
                                             {group.items.map((n) => {
-                                                // 💡 แก้ไข Logic ตรงนี้: ตรวจสอบหน้า Active ให้แม่นยำขึ้น
-                                                // ถ้าเป็นหน้าเป๊ะๆ (===) ให้สว่างเลย
-                                                // แต่ถ้าไปหน้าย่อย (เช่น /123) จะเช็ค startsWith + "/" เพื่อไม่ให้เมนูอื่นที่ชื่อคล้ายกัน (เช่น /approval) สว่างไปด้วย
+                                                // 💡 แก้ไข Logic: ค้นหาว่ามีเมนูอื่นในระบบที่ "ตรงกว่า" (href ยาวกว่า) หรือไม่
+                                                const isBetterMatchInMenu = allMenuItems.some(other => 
+                                                    other.href !== n.href && 
+                                                    path.startsWith(other.href) && 
+                                                    other.href.length > n.href.length
+                                                );
+
                                                 const isActive = 
                                                     path === n.href || 
                                                     (n.href !== "/dashboard" && 
                                                      path.startsWith(n.href + "/") && 
-                                                     !path.startsWith(n.href + "/approval"));
+                                                     !isBetterMatchInMenu);
                                                      
                                                 const itemPending = isPending && pendingHref === n.href;
                                                 

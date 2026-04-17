@@ -7,97 +7,85 @@ import OutboundHistoryPage from './outbound/page';
 import TransferHistoryPage from './transfer/page';
 import AdjustmentHistoryPage from './adjust/page';
 import ProductHistoryPage from './products/page';
+import { useRouter } from "next/navigation";
 import { Toaster } from "react-hot-toast";
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  RefreshCw,
-  Scale,
-  Database,
-  History,
+  Logs,
+  DatabaseBackup,
+  ArrowLeftRight,
   PackagePlus,
   Truck,
   ArrowRightLeft,
   ClipboardCheck,
-  Logs, 
-    DatabaseBackup, 
-    ArrowLeftRight,
-    Package
+  Package,
+  ArrowLeft
 } from "lucide-react";
 
 export default function HistoryDashboardPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('inbound');
 
   const tabs = [
-    // Inbound: ใช้ PackagePlus สื่อถึงการเพิ่มพัสดุเข้าคลัง
     { id: 'inbound', label: 'ประวัติรับเข้า', sub: 'Inbound', icon: PackagePlus, color: 'text-emerald-600' },
-
-    // Outbound: ใช้ Truck สื่อถึงการนำสินค้าออกไปจัดส่ง (ตรงกับหน้า DO)
     { id: 'outbound', label: 'ประวัติจ่ายออก', sub: 'Outbound', icon: Truck, color: 'text-blue-600' },
-
-    // Transfer: ใช้ ArrowRightLeft สื่อถึงการเคลื่อนย้ายไปมา (ตรงกับหน้าโอนย้าย)
     { id: 'transfer', label: 'ประวัติโอนย้าย', sub: 'Transfer', icon: ArrowRightLeft, color: 'text-indigo-600' },
-
-    // Adjust: ใช้ ClipboardCheck สื่อถึงการตรวจสอบและปรับยอด (ตรงกับหน้า Audit)
     { id: 'adjust', label: 'ประวัติปรับยอด', sub: 'Adjust', icon: ClipboardCheck, color: 'text-slate-600' },
-
-    { id: 'products', label: 'ประวัติสินค้า', sub: 'Products', icon: Package, color: 'text-indigo-600' },
-
+    { id: 'products', label: 'ประวัติสินค้า', sub: 'Products', icon: Package, color: 'text-[#1F3B8B]' },
   ];
 
   return (
     <AuthGate>
       <Toaster position="top-right" />
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-      {/* ควบคุมระยะห่างหลักด้วย space-y-8 ตาม Blueprint */}
-      <div className="max-w-7xl mx-auto space-y-8">
+        {/* --- HEADER SECTION --- */}
+        <div className="flex flex-col gap-6 border-b border-slate-200 pb-8 print:hidden">
+          {/* ปุ่มย้อนกลับด้านบนซ้ายสุด */}
+          <div>
+            <button 
+              onClick={() => router.back()} 
+              className="flex items-center gap-2 text-slate-500 hover:text-[#1F3B8B] font-bold text-sm transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> 
+              ย้อนกลับ
+            </button>
+          </div>
 
-        {/* HEADER SECTION - ปรับตามคอนเซปต์พรีเมียม (ชิดซ้าย/เส้นยาว) print:hidden */}
-        <div className="w-full border-b-2 border-slate-100 mb-10 print:hidden">
-
-          {/* กล่องใน: จัดตำแหน่งให้ชิดซ้าย (px-6 md:px-10) ตามคอนเซปต์ */}
-          <div className="w-full px-6 md:px-10 flex flex-col xl:flex-row xl:items-center justify-between pb-6 gap-6">
-
-            {/* --- ส่วนซ้าย: ไอคอนและชื่อหน้า (ปรับไอคอนให้ตรงหัวเรื่อง) --- */}
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              {/* 💡 เปลี่ยนไอคอนหลักเป็น Logs (สัญลักษณ์บันทึกประวัติ) */}
-              <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                <Logs className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-200 shadow-sm shrink-0">
+                <Logs className="w-6 h-6 text-[#1F3B8B]" />
               </div>
-
-              {/* กลุ่มข้อความเรียงซ้อนกัน */}
-              <div className="flex flex-col">
-                {/* ภาษาอังกฤษด้านบน */}
-                <div className="flex items-center gap-2 mb-1.5">
-                  {/* 💡 ไอคอน DatabaseBackup สื่อถึงแหล่งข้อมูลย้อนหลัง */}
-                  <DatabaseBackup className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                  <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <DatabaseBackup className="w-3.5 h-3.5 text-slate-400" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                     Audit Log / Inventory Movement
                   </p>
                 </div>
-
-                {/* หัวข้อหลัก (ตัวตรง หนาพิเศษ) */}
-                <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                   ประวัติการเคลื่อนไหว
                 </h1>
-
-                {/* คำอธิบายด้านล่าง พร้อมไอคอนสีเขียวมรกต */}
-                <div className="flex items-center gap-2 pt-1 opacity-90">
-                  {/* 💡 ไอคอน ArrowLeftRight สื่อถึงการเคลื่อนไหว เข้า-ออก */}
-                  <ArrowLeftRight className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                  <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                    ศูนย์รวมประวัติการเข้า-ออกของสินค้าพัสดุ
-                  </p>
-                </div>
               </div>
             </div>
 
-            {/* --- ส่วนขวา: (ถ้ามีปุ่ม Filter หรือ Export สามารถใส่ตรงนี้ได้) --- */}
+            {/* ส่วนสรุปเล็กๆ ด้านขวา */}
+            <div className="bg-slate-50 border border-slate-200 px-6 py-3 rounded-xl flex flex-col items-end min-w-[200px]">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                Active View
+              </span>
+              <div className="flex items-center gap-2 text-[#1F3B8B]">
+                <ArrowLeftRight className="w-4 h-4 text-emerald-500" />
+                <span className="text-lg font-bold">
+                  {tabs.find(t => t.id === activeTab)?.label}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* TAB NAVIGATION - ปรับสัดส่วนให้พรีเมียม */}
-        <div className="flex flex-wrap gap-3 mb-8 bg-slate-50 p-2.5 rounded-[2.5rem] border border-slate-200 w-fit print:hidden">
+        {/* --- TAB NAVIGATION --- */}
+        <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100/50 border border-slate-200 rounded-2xl w-fit print:hidden">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -105,32 +93,26 @@ export default function HistoryDashboardPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-4 px-8 py-4 rounded-[1.8rem] transition-all duration-300 ${isActive
-                  ? "bg-[#1e3b8a] text-white shadow-2xl shadow-blue-900/40 scale-105"
-                  : "text-slate-500 hover:text-[#1e3b8a] hover:bg-white"
-                  }`}
+                className={`flex items-center gap-3 px-6 py-3 rounded-xl transition-all duration-200 ${
+                  isActive
+                    ? "bg-white text-[#1F3B8B] shadow-sm border border-slate-200"
+                    : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                }`}
               >
-                <div className={`p-2 rounded-xl transition-colors ${isActive ? "bg-white/20" : "bg-white border border-slate-200 shadow-sm"}`}>
-                  <Icon className={`w-5 h-5 ${isActive ? "text-white" : tab.color}`} />
-                </div>
-                <div className="text-left text-nowrap">
-                  <p className="text-sm font-black uppercase leading-none tracking-tight">{tab.label}</p>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest mt-1.5 ${isActive ? "text-blue-200" : "text-slate-400"}`}>
-                    {tab.sub}
-                  </p>
+                <Icon className={`w-4 h-4 ${isActive ? "text-[#1F3B8B]" : "text-slate-400"}`} />
+                <div className="text-left">
+                  <p className="text-xs font-bold uppercase tracking-tight leading-none">{tab.label}</p>
+                  <p className="text-[9px] font-medium uppercase tracking-wider mt-1 opacity-60">{tab.sub}</p>
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* CONTENT CONTAINER - ปรับโค้งมนเป็น rounded-[2.5rem] และเงาตาม Blueprint */}
-        <section className="relative overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.1)] min-h-[700px]">
-          {/* Watermark */}
-
-
-          {/* Padding p-8 ตามมาตรฐานตารางหลัก */}
-          <div className="p-8 relative z-10">
+        {/* --- CONTENT CONTAINER --- */}
+        <section className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[600px] overflow-hidden">
+          {/* ส่วนเนื้อหาภายใน Tab จะใช้ Padding มาตรฐาน p-6 */}
+          <div className="p-6">
             {activeTab === 'inbound' && <GoodsReceiptHistoryPage />}
             {activeTab === 'outbound' && <OutboundHistoryPage />}
             {activeTab === 'transfer' && <TransferHistoryPage />}
@@ -138,6 +120,7 @@ export default function HistoryDashboardPage() {
             {activeTab === 'products' && <ProductHistoryPage />}
           </div>
         </section>
+
       </div>
     </AuthGate>
   );

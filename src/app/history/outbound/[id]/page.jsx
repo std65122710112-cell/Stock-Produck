@@ -1,242 +1,350 @@
 "use client";
 
+import React, { useEffect, useState, use, useMemo } from "react";
 import AuthGate from "@/components/AuthGate";
 import { apiFetch } from "@/lib/api";
-import { useEffect, useState, use, useMemo } from "react";
-import Link from "next/link";
-import { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 import {
-    ArrowLeft, Truck, User, Calendar, Hash, Package, MapPin,
-    ShieldCheck, Info, UserCheck, Database, MessageSquareText,
-    CheckCircle2, Banknote, Building2, ClipboardList
+  ArrowLeft,
+  CheckCircle2,
+  MapPin,
+  Printer,
+  FileText,
+  Banknote,
 } from "lucide-react";
+import { Toaster } from "react-hot-toast";
 
 export default function DeliveryOrderDetailPage({ params }) {
-    const { id } = use(params);
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { id } = use(params);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        let isMounted = true;
-        async function loadDetail() {
-            try {
-                const res = await apiFetch(`/outbound/delivery-orders/${id}`, { method: "GET" });
-                if (isMounted && res) {
-                    setData(res.data || res);
-                }
-            } catch (error) {
-                console.error("Load Error:", error);
-            } finally {
-                if (isMounted) setLoading(false);
-            }
-        }
-        loadDetail();
-        return () => { isMounted = false; };
-    }, [id]);
+  useEffect(() => {
+    async function loadDetail() {
+      try {
+        const res = await apiFetch(`/outbound/delivery-orders/${id}`, {
+          method: "GET",
+        });
+        if (res) setData(res.data || res);
+      } catch (error) {
+        console.error("Load Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDetail();
+  }, [id]);
 
-    const memoizedItems = useMemo(() => data?.items || [], [data]);
+  const getFullName = (userObj) => {
+    return userObj?.firstName
+      ? `${userObj.firstName} ${userObj.lastName || ""}`.trim()
+      : "---";
+  };
 
-    // 💡 คำนวณยอดรวมจำนวนและมูลค่า
-    const totalQty = useMemo(() => memoizedItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0), [memoizedItems]);
-    const totalValue = useMemo(() => memoizedItems.reduce((sum, item) => {
-        const cost = item.product?.unitCost || 0;
-        return sum + (Number(item.quantity) * cost);
-    }, 0), [memoizedItems]);
+  const memoizedItems = useMemo(() => data?.items || [], [data]);
 
-    const formatNumber = (num) => Number(num).toLocaleString('th-TH');
-    const formatCurrency = (num) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(num);
-
-    if (loading) return (
-        <AuthGate>
-            <div className="flex flex-col justify-center items-center h-[70vh] space-y-6">
-                <div className="w-12 h-12 border-4 border-slate-100 border-t-[#1e3b8a] rounded-full animate-spin"></div>
-                <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-xs">กำลังเรียกข้อมูลเอกสาร...</p>
-            </div>
-        </AuthGate>
+  const { totalQty, totalValue } = useMemo(() => {
+    return memoizedItems.reduce(
+      (acc, item) => ({
+        totalQty: acc.totalQty + Number(item.quantity || 0),
+        totalValue:
+          acc.totalValue +
+          Number(item.quantity || 0) * (item.product?.unitCost || 0),
+      }),
+      { totalQty: 0, totalValue: 0 },
     );
+  }, [memoizedItems]);
 
-    if (!data) return <div className="p-20 text-center font-black">ไม่พบข้อมูลเอกสาร</div>;
+  if (loading) return <SystemLoader />;
+  if (!data) return <NotFoundState />;
 
-    return (
-        <AuthGate>
-            <Toaster position="top-right" />
-            <style jsx global>{`
-                @media print {
-                    @page { size: auto; margin: 10mm; }
-                    body { background: white !important; }
-                    .print-compact { zoom: 0.8; }
-                    .no-print { display: none !important; }
-                }
-            `}</style>
+  return (
+    <AuthGate>
+      <Toaster position="top-right" />
+      <div className="min-h-screen bg-slate-50 py-10 px-4 print:bg-white print:py-0">
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* --- แถบปุ่มควบคุม (ซ่อนเวลาพิมพ์) --- */}
+          <div className="flex justify-between items-center print:hidden">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-slate-400 hover:text-[#1F3B8B] font-bold text-xs uppercase tracking-widest transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              กลับไปหน้าประวัติ
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 shadow-sm"
+            >
+              <Printer className="w-4 h-4" /> พิมพ์ใบนำจ่ายสินค้า
+            </button>
+          </div>
 
-            <div className="max-w-6xl mx-auto space-y-6 pb-20 print:pb-0 print:space-y-2 print-compact">
-                <section className="bg-white rounded-[3rem] border border-slate-100 shadow-xl overflow-hidden relative print:border-2 print:border-slate-950">
-
-                    {/* Header: Document Info */}
-                    <div className="p-10 md:p-12 border-b-2 border-slate-50 bg-slate-50/30 print:bg-white">
-                        <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-                            <div className="space-y-3">
-                                <h1 className="text-4xl font-black text-slate-950 tracking-tighter uppercase flex items-center gap-4">
-                                    ใบนำจ่ายสินค้า (Delivery Order)
-                                </h1>
-                                <div className="flex flex-wrap gap-4">
-                                    <p className="text-slate-500 text-sm font-bold flex items-center gap-2 italic">
-                                        <ShieldCheck className="w-4 h-4 text-emerald-500" /> บันทึกการตัดสต๊อกสำเร็จ
-                                    </p>
-                                    <p className="text-indigo-600 text-sm font-bold flex items-center gap-2">
-                                        <Building2 className="w-4 h-4" /> แผนก: {data.requisition?.department?.name || "ไม่ระบุแผนก"}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="bg-white px-8 py-4 rounded-3xl border border-slate-100 shadow-sm print:border-2 print:border-slate-950">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">เลขที่ใบนำจ่าย</p>
-                                <p className="text-3xl font-black text-[#1e3b8a] tabular-nums tracking-tighter leading-none text-center">{data.doNo}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Info Grid: 4 Columns */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-50 border-b-2 border-slate-50 print:border-b-4 print:border-slate-900">
-                        <div className="p-6 space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> วันที่จ่ายออก</p>
-                            <p className="text-sm font-black text-slate-900">{new Date(data.createdAt).toLocaleString('th-TH')}</p>
-                        </div>
-                        <div className="p-6 space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2"><Hash className="w-3.5 h-3.5" /> อ้างอิงใบเบิก</p>
-                            <p className="text-sm font-black text-slate-900">{data.reference || "-"}</p>
-                        </div>
-                        <div className="p-6 space-y-1">
-                            <p className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2"><ClipboardList className="w-3.5 h-3.5" /> วัตถุประสงค์</p>
-                            <p className="text-sm font-bold text-slate-700 truncate">{data.requisition?.purpose || "เพื่อใช้งานในแผนก"}</p>
-                        </div>
-
-                    </div>
-
-                    {/* Personnel Table */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-slate-50 border-b-2 border-slate-50">
-                        <div className="p-6 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><User className="w-5 h-5" /></div>
-                            <div>
-                                <p className="text-[9px] font-black text-slate-400 uppercase">ผู้ขอเบิก</p>
-                                <p className="text-xs font-black text-slate-800 uppercase">{data.requisition?.user?.firstName} {data.requisition?.user?.lastName}</p>
-                            </div>
-                        </div>
-                        <div className="p-6 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500"><UserCheck className="w-5 h-5" /></div>
-                            <div>
-                                <p className="text-[9px] font-black text-slate-400 uppercase">ผู้อนุมัติใบเบิก</p>
-                                <p className="text-xs font-black text-slate-800 uppercase">{data.requisition?.approver?.firstName || "SYSTEM"} {data.requisition?.approver?.lastName || ""}</p>
-                            </div>
-                        </div>
-                        <div className="p-6 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500"><ShieldCheck className="w-5 h-5" /></div>
-                            <div>
-                                <p className="text-[9px] font-black text-slate-400 uppercase">เจ้าหน้าที่คลังผู้จ่าย</p>
-                                <p className="text-xs font-black text-slate-800 uppercase">{data.user?.firstName} {data.user?.lastName}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Detailed Items Table */}
-                    <div className="p-8">
-                        <div className="mb-6 flex items-center justify-between">
-                            <h2 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-2">
-                                <Package className="w-4 h-4" /> รายการพัสดุและมูลค่าเบิกจ่าย
-                            </h2>
-                        </div>
-
-                        <div className="overflow-x-auto rounded-[2rem] border border-slate-100 shadow-sm print:border-2 print:border-slate-900">
-                            <table className="min-w-full text-sm text-left border-collapse">
-                                <thead className="bg-slate-50 border-b-2 border-slate-100 print:bg-white print:border-b-2 print:border-slate-900">
-                                    <tr className="text-[10px] font-black text-slate-950 uppercase tracking-widest">
-                                        <th className="p-5 w-12 text-center">#</th>
-                                        <th className="p-5">รายละเอียดพัสดุ</th>
-                                        <th className="p-5">ตำแหน่งคลัง</th>
-                                        <th className="p-5 text-right">จำนวน</th>
-                                        <th className="p-5 text-right">ราคา/หน่วย</th>
-                                        <th className="p-5 text-right pr-8">มูลค่ารวม</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-50 bg-white">
-                                    {memoizedItems.map((item, idx) => {
-                                        const unitCost = item.product?.unitCost || 0;
-                                        const rowTotal = Number(item.quantity) * unitCost;
-                                        return (
-                                            <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="p-5 text-center text-slate-300 font-black tabular-nums">{idx + 1}</td>
-                                                <td className="p-5">
-                                                    <div className="font-black text-slate-900">{item.product?.name}</div>
-                                                    <div className="text-[9px] font-black text-blue-600 mt-1 uppercase">SKU: {item.product?.sku}</div>
-                                                </td>
-                                                <td className="p-6">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <MapPin className="w-4 h-4 text-indigo-600 print:hidden" />
-                                                        <div>
-                                                            {/* 1. แสดงชื่อเต็มของคลังสินค้า */}
-                                                            <p className="text-[12px] font-black text-slate-800 uppercase tracking-tight">
-                                                                {item.location?.warehouse?.name || item.location?.warehouse?.code || "คลังสินค้าไม่ระบุชื่อ"}
-                                                            </p>
-
-                                                            {/* 2. แสดงชื่อโซน และ ชื่อตำแหน่ง (หรือรหัสตำแหน่ง) */}
-                                                            <p className="text-[10px] font-bold text-slate-500 uppercase flex flex-wrap gap-1">
-                                                                <span>โซน: {item.location?.zone?.name || item.location?.zone?.code || "-"}</span>
-                                                                <span className="text-slate-300">|</span>
-                                                                <span>ตำแหน่ง: {item.location?.name || item.location?.code || "-"}</span>
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="p-5 text-right font-black tabular-nums text-base">
-                                                    {formatNumber(item.quantity)} <span className="text-[9px] text-slate-400 uppercase ml-1">{item.product?.unit?.name}</span>
-                                                </td>
-                                                <td className="p-5 text-right font-bold text-slate-500 tabular-nums">
-                                                    {formatNumber(unitCost)}
-                                                </td>
-                                                <td className="p-5 text-right pr-8 font-black text-slate-900 tabular-nums">
-                                                    {formatNumber(rowTotal)}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Summary Section */}
-                        <div className="mt-8 flex flex-col md:flex-row justify-end gap-4">
-                            <div className="bg-slate-50 px-8 py-4 rounded-2xl border border-slate-100 flex items-center gap-4">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">จำนวนรวมทั้งสิ้น</p>
-                                <p className="text-2xl font-black text-slate-900 tabular-nums">{formatNumber(totalQty)}</p>
-                            </div>
-                            <div className="bg-indigo-600 px-8 py-4 rounded-2xl border border-indigo-700 flex items-center gap-6 shadow-xl shadow-indigo-100 print:bg-white print:border-2 print:border-slate-900 print:shadow-none">
-                                <div className="text-white print:text-slate-900">
-                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-80">มูลค่ารวมพัสดุที่เบิกจ่ายออก</p>
-                                    <p className="text-3xl font-black tabular-nums leading-none mt-1">
-                                        {formatCurrency(totalValue)}
-                                    </p>
-                                </div>
-                                <Banknote className="w-8 h-8 text-indigo-300 print:text-slate-900 opacity-50" />
-                            </div>
-                        </div>
-
-                        {/* ลายเซ็นต์สำหรับการพิมพ์ */}
-                        <div className="hidden print:grid grid-cols-3 gap-12 mt-20 text-center">
-                            <div className="space-y-10">
-                                <div className="border-b border-slate-900 pb-2"></div>
-                                <p className="text-[10px] font-black uppercase">ผู้ออกของ (Dispatcher)</p>
-                            </div>
-                            <div className="space-y-10">
-                                <div className="border-b border-slate-900 pb-2"></div>
-                                <p className="text-[10px] font-black uppercase">ผู้รับของ (Receiver)</p>
-                            </div>
-                            <div className="space-y-10">
-                                <div className="border-b border-slate-900 pb-2"></div>
-                                <p className="text-[10px] font-black uppercase">ผู้อนุมัติ (Authorized)</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+          {/* --- ตัวแผ่นเอกสาร (Main Paper) --- */}
+          <div className="bg-white border border-slate-200 shadow-2xl rounded-sm overflow-hidden flex flex-col print:shadow-none print:border-slate-300 min-h-[1100px]">
+            {/* 1. ส่วนหัวเอกสาร (Header) */}
+            <div className="bg-[#1F3B8B] text-white p-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="space-y-1">
+                <h1 className="text-3xl font-black tracking-tight flex items-center gap-4">
+                  <FileText className="w-10 h-10 text-blue-300/40" />{" "}
+                  ใบนำจ่ายสินค้า (DO)
+                </h1>
+                <p className="text-blue-200/80 text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />{" "}
+                  ตัดยอดสต๊อกและทำรายการสำเร็จแล้ว
+                </p>
+              </div>
+              <div className="text-right flex flex-col items-end">
+                <span className="text-[10px] font-black text-blue-200/50 uppercase tracking-[0.3em] mb-1">
+                  เลขที่ใบนำจ่าย
+                </span>
+                <span className="text-3xl font-black tabular-nums tracking-tight">
+                  {data.doNo}
+                </span>
+              </div>
             </div>
-        </AuthGate>
-    );
+
+            {/* 2. ข้อมูลพรรณนา (Header Info Matrix) */}
+            <div className="p-10 grid grid-cols-1 md:grid-cols-3 gap-10 border-b border-slate-100">
+              <BillInfoItem
+                label="วันที่จ่ายออก"
+                value={
+                  new Date(data.createdAt).toLocaleDateString("th-TH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }) + " น."
+                }
+              />
+              <BillInfoItem
+                label="แผนกที่เบิกจ่าย"
+                value={data.requisition?.department?.name || "ไม่ระบุแผนก"}
+              />
+              <BillInfoItem
+                label="เลขอ้างอิงใบเบิก (SR)"
+                value={data.reference || "เบิกจ่ายโดยตรง"}
+                isPrimary
+              />
+            </div>
+
+            {/* 3. ขั้นตอนตรวจสอบพนักงาน (Audit Trail) */}
+            <div className="px-10 py-6 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-y-6 justify-between items-center">
+              <AuditGroup
+                label="ผู้ขอเบิกพัสดุ"
+                value={getFullName(data.requisition?.user)}
+              />
+              <AuditGroup
+                label="ผู้อนุมัติใบเบิก"
+                value={getFullName(data.requisition?.approver)}
+              />
+              <AuditGroup
+                label="เจ้าหน้าที่คลังผู้จ่าย"
+                value={getFullName(data.user)}
+                isMain
+              />
+              <div className="flex flex-col gap-1 text-right">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                  สถานะปัจจุบัน
+                </span>
+                <span className="text-[11px] font-black text-emerald-600 px-4 py-1 rounded-full border border-emerald-200 bg-white">
+                  จ่ายพัสดุแล้ว
+                </span>
+              </div>
+            </div>
+
+            {/* 4. ตารางรายการสินค้า (Items Table) */}
+            <div className="flex-1">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="bg-white border-b-2 border-slate-900">
+                    <th className="px-10 py-5 text-left text-[11px] font-black uppercase tracking-widest text-slate-900">
+                      รายละเอียดสินค้า
+                    </th>
+                    <th className="px-6 py-5 text-left text-[11px] font-black uppercase tracking-widest text-slate-900">
+                      ตำแหน่งจัดเก็บ
+                    </th>
+                    <th className="px-6 py-5 text-center text-[11px] font-black uppercase tracking-widest text-slate-900">
+                      จำนวนเบิก
+                    </th>
+                    <th className="px-6 py-5 text-right text-[11px] font-black uppercase tracking-widest text-slate-900">
+                      ทุน/หน่วย
+                    </th>
+                    <th className="px-10 py-5 text-right text-[11px] font-black uppercase tracking-widest text-slate-900">
+                      รวม (บาท)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {memoizedItems.map((item) => {
+                    const unitCost = item.product?.unitCost || 0;
+                    return (
+                      <tr key={item.id}>
+                        <td className="px-10 py-6">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-slate-900 uppercase">
+                              {item.product?.name}
+                            </span>
+                            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-tight">
+                              รหัสสินค้า: {item.product?.sku}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-6">
+                          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500">
+                            <MapPin className="w-3.5 h-3.5 opacity-40" />
+                            {item.location?.warehouse?.name || "คลังหลัก"} (
+                            {item.location?.code})
+                          </div>
+                        </td>
+                        <td className="px-6 py-6 text-center font-black text-slate-900 tabular-nums">
+                          {item.quantity?.toLocaleString()}{" "}
+                          <span className="text-[9px] text-slate-400 ml-1">
+                            {item.product?.unit?.name}
+                          </span>
+                        </td>
+                        <td className="px-6 py-6 text-right text-slate-400 tabular-nums text-sm">
+                          {unitCost.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                          })}
+                        </td>
+                        <td className="px-10 py-6 text-right font-black text-slate-900 tabular-nums text-sm bg-slate-50/20">
+                          {(item.quantity * unitCost).toLocaleString(
+                            undefined,
+                            { minimumFractionDigits: 2 },
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 5. ส่วนสรุปท้ายเอกสาร (Footer) */}
+            <div className="border-t-2 border-slate-900 bg-slate-50 p-10 flex flex-col md:flex-row justify-between gap-10">
+              <div className="max-w-md space-y-2">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                  วัตถุประสงค์ในการเบิก
+                </span>
+                <p className="text-sm font-bold text-slate-700 leading-relaxed italic border-l-4 border-slate-200 pl-6 py-1">
+                  {data.requisition?.purpose ||
+                    "ใช้สำหรับงานดำเนินงานภายในแผนกตามที่ได้รับอนุมัติ"}
+                </p>
+              </div>
+
+              <div className="space-y-4 min-w-[280px]">
+                <div className="flex justify-between items-center text-slate-500">
+                  <span className="text-[10px] font-black uppercase tracking-widest">
+                    รวมจำนวนพัสดุ
+                  </span>
+                  <span className="text-lg font-black tabular-nums text-slate-900">
+                    {totalQty?.toLocaleString()} หน่วย
+                  </span>
+                </div>
+                <div className="flex justify-between items-end border-t-2 border-slate-200 pt-5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B] mb-1">
+                    มูลค่าเบิกจ่ายสุทธิ
+                  </span>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-slate-400 mr-2">
+                      บาท / THB
+                    </span>
+                    <span className="text-4xl font-black text-[#1F3B8B] tabular-nums tracking-tighter">
+                      {totalValue?.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ส่วนลายเซ็นสำหรับการพิมพ์ (Print Only) */}
+            <div className="hidden print:grid grid-cols-3 gap-12 px-10 pb-20 mt-20 text-center">
+              <Signature label="พนักงานผู้จ่ายของ" />
+              <Signature label="พนักงานผู้รับของ" />
+              <Signature label="ผู้อนุมัติทำรายการ" />
+            </div>
+          </div>
+
+          <div className="text-center pt-4 pb-12 opacity-30">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.5em]">
+              ระบบบริหารจัดการพัสดุคงคลัง • TJC Group Corporate
+            </p>
+          </div>
+        </div>
+      </div>
+    </AuthGate>
+  );
+}
+
+// --- ส่วนประกอบย่อย (Internal Components) ---
+
+function BillInfoItem({ label, value, isPrimary = false }) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        {label}
+      </p>
+      <p
+        className={`text-base font-bold ${isPrimary ? "text-[#1F3B8B]" : "text-slate-900"} leading-tight`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function AuditGroup({ label, value, isMain = false }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+        {label}
+      </span>
+      <span
+        className={`text-sm font-bold ${isMain ? "text-[#1F3B8B]" : "text-slate-700"}`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function Signature({ label }) {
+  return (
+    <div className="space-y-8">
+      <div className="border-b border-slate-900 pb-2"></div>
+      <p className="text-[10px] font-black uppercase text-slate-950">{label}</p>
+    </div>
+  );
+}
+
+function SystemLoader() {
+  return (
+    <div className="h-screen flex flex-col justify-center items-center bg-slate-50 gap-4">
+      <div className="w-10 h-10 border-4 border-slate-200 border-t-[#1F3B8B] rounded-full animate-spin"></div>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">
+        กำลังประมวลผลข้อมูลเอกสารนำจ่าย...
+      </p>
+    </div>
+  );
+}
+
+function NotFoundState() {
+  return (
+    <div className="h-screen flex flex-col justify-center items-center text-center p-10 space-y-6">
+      <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">
+        ไม่พบเอกสารในระบบฐานข้อมูล
+      </h2>
+      <button
+        onClick={() => window.history.back()}
+        className="text-xs font-bold text-[#1F3B8B] border-b-2 border-[#1F3B8B] pb-1 uppercase tracking-widest"
+      >
+        ย้อนกลับ
+      </button>
+    </div>
+  );
 }
