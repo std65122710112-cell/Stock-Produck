@@ -9,6 +9,7 @@ import {
     ClipboardCheck,
     Package,
     AlertCircle,
+    FileText, // นำเข้าไอคอนสำหรับหน้า Inbound
 } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
@@ -56,8 +57,7 @@ export default function GoodsReceiptHistoryPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-100 bg-white">
                             {loading ? (
-                                // เรียกใช้ Skeleton ของคุณที่นี่
-                                <tr><td colSpan="6" className="py-20 text-center text-slate-400">กำลังดึงข้อมูล...</td></tr>
+                                <tr><td colSpan="6" className="py-20 text-center text-slate-400 font-bold">กำลังดึงข้อมูลประวัติการรับเข้า...</td></tr>
                             ) : memoizedReceipts.length === 0 ? (
                                 <tr>
                                     <td colSpan="6" className="py-24 text-center">
@@ -82,11 +82,16 @@ export default function GoodsReceiptHistoryPage() {
                                             </div>
                                         </td>
 
-                                        {/* GR Number */}
+                                        {/* --- ส่วนที่แก้ไข: เพิ่มไอคอน FileText ในกล่องสีเขียว Emerald สำหรับงานขาเข้า --- */}
                                         <td className="py-4 px-6">
-                                            <span className="font-bold text-[#1F3B8B] tabular-nums tracking-tight">
-                                                {r.receiptNo}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 shadow-sm">
+                                                    <FileText className="w-3.5 h-3.5" />
+                                                </div>
+                                                <span className="font-bold text-[#1F3B8B] tabular-nums tracking-tight">
+                                                    {r.receiptNo}
+                                                </span>
+                                            </div>
                                         </td>
 
                                         {/* PO Reference */}
@@ -111,7 +116,7 @@ export default function GoodsReceiptHistoryPage() {
 
                                         {/* Remarks */}
                                         <td className="py-4 px-6">
-                                            <p className="text-xs text-slate-500 truncate max-w-[180px]" title={r.remarks}>
+                                            <p className="text-xs text-slate-500 truncate max-w-45" title={r.remarks}>
                                                 {r.remarks || "---"}
                                             </p>
                                         </td>
@@ -122,7 +127,7 @@ export default function GoodsReceiptHistoryPage() {
                                                 href={`/history/inbound/${r.id}`}
                                                 className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-[#1F3B8B] px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-slate-50 hover:border-[#1F3B8B] transition-all shadow-sm"
                                             >
-                                                View <ChevronRight className="w-3.5 h-3.5" />
+                                                Details <ChevronRight className="w-3.5 h-3.5" />
                                             </Link>
                                         </td>
                                     </tr>

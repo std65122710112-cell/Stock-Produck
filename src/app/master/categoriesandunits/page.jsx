@@ -6,8 +6,8 @@ import { useEffect, useState, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
     Settings, RefreshCw, Plus, Trash2, Edit3, Check, X,
-    Database, Tag, Layers, ShieldCheck, AlertTriangle, ChevronRight,
-    ClipboardList, Info
+    Database, Tag, Layers, ShieldCheck, AlertTriangle,
+    ClipboardList, Info, Loader2
 } from "lucide-react";
 
 const MAX_INPUT_LENGTH = 50;
@@ -17,12 +17,8 @@ function MasterDataSection({
     endpoint,
     placeholder,
     hasAbbr,
-    icon,
-    iconClass = "text-slate-600"
+    icon: Icon
 }) {
-
-    const Icon = icon; // ✅ ประกาศก่อนใช้
-
     const [rows, setRows] = useState([]);
     const [name, setName] = useState("");
     const [abbr, setAbbr] = useState("");
@@ -114,63 +110,63 @@ function MasterDataSection({
         }
     }
 
-
     return (
-        <div className="flex flex-col bg-white rounded-[2.5rem] border-2 border-slate-100 shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300">
+        <div className="flex flex-col bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
 
-            {/* Modal: ยืนยันการลบ */}
+            {/* --- Modals --- */}
             {deleteTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl border-2 border-slate-100 text-center animate-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mb-6 mx-auto border-2 border-rose-100">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mb-6 mx-auto border border-rose-100 shadow-sm">
                             <AlertTriangle className="w-8 h-8 text-rose-500" />
                         </div>
-                        <h3 className="text-xl font-black text-slate-950 uppercase mb-2">ยืนยันการลบ?</h3>
-                        <p className="text-sm font-bold text-slate-500 mb-8">คุณต้องการลบรายการนี้ใช่หรือไม่? ข้อมูลที่ถูกลบไม่สามารถกู้คืนได้</p>
+                        <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight mb-2">ยืนยันการลบ?</h3>
+                        <p className="text-xs font-bold text-slate-500 mb-8 leading-relaxed">
+                            คุณต้องการลบรายการนี้ใช่หรือไม่? <br/> ข้อมูลที่ถูกลบไม่สามารถกู้คืนได้ และระบบจะปฏิเสธการลบหากมีการผูกข้อมูลไว้แล้ว
+                        </p>
                         <div className="flex gap-3">
-                            <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-slate-100 text-slate-600 py-3.5 rounded-xl font-black text-sm uppercase hover:bg-slate-200 transition-all">ยกเลิก</button>
-                            <button onClick={executeDelete} className="flex-1 bg-rose-600 text-white py-3.5 rounded-xl font-black text-sm uppercase hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2"><Trash2 className="w-4 h-4" /> ยืนยันลบ</button>
+                            <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-200 active:scale-95">ยกเลิก</button>
+                            <button onClick={executeDelete} className="flex-1 bg-rose-600 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-rose-700 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"><Trash2 className="w-4 h-4" /> ยืนยันลบ</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Modal: ยืนยันการแก้ไข */}
             {updateTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl border-2 border-slate-100 text-center animate-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mb-6 mx-auto border-2 border-emerald-100">
-                            <Edit3 className="w-8 h-8 text-emerald-600" />
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-6 mx-auto border border-blue-100 shadow-sm">
+                            <Edit3 className="w-8 h-8 text-[#1F3B8B]" />
                         </div>
-                        <h3 className="text-xl font-black text-slate-950 uppercase mb-2">ยืนยันการแก้ไข?</h3>
-                        <p className="text-sm font-bold text-slate-500 mb-8">คุณต้องการบันทึกการเปลี่ยนแปลงของข้อมูลนี้ใช่หรือไม่?</p>
+                        <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight mb-2">ยืนยันการแก้ไข?</h3>
+                        <p className="text-xs font-bold text-slate-500 mb-8 leading-relaxed">คุณต้องการบันทึกการเปลี่ยนแปลงของข้อมูลหลักระบบนี้ใช่หรือไม่?</p>
                         <div className="flex gap-3">
-                            <button onClick={() => setUpdateTarget(null)} className="flex-1 bg-slate-100 text-slate-600 py-3.5 rounded-xl font-black text-sm uppercase hover:bg-slate-200 transition-all">ยกเลิก</button>
-                            <button onClick={executeUpdate} className="flex-1 bg-emerald-600 text-white py-3.5 rounded-xl font-black text-sm uppercase hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2"><Check className="w-4 h-4" /> บันทึก</button>
+                            <button onClick={() => setUpdateTarget(null)} className="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-200 active:scale-95">ยกเลิก</button>
+                            <button onClick={executeUpdate} className="flex-1 bg-[#1F3B8B] text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-900 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"><Check className="w-4 h-4" /> บันทึก</button>
                         </div>
                     </div>
                 </div>
             )}
+            {/* --- End Modals --- */}
 
             {/* Header Area */}
-            <div className="p-6 bg-slate-50 border-b-2 border-slate-100 flex items-center justify-between">
+            <div className="p-6  border-b border-slate-200 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    {/* 💡 นำ iconClass มาใส่ตรงนี้แทนสีที่ถูก Fix ไว้ */}
-                    <div className={`p-2.5 bg-white rounded-xl shadow-sm border border-slate-100 ${iconClass}`}>
+                    <div className={`p-2.5 bg-white rounded-lg shadow-sm border border-slate-200 text-[#1F3B8B]`}>
                         <Icon className="w-5 h-5" />
                     </div>
-                    <h2 className="text-sm font-black text-slate-950 uppercase tracking-[0.15em]">{title}</h2>
+                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">{title}</h2>
                 </div>
-                <button onClick={load} disabled={loading} className="p-2 hover:bg-[#1F3B8B]/10 rounded-lg text-slate-400 hover:text-[#1F3B8B] transition-all disabled:opacity-30">
-                    <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                <button onClick={load} disabled={loading} className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-[#1F3B8B] shadow-sm transition-all disabled:opacity-30">
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
 
             {/* Creation Form */}
-            <form onSubmit={create} autoComplete="off" className="p-6 bg-white border-b-2 border-slate-50 flex flex-wrap lg:flex-nowrap gap-3">
+            <form onSubmit={create} autoComplete="off" className="p-6 bg-white border-b border-slate-100 flex flex-wrap lg:flex-nowrap gap-3">
                 <div className="flex-1 min-w-[200px]">
                     <input
-                        className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold outline-none focus:border-[#1F3B8B] bg-slate-50/50 focus:bg-white transition-all placeholder:text-slate-300"
+                        className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-400"
                         placeholder={placeholder}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -179,9 +175,9 @@ function MasterDataSection({
                     />
                 </div>
                 {hasAbbr && (
-                    <div className="w-32">
+                    <div className="w-28">
                         <input
-                            className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm font-black uppercase text-center outline-none focus:border-[#1F3B8B] bg-slate-50/50 focus:bg-white transition-all placeholder:text-slate-300"
+                            className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-bold uppercase text-center outline-none focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-400"
                             placeholder="ตัวย่อ"
                             value={abbr}
                             onChange={(e) => setAbbr(e.target.value.toUpperCase())}
@@ -192,53 +188,51 @@ function MasterDataSection({
                 )}
                 <button
                     disabled={loading || !name.trim()}
-                    className="bg-emerald-600 text-white rounded-2xl px-8 py-4 font-black text-xs uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-30 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-95"
+                    className="bg-[#1F3B8B] text-white rounded-xl px-6 py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-blue-900 disabled:opacity-30 transition-all flex items-center gap-2 shadow-sm active:scale-95 shrink-0"
                 >
-                    <Plus className="w-4 h-4" /> {loading ? "..." : "เพิ่มข้อมูล"}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} เพิ่มข้อมูล
                 </button>
             </form>
 
             {/* Data Table */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[400px]">
                 <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b-2 border-slate-100">
+                    <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-200">
                         <tr>
-                            {/* 💡 ปรับเพิ่ม text-xs (ใหญ่ขึ้น) และ text-slate-950 (เข้มขึ้น) */}
-                            <th className="px-8 py-5 text-left text-xs font-black uppercase tracking-[0.2em] text-slate-950">
-                                ชื่อรายการ
-                            </th>
-                            {hasAbbr && (
-                                <th className="px-8 py-5 text-center text-xs font-black uppercase tracking-[0.2em] text-slate-950 w-32">
-                                    ตัวย่อ
-                                </th>
-                            )}
-                            <th className="px-8 py-5 text-right text-xs font-black uppercase tracking-[0.2em] text-slate-950 w-40">
-                                จัดการ
-                            </th>
+                            <th className="px-6 py-4 text-left">ชื่อรายการ</th>
+                            {hasAbbr && <th className="px-6 py-4 text-center w-28">ตัวย่อ</th>}
+                            <th className="px-6 py-4 text-right w-36">จัดการ</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50">
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                        {rows.length === 0 && !loading && (
+                            <tr>
+                                <td colSpan={hasAbbr ? 3 : 2} className="py-20 text-center text-slate-400 font-medium text-xs italic">
+                                    ยังไม่มีข้อมูล
+                                </td>
+                            </tr>
+                        )}
                         {rows.map((r) => (
-                            <tr key={r.id} className="hover:bg-slate-50/80 transition-all group">
-                                <td className="px-8 py-5">
+                            <tr key={r.id} className={`group transition-all ${editingId === r.id ? 'bg-[#1F3B8B]/5' : 'hover:bg-slate-50'}`}>
+                                <td className="px-6 py-4">
                                     {editingId === r.id ? (
                                         <input
                                             autoFocus
-                                            className="border-2 border-emerald-500 rounded-xl px-4 py-2 w-full text-sm font-bold outline-none bg-white shadow-inner"
+                                            className="border border-slate-300 rounded-lg px-3 py-2 w-full text-sm font-bold outline-none focus:border-[#1F3B8B] bg-white shadow-sm text-slate-900"
                                             value={editName}
                                             onChange={(e) => setEditName(e.target.value)}
                                             maxLength={MAX_INPUT_LENGTH}
                                             disabled={loading}
                                         />
                                     ) : (
-                                        <span className="font-bold text-slate-800 uppercase tracking-tight text-sm group-hover:text-[#1F3B8B] transition-colors">{r.name}</span>
+                                        <span className="font-bold text-slate-900 uppercase tracking-tight text-sm transition-colors">{r.name}</span>
                                     )}
                                 </td>
                                 {hasAbbr && (
-                                    <td className="px-8 py-5 text-center">
+                                    <td className="px-6 py-4 text-center">
                                         {editingId === r.id ? (
                                             <input
-                                                className="border-2 border-emerald-500 rounded-xl px-2 py-2 w-24 text-center text-xs font-black uppercase outline-none bg-white shadow-inner"
+                                                className="border border-slate-300 rounded-lg px-2 py-2 w-full text-center text-xs font-bold uppercase outline-none focus:border-[#1F3B8B] bg-white shadow-sm text-slate-900"
                                                 value={editAbbr}
                                                 onChange={(e) => setEditAbbr(e.target.value.toUpperCase())}
                                                 placeholder="-"
@@ -246,45 +240,40 @@ function MasterDataSection({
                                                 disabled={loading}
                                             />
                                         ) : (
-                                            <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-[10px] font-black border border-slate-200 group-hover:bg-[#1F3B8B]/10 group-hover:text-[#1F3B8B] transition-all">
+                                            <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md text-[10px] font-bold border border-slate-200">
                                                 {r.abbr || "-"}
                                             </span>
                                         )}
                                     </td>
                                 )}
-                                <td className="px-8 py-5 text-right">
+                                <td className="px-6 py-4 text-right">
                                     {editingId === r.id ? (
                                         <div className="flex justify-end gap-2">
-                                            <button onClick={() => setUpdateTarget(r.id)} disabled={loading || !editName.trim()} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all" title="บันทึก">
-                                                <Check className="w-5 h-5" />
+                                            <button onClick={() => setUpdateTarget(r.id)} disabled={loading || !editName.trim()} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all border border-emerald-200" title="บันทึก">
+                                                <Check className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => setEditingId(null)} disabled={loading} className="p-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-all" title="ยกเลิก">
-                                                <X className="w-5 h-5" />
+                                            <button onClick={() => setEditingId(null)} disabled={loading} className="p-2 bg-slate-50 text-slate-500 hover:bg-slate-100 rounded-lg transition-all border border-slate-200" title="ยกเลิก">
+                                                <X className="w-4 h-4" />
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="flex justify-end gap-2">
-                                            <div className="flex justify-end gap-2">
-                                                {/* 💡 ปุ่มแก้ไข: เปลี่ยนจาก text-slate-300 เป็นสีน้ำเงินหลัก และเพิ่มพื้นหลังจางๆ ให้ดูมีมิติ */}
-                                                <button
-                                                    onClick={() => { setEditingId(r.id); setEditName(r.name); setEditAbbr(r.abbr || ""); }}
-                                                    disabled={loading}
-                                                    className="p-2 text-[#1F3B8B] bg-[#1F3B8B]/5 hover:bg-[#1F3B8B]/10 rounded-xl transition-all active:scale-90"
-                                                    title="แก้ไข"
-                                                >
-                                                    <Edit3 className="w-5 h-5" />
-                                                </button>
-
-                                                {/* 💡 ปุ่มลบ: เปลี่ยนจาก text-slate-300 เป็นสีแดง Rose และเพิ่มพื้นหลังจางๆ */}
-                                                <button
-                                                    onClick={() => setDeleteTarget(r.id)}
-                                                    disabled={loading}
-                                                    className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all active:scale-90"
-                                                    title="ลบ"
-                                                >
-                                                    <Trash2 className="w-5 h-5" />
-                                                </button>
-                                            </div>
+                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => { setEditingId(r.id); setEditName(r.name); setEditAbbr(r.abbr || ""); }}
+                                                disabled={loading}
+                                                className="p-2 text-slate-400 bg-slate-50 hover:text-[#1F3B8B] hover:bg-blue-50 rounded-lg transition-all border border-slate-200"
+                                                title="แก้ไข"
+                                            >
+                                                <Edit3 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setDeleteTarget(r.id)}
+                                                disabled={loading}
+                                                className="p-2 text-slate-400 bg-slate-50 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all border border-slate-200"
+                                                title="ลบ"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     )}
                                 </td>
@@ -292,9 +281,6 @@ function MasterDataSection({
                         ))}
                     </tbody>
                 </table>
-                {rows.length === 0 && (
-                    <div className="p-16 text-center text-slate-400 text-[10px] font-black uppercase tracking-widest italic">ยังไม่มีข้อมูลในระบบ</div>
-                )}
             </div>
         </div>
     );
@@ -304,64 +290,50 @@ export default function MasterSettingsPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="max-w-6xl mx-auto space-y-10 pb-20">
+            <div className="min-h-screen  py-8 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-[1600px] mx-auto space-y-8 pb-20">
 
-                {/* Header Section */}
-                <div className="flex flex-col md:flex-row items-start md:items-center border-b-2 border-slate-100 pb-8 gap-6">
-
-                    {/* ด้านซ้าย: กล่องไอคอน */}
-                    <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-[#1F3B8B] flex items-center justify-center shadow-xl shadow-[#1F3B8B]/20 shrink-0 border border-[#1F3B8B]">
-                        <ClipboardList className="w-8 h-8 text-white" strokeWidth={2} />
-                    </div>
-
-                    {/* ด้านขวา: ข้อมูลเรียงซ้อนกัน */}
-                    <div className="flex flex-col">
-                        {/* ส่วนบน: หมวดหมู่ระบบ (System Core Configuration) */}
-                        <div className="flex items-center gap-2 mb-1.5">
-                            <ShieldCheck className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                System Core Configuration
-                            </p>
-                        </div>
-
-                        {/* หัวข้อหลัก: ตัวตรง ไม่เอียง หนาพิเศษ */}
-                        <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                            หมวดหมู่และหน่วยนับ
-                        </h1>
-
-                        {/* คำอธิบายด้านล่าง: ไอคอน Info นำหน้า */}
-                        <div className="flex items-center gap-2">
-                            <Info className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                            <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                จัดการข้อมูลหมวดหมู่และหน่วยนับพื้นฐาน
-                            </p>
+                    {/* --- HEADER SECTION --- */}
+                    <div className="flex flex-col md:flex-row items-start md:items-center border-b border-slate-200 pb-8 gap-6">
+                        <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 bg-white text-[#1F3B8B] rounded-xl shadow-sm border border-slate-200 flex items-center justify-center shrink-0">
+                                <ClipboardList className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                                    หมวดหมู่และหน่วยนับ (Master Data)
+                                </h1>
+                                <p className="text-slate-500 font-medium text-sm mt-1 flex items-center gap-2">
+                                    <Database className="w-4 h-4 text-[#1F3B8B]" />
+                                    จัดการข้อมูลหมวดหมู่สินค้าและหน่วยนับพื้นฐาน
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 items-start">
-                    <MasterDataSection
-                        title="จัดการหมวดหมู่สินค้า"
-                        endpoint="/master/categories"
-                        placeholder="ชื่อหมวดหมู่ (เช่น Fiber Optics)"
-                        hasAbbr={true}
-                        icon={Layers}
-                        iconClass="text-blue-600" // 👈 เปลี่ยนสีตรงนี้ได้เลย เช่น text-rose-500, text-amber-500
-                    />
-                    <MasterDataSection
-                        title="จัดการหมวดหมู่หน่วยนับ"
-                        endpoint="/master/units"
-                        placeholder="ชื่อหน่วยนับ (เช่น ม้วน, ชิ้น)"
-                        hasAbbr={false}
-                        icon={Tag}
-                        iconClass="text-emerald-600" // 👈 เปลี่ยนสีตรงนี้ได้เลย
-                    />
-                </div>
+                    {/* --- 2 COLUMNS LAYOUT --- */}
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                        <MasterDataSection
+                            title="จัดการหมวดหมู่สินค้า (Categories)"
+                            endpoint="/master/categories"
+                            placeholder="ชื่อหมวดหมู่ (เช่น Fiber Optics)"
+                            hasAbbr={true}
+                            icon={Layers}
+                        />
+                        <MasterDataSection
+                            title="จัดการหน่วยนับ (Units)"
+                            endpoint="/master/units"
+                            placeholder="ชื่อหน่วยนับ (เช่น ม้วน, ชิ้น)"
+                            hasAbbr={false}
+                            icon={Tag}
+                        />
+                    </div>
 
-                {/* Footer Compliance */}
-                <div className="flex justify-center items-center gap-3 py-10">
-                    <Database className="w-4 h-4 text-slate-300" />
-                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">ข้อมูลตั้งต้นจะถูกใช้ร่วมกันในทุกส่วนของระบบปฏิบัติการ</span>
+                    {/* --- FOOTER HINT --- */}
+                    <div className="flex justify-center items-center gap-2 py-6 opacity-50">
+                        <Database className="w-4 h-4 text-slate-400" />
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">ข้อมูลตั้งต้นจะถูกนำไปใช้งานร่วมกันในทุกฟังก์ชันของระบบ</span>
+                    </div>
                 </div>
             </div>
         </AuthGate>

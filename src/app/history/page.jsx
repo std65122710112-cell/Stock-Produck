@@ -36,20 +36,11 @@ export default function HistoryDashboardPage() {
   return (
     <AuthGate>
       <Toaster position="top-right" />
-      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         {/* --- HEADER SECTION --- */}
         <div className="flex flex-col gap-6 border-b border-slate-200 pb-8 print:hidden">
-          {/* ปุ่มย้อนกลับด้านบนซ้ายสุด */}
-          <div>
-            <button 
-              onClick={() => router.back()} 
-              className="flex items-center gap-2 text-slate-500 hover:text-[#1F3B8B] font-bold text-sm transition-colors group"
-            >
-              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> 
-              ย้อนกลับ
-            </button>
-          </div>
+          
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="flex items-center gap-4">
@@ -70,7 +61,7 @@ export default function HistoryDashboardPage() {
             </div>
 
             {/* ส่วนสรุปเล็กๆ ด้านขวา */}
-            <div className="bg-slate-50 border border-slate-200 px-6 py-3 rounded-xl flex flex-col items-end min-w-[200px]">
+            <div className="bg-slate-50 border border-slate-200 px-6 py-3 rounded-xl flex flex-col items-end min-w-50">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                 Active View
               </span>
@@ -110,7 +101,7 @@ export default function HistoryDashboardPage() {
         </div>
 
         {/* --- CONTENT CONTAINER --- */}
-        <section className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-[600px] overflow-hidden">
+        <section className="bg-white rounded-xl border border-slate-200 shadow-sm min-h-150 overflow-hidden">
           {/* ส่วนเนื้อหาภายใน Tab จะใช้ Padding มาตรฐาน p-6 */}
           <div className="p-6">
             {activeTab === 'inbound' && <GoodsReceiptHistoryPage />}

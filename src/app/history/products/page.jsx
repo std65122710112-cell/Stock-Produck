@@ -1,24 +1,24 @@
 "use client";
 
+import React, { useEffect, useState, useMemo } from "react";
 import AuthGate from "@/components/AuthGate";
 import { apiFetch } from "@/lib/api";
-import { useEffect, useState, useMemo } from "react";
 import {
-    History, Package, MapPin, Calendar, ArrowUpRight,
-    ArrowDownLeft, Database, Search, RefreshCw, Activity,
-    Filter, ChevronLeft, ChevronRight, Hash
+    Package, MapPin, Calendar, ArrowUpRight,
+    ArrowDownLeft, Database, Search, Activity,
+    Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    History, LayoutGrid, ArrowDownCircle, ArrowUpCircle, Boxes
 } from "lucide-react";
+import { Toaster } from "react-hot-toast";
 
 export default function GlobalMovementHistoryPage() {
     const [movements, setMovements] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // --- States สำหรับตัวกรอง (Filters) ---
     const [searchTerm, setSearchTerm] = useState("");
-    const [filterType, setFilterType] = useState("ALL"); // ALL, IN, OUT, TRANSFER, ADJUST
+    const [filterType, setFilterType] = useState("ALL"); 
     const [filterDate, setFilterDate] = useState("");
 
-    // --- States สำหรับแบ่งหน้า (Pagination) ---
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 30;
 
@@ -40,10 +40,8 @@ export default function GlobalMovementHistoryPage() {
         }
     }
 
-    // 🔍 กรองข้อมูลก่อน (Search & Filters)
     const filteredMovements = useMemo(() => {
         return movements.filter(m => {
-            // 1. กรองคำค้นหา (SKU, ชื่อ, ตำแหน่ง, ผู้ทำรายการ)
             const s = searchTerm.toLowerCase();
             const matchSearch = !s ||
                 m.product?.name?.toLowerCase().includes(s) ||
@@ -51,10 +49,8 @@ export default function GlobalMovementHistoryPage() {
                 m.location?.code?.toLowerCase().includes(s) ||
                 m.user?.firstName?.toLowerCase().includes(s);
 
-            // 2. กรองประเภทกิจกรรม
             const matchType = filterType === "ALL" || m.type === filterType;
 
-            // 3. กรองวันที่ (ถ้าเลือก)
             let matchDate = true;
             if (filterDate) {
                 const itemDate = new Date(m.createdAt).toISOString().split('T')[0];
@@ -65,246 +61,292 @@ export default function GlobalMovementHistoryPage() {
         });
     }, [movements, searchTerm, filterType, filterDate]);
 
-    // 📄 แบ่งหน้า (Pagination) จากข้อมูลที่กรองแล้ว
+    // 📄 คำนวณสรุปยอดสำหรับกล่อง Summary
+    const stats = useMemo(() => {
+        const inbound = filteredMovements.filter(m => m.type === 'IN').reduce((sum, m) => sum + (m.quantity || 0), 0);
+        const outbound = filteredMovements.filter(m => m.type === 'OUT').reduce((sum, m) => sum + Math.abs(m.quantity || 0), 0);
+        return { total: filteredMovements.length, inbound, outbound };
+    }, [filteredMovements]);
+
     const totalPages = Math.ceil(filteredMovements.length / itemsPerPage);
     const paginatedMovements = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return filteredMovements.slice(startIndex, startIndex + itemsPerPage);
     }, [filteredMovements, currentPage]);
 
-    // รีเซ็ตไปหน้าแรกเสมอถ้ามีการเปลี่ยนตัวกรอง
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, filterType, filterDate]);
 
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-            <RefreshCw className="animate-spin text-indigo-600" size={32} />
-            <p className="font-black text-slate-400 uppercase tracking-widest text-[10px]">Accessing Global Ledger...</p>
-        </div>
-    );
+    if (loading) return <SystemLoader />;
 
     return (
         <AuthGate>
-            <div className="max-w-7xl mx-auto space-y-6 pb-20 pt-6 px-4">
+            <Toaster position="top-right" />
+            <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-                {/* --- HEADER --- */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-200 pb-6">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-[0.3em]">
-                            <Activity size={16} /> Transaction Audit Trail
+                {/* --- HEADER SECTION --- */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-8 gap-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                            <Activity className="w-6 h-6 text-[#1F3B8B]" />
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
-                            ประวัติการเคลื่อนไหวรวม
-                        </h1>
-                        <p className="text-slate-500 font-bold text-sm">รายการ เข้า-ออก และโอนย้ายพัสดุทุกรายการภายในระบบ</p>
+                        <div>
+                            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                                ประวัติการเคลื่อนไหวรวม
+                            </h1>
+                            <p className="text-sm text-slate-500 mt-1 font-medium flex items-center gap-2">
+                                <Database className="w-4 h-4 text-slate-400" />
+                                บันทึกการตรวจสอบรายการเคลื่อนไหวพัสดุทุกประเภท (Audit Trail)
+                            </p>
+                        </div>
                     </div>
 
-                    {/* Summary Stats (มุมขวาบน) */}
-                    <div className="bg-slate-900 text-white px-6 py-4 rounded-2xl flex items-center gap-6 shadow-lg shadow-slate-200">
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Records</p>
-                            <p className="text-2xl font-black font-mono">{filteredMovements.length}</p>
-                        </div>
-                        <div className="w-px h-10 bg-slate-700"></div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Current Page</p>
-                            <p className="text-2xl font-black font-mono text-indigo-400">{currentPage}<span className="text-sm text-slate-500">/{totalPages || 1}</span></p>
+                    <div className="flex flex-col items-end print:hidden">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">หน้าปัจจุบัน</span>
+                        <div className="bg-slate-900 text-white px-4 py-1.5 rounded-lg font-bold tabular-nums text-sm border border-slate-700 shadow-sm">
+                            {currentPage} <span className="text-slate-500 mx-1">/</span> {totalPages || 1}
                         </div>
                     </div>
+                </div>
+
+                {/* --- SUMMARY CARDS SECTION --- */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <SummaryCard 
+                        title="จำนวนรายการทั้งหมด" 
+                        count={stats.total} 
+                        unit="เอกสาร"
+                        color="slate" 
+                        icon={<LayoutGrid className="w-5 h-5 text-slate-600" />} 
+                    />
+                    <SummaryCard 
+                        title="รวมจำนวนรับเข้า (Inbound)" 
+                        count={stats.inbound} 
+                        unit="หน่วย"
+                        color="emerald" 
+                        icon={<ArrowDownCircle className="w-5 h-5 text-emerald-600" />} 
+                    />
+                    <SummaryCard 
+                        title="รวมจำนวนจ่ายออก (Outbound)" 
+                        count={stats.outbound} 
+                        unit="หน่วย"
+                        color="blue" 
+                        icon={<ArrowUpCircle className="w-5 h-5 text-blue-600" />} 
+                    />
                 </div>
 
                 {/* --- FILTER PANEL --- */}
-                <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5 print:hidden">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="flex-1 relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1F3B8B] transition-colors" size={18} />
+                            <input
+                                type="text"
+                                placeholder="ค้นหาด้วยรหัส SKU, ชื่อพัสดุ, ตำแหน่งจัดเก็บ หรือชื่อเจ้าหน้าที่..."
+                                className="w-full pl-12 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-[#1F3B8B] focus:bg-white focus:ring-4 focus:ring-[#1F3B8B]/5 font-bold text-sm transition-all placeholder:text-slate-400"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
 
-                    {/* Search */}
-                    <div className="relative w-full md:flex-1 group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                        <input
-                            type="text"
-                            placeholder="ค้นหา SKU, ชื่อพัสดุ, ตำแหน่ง, เจ้าหน้าที่..."
-                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-50 font-bold text-sm transition-all"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="relative min-w-50">
+                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                <select
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none focus:border-[#1F3B8B] font-bold text-sm text-slate-700 cursor-pointer"
+                                >
+                                    <option value="ALL">ทุกกิจกรรม (All Actions)</option>
+                                    <option value="IN">รับสินค้าเข้า (IN)</option>
+                                    <option value="OUT">จ่ายพัสดุออก (OUT)</option>
+                                    <option value="TRANSFER">โอนย้าย (TRANSFER)</option>
+                                    <option value="ADJUST">ปรับยอด (ADJUST)</option>
+                                </select>
+                            </div>
+
+                            <input
+                                type="date"
+                                value={filterDate}
+                                onChange={(e) => setFilterDate(e.target.value)}
+                                className="px-4 py-2.5 bg-white border border-slate-200 rounded-lg outline-none focus:border-[#1F3B8B] font-bold text-sm text-slate-700 cursor-pointer shadow-sm"
+                            />
+                        </div>
+
+                        {(searchTerm || filterType !== "ALL" || filterDate) && (
+                            <button
+                                onClick={() => { setSearchTerm(""); setFilterType("ALL"); setFilterDate(""); }}
+                                className="px-6 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg font-bold text-xs uppercase tracking-widest border border-rose-100 transition-colors"
+                            >
+                                ล้างตัวกรอง
+                            </button>
+                        )}
                     </div>
-
-                    {/* Filter Type */}
-                    <div className="w-full md:w-48 relative">
-                        <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                        <select
-                            value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 font-bold text-sm text-slate-700 appearance-none cursor-pointer"
-                        >
-                            <option value="ALL">ทุกประเภท (All)</option>
-                            <option value="IN">รับเข้า (IN)</option>
-                            <option value="OUT">จ่ายออก (OUT)</option>
-                            <option value="TRANSFER">โอนย้าย (TRANSFER)</option>
-                            <option value="ADJUST">ปรับยอด (ADJUST)</option>
-                        </select>
-                    </div>
-
-                    {/* Filter Date */}
-                    <div className="w-full md:w-48">
-                        <input
-                            type="date"
-                            value={filterDate}
-                            onChange={(e) => setFilterDate(e.target.value)}
-                            className="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 font-bold text-sm text-slate-700 cursor-pointer"
-                        />
-                    </div>
-
-                    {/* Clear Button */}
-                    {(searchTerm || filterType !== "ALL" || filterDate) && (
-                        <button
-                            onClick={() => { setSearchTerm(""); setFilterType("ALL"); setFilterDate(""); }}
-                            className="w-full md:w-auto px-6 py-3.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-2xl font-black text-xs uppercase tracking-widest transition-colors"
-                        >
-                            ล้างค่า
-                        </button>
-                    )}
                 </div>
 
                 {/* --- DATA TABLE --- */}
-                <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-xl overflow-hidden">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-900 text-white">
-                                <tr className="text-[10px] font-black uppercase tracking-[0.15em]">
-                                    <th className="p-6 w-16 text-center">ลำดับ</th>
-                                    <th className="p-6">วัน/เวลา</th>
-                                    <th className="p-6">ข้อมูลพัสดุ (SKU / NAME)</th>
-                                    <th className="p-6">กิจกรรม</th>
-                                    <th className="p-6">ตำแหน่ง</th>
-                                    <th className="p-6 text-center">จำนวน</th>
-                                    <th className="p-6">ผู้รับผิดชอบ</th>
+                        <table className="min-w-full border-collapse text-left">
+                            <thead className="bg-slate-50 border-b border-slate-200">
+                                <tr className="text-slate-500 font-bold text-xs uppercase tracking-wider">
+                                    <th className="py-4 px-6 w-16 text-center">ลำดับ</th>
+                                    <th className="py-4 px-6">วันที่ / เวลา</th>
+                                    <th className="py-4 px-6">รายละเอียดพัสดุ</th>
+                                    <th className="py-4 px-6">กิจกรรม</th>
+                                    <th className="py-4 px-6">ตำแหน่งจัดเก็บ</th>
+                                    <th className="py-4 px-6 text-center">จำนวน</th>
+                                    <th className="py-4 px-6 text-right">ผู้ทำรายการ</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 bg-white">
                                 {paginatedMovements.length === 0 ? (
-                                    <tr><td colSpan="7" className="p-20 text-center text-slate-400 font-bold">ไม่พบรายการเคลื่อนไหว</td></tr>
-                                ) : paginatedMovements.map((m, index) => {
-                                    // คำนวณลำดับที่แท้จริง
-                                    const rowNumber = ((currentPage - 1) * itemsPerPage) + index + 1;
+                                    <tr>
+                                        <td colSpan="7" className="py-24 text-center">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <History className="w-12 h-12 text-slate-200" />
+                                                <p className="text-slate-400 font-medium text-sm">ไม่พบข้อมูลประวัติการเคลื่อนไหว</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    paginatedMovements.map((m, index) => {
+                                        const rowNumber = ((currentPage - 1) * itemsPerPage) + index + 1;
+                                        const isPositive = m.quantity > 0;
 
-                                    return (
-                                        <tr key={m.id} className="hover:bg-slate-50/80 transition-all group">
-                                            <td className="p-6 text-center">
-                                                <span className="text-[10px] font-black text-slate-300 tabular-nums">{rowNumber}</span>
-                                            </td>
-                                            <td className="p-6 whitespace-nowrap">
-                                                <p className="text-xs font-black text-slate-700 tabular-nums">{new Date(m.createdAt).toLocaleDateString('th-TH')}</p>
-                                                <p className="text-[10px] font-bold text-slate-400 tabular-nums">{new Date(m.createdAt).toLocaleTimeString('th-TH')} น.</p>
-                                            </td>
-                                            <td className="p-6 min-w-[250px]">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600 group-hover:bg-white transition-colors shadow-sm"><Package size={20} /></div>
-                                                    <div>
-                                                        <p className="text-xs font-black text-indigo-600 font-mono tracking-tighter uppercase">{m.product?.sku}</p>
-                                                        <p className="text-sm font-bold text-slate-800 uppercase tracking-tight truncate max-w-[200px]" title={m.product?.name}>{m.product?.name}</p>
+                                        return (
+                                            <tr key={m.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                <td className="py-4 px-6 text-center">
+                                                    <span className="text-[11px] font-bold text-slate-300 tabular-nums">{rowNumber}</span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex flex-col text-slate-600 text-xs">
+                                                        <span className="font-bold tabular-nums">{new Date(m.createdAt).toLocaleDateString('th-TH')}</span>
+                                                        <span className="opacity-70 font-medium">{new Date(m.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="p-6">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`p-1.5 rounded-lg ${m.quantity > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-                                                        {m.quantity > 0 ? <ArrowDownLeft size={14} /> : <ArrowUpRight size={14} />}
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex items-center gap-3">
+                                                        {/* ไอคอนตามโจทย์ */}
+                                                        <div className="p-2 bg-indigo-50 rounded-lg text-[#1F3B8B] border border-indigo-100 group-hover:bg-white transition-colors shadow-sm shrink-0">
+                                                            <Boxes size={18} />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-tight mb-0.5">SKU: {m.product?.sku}</span>
+                                                            <span className="text-sm font-semibold text-slate-800 line-clamp-1 group-hover:text-[#1F3B8B] uppercase" title={m.product?.name}>{m.product?.name}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <MovementBadge type={m.type} />
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex flex-col gap-0.5 text-[11px] font-medium text-slate-600">
+                                                        <span className="font-bold text-slate-800 flex items-center gap-1">
+                                                            <MapPin className="w-3 h-3 text-indigo-500" /> {m.location?.warehouse?.name || 'WH'}
+                                                        </span>
+                                                        <span className="pl-4">ตำแหน่ง: {m.location?.code}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <span className={`text-lg font-black tabular-nums ${isPositive ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                                        {isPositive ? `+${m.quantity}` : m.quantity}
                                                     </span>
-                                                    <div>
-                                                        <p className="text-xs font-black uppercase text-slate-700">{m.type}</p>
-                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{m.referenceType || 'Entry'}</p>
+                                                </td>
+                                                <td className="py-4 px-6 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-xs font-bold text-slate-700 uppercase">{m.user ? `${m.user.firstName}` : 'System'}</span>
+                                                            <span className="text-[9px] text-slate-400 font-black uppercase tracking-tighter">Verified</span>
+                                                        </div>
+                                                        <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-black text-slate-600 border border-white shadow-sm">
+                                                            {m.user?.firstName?.[0] || 'S'}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td className="p-6">
-                                                <div className="space-y-0.5">
-                                                    <div className="flex items-center gap-1.5 text-xs font-black text-slate-800">
-                                                        <MapPin size={12} className="text-indigo-500" />
-                                                        {m.location?.code}
-                                                    </div>
-                                                    <p className="text-[9px] font-bold text-slate-400 uppercase italic">
-                                                        {m.location?.warehouse?.name}
-                                                    </p>
-                                                </div>
-                                            </td>
-                                            <td className="p-6 text-center">
-                                                <span className={`text-lg font-black font-mono ${m.quantity > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                                    {m.quantity > 0 ? `+${m.quantity}` : m.quantity}
-                                                </span>
-                                            </td>
-                                            <td className="p-6">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[9px] font-black text-slate-500 uppercase">
-                                                        {m.user?.firstName?.[0] || '-'}
-                                                    </div>
-                                                    <span className="text-xs font-bold text-slate-600 uppercase italic">
-                                                        {m.user ? `${m.user.firstName}` : 'System'}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 {/* --- PAGINATION CONTROLS --- */}
-                {totalPages > 1 && (
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 border border-slate-200 rounded-3xl shadow-sm">
-                        <div className="text-xs font-bold text-slate-400 px-4">
-                            แสดง {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredMovements.length)} จากทั้งหมด <span className="text-slate-800 font-black">{filteredMovements.length}</span> รายการ
-                        </div>
+                {!loading && totalPages > 1 && (
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-2 print:hidden">
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                            แสดง {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredMovements.length)} จากทั้งหมด {filteredMovements.length.toLocaleString()} รายการ
+                        </p>
                         <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                className="p-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-                            >
-                                <ChevronLeft size={20} />
-                            </button>
-
-                            <div className="flex gap-1 px-2">
-                                {/* สร้างปุ่มตัวเลขหน้าแบบย่อ */}
-                                {[...Array(totalPages)].map((_, i) => {
-                                    const page = i + 1;
-                                    // โชว์เฉพาะหน้าแรก หน้าสุดท้าย และหน้าใกล้เคียง
-                                    if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
-                                        return (
-                                            <button
-                                                key={page}
-                                                onClick={() => setCurrentPage(page)}
-                                                className={`w-8 h-8 rounded-xl text-xs font-black transition-colors ${currentPage === page ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
-                                            >
-                                                {page}
-                                            </button>
-                                        );
-                                    } else if (page === currentPage - 2 || page === currentPage + 2) {
-                                        return <span key={page} className="w-8 h-8 flex items-center justify-center text-slate-300 font-bold">...</span>;
-                                    }
-                                    return null;
-                                })}
+                            <PaginationButton onClick={() => setCurrentPage(1)} disabled={currentPage === 1} icon={<ChevronsLeft className="w-4 h-4" />} />
+                            <PaginationButton onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} icon={<ChevronLeft className="w-4 h-4" />} />
+                            
+                            <div className="px-4 py-1.5 text-xs font-bold text-[#1F3B8B] bg-white border border-slate-200 rounded-lg shadow-sm font-mono">
+                                {currentPage} / {totalPages}
                             </div>
 
-                            <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                                className="p-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-                            >
-                                <ChevronRight size={20} />
-                            </button>
+                            <PaginationButton onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} icon={<ChevronRight className="w-4 h-4" />} />
+                            <PaginationButton onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} icon={<ChevronsRight className="w-4 h-4" />} />
                         </div>
                     </div>
                 )}
-
-                <div className="text-center pt-8 opacity-20">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.6em] flex items-center justify-center gap-4">
-                        <Database className="w-4 h-4" /> Secure Ledger Management • TJC Group 2026
-                    </p>
-                </div>
             </div>
         </AuthGate>
+    );
+}
+
+// --- SUB-COMPONENTS ---
+
+function SummaryCard({ title, count, unit, color, icon }) {
+    const themes = {
+        slate: "border-l-slate-400 bg-slate-50/50",
+        emerald: "border-l-emerald-500 bg-emerald-50/30",
+        blue: "border-l-blue-500 bg-blue-50/30",
+    };
+    return (
+        <div className={`bg-white border border-slate-200 border-l-4 ${themes[color]} p-5 rounded-xl flex items-center gap-4 shadow-sm transition-all hover:shadow-md`}>
+            <div className="p-2.5 bg-white rounded-lg shadow-sm border border-slate-100">{icon}</div>
+            <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">{title}</p>
+                <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-slate-900 tabular-nums">{count.toLocaleString()}</span>
+                    {unit && <span className="text-xs font-bold text-slate-400 uppercase">{unit}</span>}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function MovementBadge({ type }) {
+    const configs = {
+        IN: { label: "รับเข้า (IN)", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: <ArrowDownLeft size={12} /> },
+        OUT: { label: "จ่ายออก (OUT)", color: "bg-blue-50 text-blue-700 border-blue-200", icon: <ArrowUpRight size={12} /> },
+        TRANSFER: { label: "โอนย้าย (TF)", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: <History size={12} /> },
+        ADJUST: { label: "ปรับยอด (ADJ)", color: "bg-slate-50 text-slate-700 border-slate-200", icon: <Activity size={12} /> },
+    };
+    const config = configs[type] || { label: type, color: "bg-slate-50 text-slate-500 border-slate-200", icon: null };
+
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[10px] font-black uppercase ${config.color} shadow-sm`}>
+            {config.icon}
+            {config.label}
+        </span>
+    );
+}
+
+function PaginationButton({ onClick, disabled, icon }) {
+    return (
+        <button onClick={onClick} disabled={disabled} className="p-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-30 transition-colors shadow-sm">{icon}</button>
+    );
+}
+
+function SystemLoader() {
+    return (
+        <div className="h-screen flex flex-col justify-center items-center bg-slate-50 gap-6">
+            <div className="w-12 h-12 border-4 border-slate-200 border-t-[#1F3B8B] rounded-full animate-spin"></div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">Accessing Global Activity Registry...</p>
+        </div>
     );
 }

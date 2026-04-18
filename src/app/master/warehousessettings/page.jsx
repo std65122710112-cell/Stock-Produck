@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
     Building2, Layers, MapPin, Database, RefreshCw, Plus,
-    ArrowRight, Loader2, LayoutGrid, Trash2, AlertTriangle, ShieldCheck, ChevronRight
+    Loader2, LayoutGrid, Trash2, AlertTriangle, ArrowRight
 } from "lucide-react";
 
 export default function UnifiedInfrastructurePage() {
@@ -85,164 +85,151 @@ export default function UnifiedInfrastructurePage() {
 
             {/* --- Custom Confirm Delete Modal --- */}
             {confirmDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full mx-4 shadow-2xl border-2 border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mb-6 border-2 border-rose-100 shadow-inner">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mb-6 border border-rose-100 shadow-sm">
                             <AlertTriangle className="w-8 h-8 text-rose-500" />
                         </div>
-                        <h3 className="text-xl font-black text-slate-950 uppercase tracking-tight mb-2">ยืนยันการลบ?</h3>
-                        <p className="text-sm font-bold text-slate-500 mb-8">คุณต้องการลบ {confirmDelete.typeLabel} ใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+                        <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight mb-2">ยืนยันการลบ?</h3>
+                        <p className="text-xs font-bold text-slate-500 mb-8 leading-relaxed">
+                            คุณต้องการลบ <span className="text-rose-600">{confirmDelete.typeLabel}</span> ใช่หรือไม่? <br/>หากข้อมูลนี้มีการผูกรายการอยู่ ระบบจะปฏิเสธการลบ
+                        </p>
 
                         <div className="flex w-full gap-3">
-                            <button onClick={() => setConfirmDelete(null)} className="flex-1 bg-slate-100 text-slate-600 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95">ยกเลิก</button>
-                            <button onClick={executeDelete} className="flex-1 bg-rose-600 text-white py-3.5 rounded-xl font-black text-sm uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/30 active:scale-95 flex items-center justify-center gap-2"><Trash2 className="w-4 h-4" /> ยืนยันลบ</button>
+                            <button onClick={() => setConfirmDelete(null)} className="flex-1 bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-200 active:scale-95">ยกเลิก</button>
+                            <button onClick={executeDelete} className="flex-1 bg-rose-600 text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-rose-700 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"><Trash2 className="w-4 h-4" /> ยืนยันลบ</button>
                         </div>
                     </div>
                 </div>
             )}
-            {/* --- End Modal --- */}
 
-            <div className="max-w-[1600px] mx-auto p-6 space-y-6 pb-20">
+            <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-[1600px] mx-auto space-y-8 pb-20">
 
-                {/* HEADER: เส้นกั้นยาวเส้นเดียว และระยะชิดหัวข้อ */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b-2 border-slate-100 pb-6 gap-6 mb-10">
-
-                    {/* กลุ่มเนื้อหาซ้าย: ไอคอน + ข้อความ */}
-                    <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                        {/* ด้านซ้าย: กล่องไอคอน */}
-                        <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                            <Building2 className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
-                        </div>
-
-                        {/* ด้านขวา: ข้อมูลเรียงซ้อนกัน */}
-                        <div className="flex flex-col">
-                            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B] mb-1.5">
-                                Logistics Infrastructure
-                            </p>
-
-                            <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                                จัดการคลังและพื้นที่
-                            </h1>
-
-                            <div className="flex items-center gap-2 pt-1 opacity-90">
-                                <Database className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                    บริหารจัดการตำแหน่งจัดเก็บและโครงสร้างคลังสินค้าอย่างเป็นระบบ
+                    {/* --- HEADER --- */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-8 gap-6">
+                        <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 bg-white text-[#1F3B8B] rounded-xl shadow-sm border border-slate-200 flex items-center justify-center shrink-0">
+                                <Building2 className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                                    จัดการคลังและพื้นที่ (Infrastructure)
+                                </h1>
+                                <p className="text-slate-500 font-medium text-sm mt-1 flex items-center gap-2">
+                                    <Database className="w-4 h-4 text-emerald-500" />
+                                    บริหารจัดการคลังสินค้า, โซนจัดเก็บ และตำแหน่งวางพัสดุ
                                 </p>
                             </div>
                         </div>
+
+                        <button
+                            onClick={loadData}
+                            disabled={loading}
+                            className="flex items-center gap-2 bg-white border border-slate-200 hover:border-[#1F3B8B]/40 hover:bg-blue-50 text-slate-600 hover:text-[#1F3B8B] px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm active:scale-95 shrink-0"
+                        >
+                            {loading ? <Loader2 className="w-4 h-4 animate-spin text-[#1F3B8B]" /> : <RefreshCw className="w-4 h-4 text-[#1F3B8B]" />}
+                            ซิงค์ข้อมูล
+                        </button>
                     </div>
 
-                    {/* ปุ่มซิงค์ข้อมูล: อยู่ขวาสุดของเส้นยาว */}
-                    <button
-                        onClick={loadData}
-                        disabled={loading}
-                        className="flex items-center gap-2 bg-white border-2 border-slate-100 hover:border-[#1F3B8B]/30 hover:bg-[#1F3B8B]/5 text-slate-600 hover:text-[#1F3B8B] px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-sm active:scale-95 shrink-0"
-                    >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin text-[#1F3B8B]" /> : <RefreshCw className="w-4 h-4 text-[#1F3B8B]" />}
-                        ซิงค์ข้อมูล
-                    </button>
-                </div>
+                    {/* --- 3 COLUMNS LAYOUT --- */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[750px]">
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[720px]">
-
-                    {/* 1. WAREHOUSES */}
-                    <div className="flex flex-col bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden hover:shadow-lg transition-all">
-                        <header className="p-6 bg-slate-50 border-b-2 border-slate-100">
-                            <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-slate-950">
-                                <div className="p-2 bg-[#1F3B8B]/10 rounded-xl"><Building2 className="w-5 h-5 text-[#1F3B8B]" /></div>
-                                1. คลังสินค้า
-                            </h3>
-                        </header>
-                        <div className="p-5 bg-white border-b-2 border-slate-50">
-                            <DoubleAddInput
-                                codePlaceholder="รหัสคลัง (เช่น WH-01)"
-                                namePlaceholder="ชื่อคลังสินค้า"
-                                onAdd={(c, n) => handleCreate("/master/warehouses", { code: c, name: n }, "เพิ่มคลังสำเร็จ")}
-                            />
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30">
-                            {warehouses.map(wh => (
-                                <SelectCard
-                                    key={wh.id}
-                                    active={selWhId === wh.id}
-                                    onClick={() => { setSelWhId(wh.id); setSelZoneId(null); }}
-                                    onDelete={() => requestDelete("/master/warehouses", wh.id, "คลังสินค้า")}
-                                    title={wh.code}
-                                    subtitle={wh.name}
-                                    badge={`${zones.filter(z => z.warehouseId === wh.id).length} โซน`}
-                                    theme="blue"
+                        {/* 1. WAREHOUSES */}
+                        <div className="flex flex-col bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden">
+                            <header className="p-6 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
+                                <div className="p-2 bg-blue-100 rounded-lg"><Building2 className="w-5 h-5 text-blue-700" /></div>
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-900">1. คลังสินค้า (Warehouse)</h3>
+                            </header>
+                            <div className="p-5 bg-white border-b border-slate-50">
+                                <DoubleAddInput
+                                    codePlaceholder="รหัสคลัง (WH-01)"
+                                    namePlaceholder="ชื่อคลังสินค้า"
+                                    onAdd={(c, n) => handleCreate("/master/warehouses", { code: c, name: n }, "เพิ่มคลังสำเร็จ")}
+                                    loading={loading}
                                 />
-                            ))}
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-slate-50/50 custom-scrollbar">
+                                {warehouses.map(wh => (
+                                    <SelectCard
+                                        key={wh.id}
+                                        active={selWhId === wh.id}
+                                        onClick={() => { setSelWhId(wh.id); setSelZoneId(null); }}
+                                        onDelete={() => requestDelete("/master/warehouses", wh.id, "คลังสินค้า")}
+                                        title={wh.code}
+                                        subtitle={wh.name}
+                                        badge={`${zones.filter(z => z.warehouseId === wh.id).length} โซน`}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* 2. ZONES */}
-                    <div className={`flex flex-col bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg ${!selWhId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-                        <header className="p-6 bg-slate-50 border-b-2 border-slate-100">
-                            <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-slate-950">
-                                <div className="p-2 bg-amber-100 rounded-xl"><Layers className="w-5 h-5 text-amber-500" /></div>
-                                2. โซนจัดเก็บ
-                            </h3>
-                        </header>
-                        <div className="p-5 bg-white border-b-2 border-slate-50">
-                            <DoubleAddInput
-                                codePlaceholder="รหัสโซน (เช่น Z-A)"
-                                namePlaceholder="ชื่อโซน"
-                                onAdd={(c, n) => handleCreate("/master/zones", { warehouseId: selWhId, code: c, name: n }, "เพิ่มโซนสำเร็จ")}
-                            />
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30">
-                            {filteredZones.map(zn => (
-                                <SelectCard
-                                    key={zn.id}
-                                    active={selZoneId === zn.id}
-                                    onClick={() => setSelZoneId(zn.id)}
-                                    onDelete={() => requestDelete("/master/zones", zn.id, "โซน")}
-                                    title={zn.code}
-                                    subtitle={zn.name}
-                                    badge={`${locations.filter(l => l.zoneId === zn.id).length} ตำแหน่ง`}
-                                    theme="amber"
+                        {/* 2. ZONES */}
+                        <div className={`flex flex-col bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-300 ${!selWhId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+                            <header className="p-6 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
+                                <div className="p-2 bg-amber-100 rounded-lg"><Layers className="w-5 h-5 text-amber-600" /></div>
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-900">2. โซนจัดเก็บ (Zone)</h3>
+                            </header>
+                            <div className="p-5 bg-white border-b border-slate-50">
+                                <DoubleAddInput
+                                    codePlaceholder="รหัสโซน (Z-A)"
+                                    namePlaceholder="ชื่อโซน"
+                                    onAdd={(c, n) => handleCreate("/master/zones", { warehouseId: selWhId, code: c, name: n }, "เพิ่มโซนสำเร็จ")}
+                                    loading={loading}
                                 />
-                            ))}
-                            {filteredZones.length === 0 && <EmptyHint msg="ยังไม่มีข้อมูลโซน" />}
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-slate-50/50 custom-scrollbar">
+                                {filteredZones.map(zn => (
+                                    <SelectCard
+                                        key={zn.id}
+                                        active={selZoneId === zn.id}
+                                        onClick={() => setSelZoneId(zn.id)}
+                                        onDelete={() => requestDelete("/master/zones", zn.id, "โซน")}
+                                        title={zn.code}
+                                        subtitle={zn.name}
+                                        badge={`${locations.filter(l => l.zoneId === zn.id).length} ตำแหน่ง`}
+                                    />
+                                ))}
+                                {filteredZones.length === 0 && <EmptyHint msg="ยังไม่มีข้อมูลโซน" />}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* 3. LOCATIONS */}
-                    <div className={`flex flex-col bg-white border-2 border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg ${!selZoneId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-                        <header className="p-6 bg-slate-50 border-b-2 border-slate-100">
-                            <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3 text-slate-950">
-                                <div className="p-2 bg-emerald-100 rounded-xl"><MapPin className="w-5 h-5 text-emerald-500" /></div>
-                                3. ตำแหน่ง (Locations)
-                            </h3>
-                        </header>
-                        <div className="p-5 bg-white border-b-2 border-slate-50">
-                            <DoubleAddInput
-                                codePlaceholder="รหัสตำแหน่ง (เช่น A-01)"
-                                namePlaceholder="รายละเอียดชั้นวาง"
-                                onAdd={(c, n) => handleCreate("/master/locations", { warehouseId: selWhId, zoneId: selZoneId, code: c, name: n }, "เพิ่มตำแหน่งสำเร็จ")}
-                            />
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30">
-                            {filteredLocations.map(loc => (
-                                <div key={loc.id} className="p-5 bg-white border-2 border-slate-100 rounded-2xl flex justify-between items-center group hover:border-emerald-300 hover:shadow-md hover:bg-emerald-50/50 transition-all cursor-default">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-emerald-100 group-hover:text-emerald-600 transition-colors">
-                                            <Database className="w-4 h-4" />
+                        {/* 3. LOCATIONS */}
+                        <div className={`flex flex-col bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden transition-all duration-300 ${!selZoneId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+                            <header className="p-6 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
+                                <div className="p-2 bg-emerald-100 rounded-lg"><MapPin className="w-5 h-5 text-emerald-600" /></div>
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-900">3. ตำแหน่ง (Location)</h3>
+                            </header>
+                            <div className="p-5 bg-white border-b border-slate-50">
+                                <DoubleAddInput
+                                    codePlaceholder="รหัส (A-01)"
+                                    namePlaceholder="รายละเอียดชั้นวาง"
+                                    onAdd={(c, n) => handleCreate("/master/locations", { warehouseId: selWhId, zoneId: selZoneId, code: c, name: n }, "เพิ่มตำแหน่งสำเร็จ")}
+                                    loading={loading}
+                                />
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-slate-50/50 custom-scrollbar">
+                                {filteredLocations.map(loc => (
+                                    <div key={loc.id} className="p-4 bg-white border border-slate-200 rounded-xl flex justify-between items-center group hover:border-emerald-300 hover:shadow-sm transition-all cursor-default">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                                                <Database className="w-4 h-4" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-slate-900 uppercase text-sm group-hover:text-emerald-700 transition-colors">{loc.code}</span>
+                                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wide mt-0.5">{loc.name}</span>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-mono font-black text-slate-950 uppercase text-sm group-hover:text-emerald-700 transition-colors">{loc.code}</p>
-                                            <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">{loc.name}</p>
-                                        </div>
+                                        <button onClick={() => requestDelete("/master/locations", loc.id, "ตำแหน่ง")} className="p-2 bg-slate-50 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100 active:scale-95">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </div>
-                                    <button onClick={() => requestDelete("/master/locations", loc.id, "ตำแหน่ง")} className="p-2.5 bg-slate-50 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100 active:scale-95">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ))}
-                            {filteredLocations.length === 0 && <EmptyHint msg="กรุณาเลือกโซนก่อน" />}
+                                ))}
+                                {filteredLocations.length === 0 && <EmptyHint msg="กรุณาเลือกโซนก่อน หรือโซนนี้ยังไม่มีตำแหน่งจัดเก็บ" />}
+                            </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -250,73 +237,69 @@ export default function UnifiedInfrastructurePage() {
     );
 }
 
-// 🆕 Component สำหรับกรอก 2 ช่อง (Code & Name)
-function DoubleAddInput({ codePlaceholder, namePlaceholder, onAdd }) {
+// --- Local Components ---
+
+function DoubleAddInput({ codePlaceholder, namePlaceholder, onAdd, loading }) {
     const [c, setC] = useState("");
     const [n, setN] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const submit = async (e) => {
         e.preventDefault();
         if (!c.trim()) return;
-        setLoading(true);
+        setIsSubmitting(true);
         await onAdd(c.trim(), n.trim() || c.trim());
         setC(""); setN("");
-        setLoading(false);
+        setIsSubmitting(false);
     };
 
     return (
         <form onSubmit={submit} autoComplete="off" className="space-y-3">
-            <div className="flex gap-2">
+            <div className="flex gap-3">
                 <input
-                    className="w-1/3 bg-slate-50 border-2 border-slate-100 rounded-xl py-3 px-4 text-xs font-mono font-black focus:bg-white focus:border-emerald-500 outline-none transition-all uppercase placeholder:text-slate-400"
+                    className="w-1/3 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold focus:bg-white focus:border-[#1F3B8B] outline-none transition-all uppercase placeholder:text-slate-400 placeholder:font-medium"
                     placeholder={codePlaceholder}
                     value={c} onChange={e => setC(e.target.value)}
                 />
                 <input
-                    className="w-2/3 bg-slate-50 border-2 border-slate-100 rounded-xl py-3 px-4 text-xs font-bold focus:bg-white focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400"
+                    className="w-2/3 bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold focus:bg-white focus:border-[#1F3B8B] outline-none transition-all placeholder:text-slate-400 placeholder:font-medium"
                     placeholder={namePlaceholder}
                     value={n} onChange={e => setN(e.target.value)}
                 />
             </div>
-            <button type="submit" disabled={loading || !c.trim()} className="w-full bg-emerald-600 text-white rounded-xl py-3 text-xs font-black uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 active:scale-95">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} เพิ่มข้อมูล
+            <button type="submit" disabled={isSubmitting || loading || !c.trim()} className="w-full bg-[#1F3B8B] text-white rounded-xl py-3 text-xs font-bold uppercase tracking-widest hover:bg-blue-900 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95">
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} บันทึกข้อมูล
             </button>
         </form>
     );
 }
 
-function SelectCard({ active, onClick, onDelete, title, subtitle, badge, theme }) {
-    // 💡 ปรับสีกล่องให้ "ไม่เข้มเกินไป" โดยใช้สีอ่อนตัดขอบชัดเจน (Soft Pastel & Clear Border)
-    const activeBg = theme === 'blue' ? 'bg-[#1F3B8B]/5 border-[#1F3B8B]/40' : 'bg-amber-50 border-amber-400';
-    const activeShadow = theme === 'blue' ? 'shadow-[#1F3B8B]/10' : 'shadow-amber-500/10';
-    const activeText = theme === 'blue' ? 'text-[#1F3B8B]' : 'text-amber-900';
-    const activeSubText = theme === 'blue' ? 'text-[#1F3B8B]/70' : 'text-amber-600';
-    const activeBadgeBg = theme === 'blue' ? 'bg-[#1F3B8B]/10' : 'bg-amber-100';
-    const activeBadgeText = theme === 'blue' ? 'text-[#1F3B8B]' : 'text-amber-700';
-
+function SelectCard({ active, onClick, onDelete, title, subtitle, badge }) {
+    // ปรับสีให้ดูคลีนขึ้น: สี Active = Navy อ่อนๆ พื้นหลังขาว กรอบ Navy
     return (
-        <div onClick={onClick} className={`p-5 rounded-[1.8rem] cursor-pointer transition-all duration-300 border-2 flex justify-between items-center group relative overflow-hidden outline-none ${active ? `${activeBg} ${activeText} shadow-lg ${activeShadow} scale-[1.02] z-10` : "bg-white border-slate-100 hover:border-slate-300 text-slate-600 hover:shadow-md hover:bg-slate-50/80"}`}>
-
-            {active && (
-                <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl pointer-events-none ${theme === 'blue' ? 'bg-[#1F3B8B]/10' : 'bg-amber-200/40'}`} />
-            )}
-
+        <div 
+            onClick={onClick} 
+            className={`p-4 rounded-xl cursor-pointer transition-all duration-200 border flex justify-between items-center group relative overflow-hidden outline-none ${
+                active 
+                    ? 'bg-[#1F3B8B]/5 border-[#1F3B8B]/40 shadow-sm' 
+                    : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
+            }`}
+        >
             <div className="z-10 flex flex-col justify-center">
-                <p className={`font-mono font-black uppercase text-sm tracking-wide transition-colors ${active ? activeText : 'text-slate-950 group-hover:text-slate-900'}`}>{title}</p>
-                <p className={`text-[10px] font-bold uppercase truncate max-w-[140px] mt-0.5 transition-colors ${active ? activeSubText : 'text-slate-500'}`}>{subtitle}</p>
+                <p className={`font-bold uppercase text-sm tracking-wide transition-colors ${active ? 'text-[#1F3B8B]' : 'text-slate-900 group-hover:text-slate-950'}`}>{title}</p>
+                <p className={`text-[10px] font-bold uppercase truncate max-w-[140px] mt-0.5 transition-colors ${active ? 'text-[#1F3B8B]/70' : 'text-slate-500'}`}>{subtitle}</p>
             </div>
 
             <div className="flex flex-col items-end gap-2 z-10">
-                <div className="flex items-center gap-3">
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className={`p-2 rounded-xl transition-all active:scale-95 ${active ? 'text-slate-400 hover:text-rose-500 hover:bg-white/60' : 'bg-slate-50 text-slate-300 hover:text-rose-500 hover:bg-rose-50 opacity-0 group-hover:opacity-100'}`}>
+                <div className="flex items-center gap-2">
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className={`p-1.5 rounded-lg transition-all active:scale-95 ${active ? 'text-slate-400 hover:text-rose-500 hover:bg-white' : 'bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 opacity-0 group-hover:opacity-100'}`}>
                         <Trash2 className="w-4 h-4" />
                     </button>
-                    <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase transition-colors ${active ? `${activeBadgeBg} ${activeBadgeText}` : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`}>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase transition-colors ${active ? 'bg-white text-[#1F3B8B] border border-[#1F3B8B]/20' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`}>
                         {badge}
                     </span>
                 </div>
-                <ArrowRight className={`w-4 h-4 transition-all duration-300 ${active ? `translate-x-0 opacity-100 ${activeText}` : '-translate-x-3 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 text-slate-400'}`} strokeWidth={3} />
+                <ArrowRight className={`w-4 h-4 transition-all duration-300 ${active ? 'translate-x-0 opacity-100 text-[#1F3B8B]' : '-translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 text-slate-400'}`} strokeWidth={2} />
             </div>
         </div>
     );
@@ -324,11 +307,11 @@ function SelectCard({ active, onClick, onDelete, title, subtitle, badge, theme }
 
 function EmptyHint({ msg }) {
     return (
-        <div className="flex flex-col items-center justify-center p-14 text-center opacity-40">
-            <div className="w-16 h-16 bg-slate-200 rounded-[1.5rem] flex items-center justify-center mb-4">
-                <LayoutGrid className="w-8 h-8 text-slate-400" />
+        <div className="flex flex-col items-center justify-center p-12 text-center opacity-50">
+            <div className="w-12 h-12 bg-slate-200 rounded-xl flex items-center justify-center mb-3">
+                <LayoutGrid className="w-6 h-6 text-slate-400" />
             </div>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{msg}</p>
+            <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{msg}</p>
         </div>
     );
 }

@@ -95,7 +95,7 @@ export default function OutboundHistoryPage() {
 
                                         {/* Reference / Project */}
                                         <td className="py-4 px-6">
-                                            <div className="flex flex-col max-w-[200px]">
+                                            <div className="flex flex-col max-w-50">
                                                 <span className="text-xs font-bold text-slate-700 truncate">
                                                     {o.reference || "---"}
                                                 </span>
