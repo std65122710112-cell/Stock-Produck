@@ -1,14 +1,31 @@
 "use client";
 
+import React, { useState, useEffect, useMemo } from "react"; // 💡 เพิ่ม React เข้าไปเพื่อรองรับ React.Fragment
 import AuthGate from "@/components/AuthGate";
 import { apiFetch } from "@/lib/api";
-import { useState, useEffect, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
-    RefreshCw, Database, ArrowRightLeft, Plus, Trash2, ShieldCheck,
-    Package, MapPin, Hash, Info, CheckCircle2, MoveRight,
-    ClipboardList, AlertTriangle, Truck, CheckSquare, Search, Warehouse as WhIcon
+    RefreshCw, 
+    Database, 
+    ArrowRightLeft, 
+    Plus, 
+    Trash2, 
+    ShieldCheck,
+    Package, 
+    MapPin, 
+    Hash, 
+    Info, 
+    CheckCircle2, 
+    MoveRight,
+    ClipboardList, 
+    AlertTriangle, 
+    Truck, 
+    CheckSquare, 
+    Search, 
+    Warehouse as WhIcon
 } from "lucide-react";
+
+// ส่วนที่เหลือของโค้ดด้านล่างใช้ของเดิมได้เลยครับ...
 
 export default function TwoStepTransferPage() {
     // --- Global State ---
@@ -76,7 +93,6 @@ export default function TwoStepTransferPage() {
         }
     }
 
-    // 💡 ฟังก์ชันหัวใจสำคัญ: จัดรูปแบบชื่อตำแหน่งแบบละเอียด
     const formatLocationFull = (loc) => {
         if (!loc) return "ไม่ระบุตำแหน่ง";
         const whPart = loc.warehouse ? `[${loc.warehouse.code}] ${loc.warehouse.name}` : "ไม่ระบุคลัง";
@@ -122,7 +138,7 @@ export default function TwoStepTransferPage() {
             await apiFetch("/api/transfer/ship", {
                 method: "POST",
                 body: JSON.stringify({
-                    referenceNo: null, // 💡 ปล่อยว่างเพื่อให้ Backend Gen เลขที่ให้อัตโนมัติ
+                    referenceNo: null,
                     remarks: reason.trim() || null,
                     items: shipItems.map(it => ({ ...it, quantity: Number(it.quantity) }))
                 })
@@ -147,7 +163,6 @@ export default function TwoStepTransferPage() {
             itemId: it.id,
             productName: it.product?.name || "Unknown Product",
             sku: it.product?.sku || "N/A",
-            // 💡 แสดงชื่อตำแหน่งปลายทางแบบเต็มในหน้ากดยืนยัน
             targetLocationDetail: formatLocationFull(it.toLocation),
             shippedQty: it.shippedQty,
             receivedQty: it.shippedQty 
@@ -190,54 +205,73 @@ export default function TwoStepTransferPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="max-w-6xl mx-auto space-y-8 pb-20 pt-6 px-4 md:px-0">
+            <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-500">
 
-                {/* --- Header --- */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-4">
-                    <div className="space-y-1">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500">Inventory Movement Control</p>
-                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-3">
-                            โอนย้ายสินค้าระหว่างคลัง
-                            <span className="not-italic bg-slate-900 text-white text-[9px] px-3 py-1 rounded-full tracking-[0.2em] font-black shadow-lg uppercase">System</span>
-                        </h1>
+                {/* --- HEADER SECTION --- */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6 print:hidden">
+                    <div className="flex flex-col gap-4 w-full">
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                                    <ArrowRightLeft className="w-7 h-7 text-[#1F3B8B]" />
+                                </div>
+                                <div>
+                                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
+                                        โอนย้ายสินค้าระหว่างคลัง
+                                        <span className="bg-[#1F3B8B] text-white text-[10px] px-2.5 py-1 rounded-md tracking-widest font-bold shadow-sm uppercase mt-1 xl:mt-0">System</span>
+                                    </h1>
+                                    <p className="text-base text-slate-500 mt-1.5 font-medium flex items-center gap-2">
+                                        <Database className="w-4 h-4" /> Inventory Movement Control • ระบบบริหารจัดการส่งออกและรับเข้าพัสดุ
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* --- Tab Navigation --- */}
+                            <div className="flex bg-slate-100 p-1.5 rounded-xl w-full xl:w-auto">
+                                <button 
+                                    onClick={() => { setActiveTab("SHIP"); setSelectedTransfer(null); }} 
+                                    className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === "SHIP" ? "bg-white text-[#1F3B8B] shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}
+                                >
+                                    <Truck className="w-4 h-4" /> 1. ส่งของออก (Ship)
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab("RECEIVE")} 
+                                    className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === "RECEIVE" ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50" : "text-slate-500 hover:text-slate-700"}`}
+                                >
+                                    <CheckSquare className="w-4 h-4" /> 2. รับของเข้า (Receive)
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* --- Tab Navigation --- */}
-                <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full max-w-md shadow-inner">
-                    <button onClick={() => setActiveTab("SHIP")} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "SHIP" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-                        <Truck className="w-4 h-4" /> 1. ส่งของออก (Ship)
-                    </button>
-                    <button onClick={() => setActiveTab("RECEIVE")} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "RECEIVE" ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-                        <CheckSquare className="w-4 h-4" /> 2. รับของเข้า (Receive)
-                    </button>
-                </div>
-
-                {/* 🚚 TAB: SHIP (โอนออก) */}
+                {/* ========================================== */}
+                {/* 🚚 TAB: SHIP (ส่งของออก) */}
+                {/* ========================================== */}
                 {activeTab === "SHIP" && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        {/* ส่วนหัวเอกสาร (Auto-ID) */}
-                        <div className="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 bg-slate-900 text-white text-[9px] font-black px-8 py-2 rounded-bl-3xl tracking-widest uppercase">Auto-Generation</div>
-                            <h2 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-                                <ClipboardList className="w-4 h-4 text-indigo-500" /> 1. ข้อมูลบิลโอนย้ายพัสดุ
+                    <div className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col animate-in fade-in duration-500">
+                        
+                        {/* Section 1: Header / Reason */}
+                        <div className="p-8 md:p-10 border-b border-slate-200">
+                            <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-8">
+                                1. ข้อมูลบิลโอนย้ายพัสดุ
                             </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1 ml-1">
-                                        <Hash className="w-3.5 h-3.5" /> เลขที่เอกสาร (ระบบกำหนดให้อัตโนมัติ)
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                                        เลขที่เอกสาร (ระบบกำหนดให้อัตโนมัติ)
                                     </label>
-                                    <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 flex items-center gap-4">
-                                        <div className="bg-white p-2 rounded-lg shadow-sm"><RefreshCw className="w-4 h-4 text-slate-400 animate-spin-slow" /></div>
-                                        <span className="text-lg font-mono font-black text-slate-400 tracking-tighter">{previewTransferNo}</span>
+                                    <div className="flex items-center gap-4 w-full border border-slate-200 bg-slate-50 rounded-lg p-3.5 outline-none cursor-not-allowed">
+                                        <RefreshCw className="w-4 h-4 text-slate-400" />
+                                        <span className="text-base font-bold text-slate-500">{previewTransferNo}</span>
                                     </div>
                                 </div>
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1 ml-1">
-                                        <Info className="w-3.5 h-3.5" /> หมายเหตุ / เหตุผลการเบิกโอน
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                                        หมายเหตุ / เหตุผลการเบิกโอน
                                     </label>
                                     <textarea 
-                                        className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-700 focus:border-indigo-500 outline-none transition-all bg-slate-50/30" 
+                                        className="w-full border rounded-lg p-3.5 text-base font-medium text-slate-900 focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 outline-none transition-all placeholder:text-slate-400 resize-none" 
                                         rows="1"
                                         placeholder="ระบุเหตุผลสั้นๆ เช่น ย้ายไปเก็บโซนใหม่..."
                                         value={reason} 
@@ -247,156 +281,242 @@ export default function TwoStepTransferPage() {
                             </div>
                         </div>
 
-                        {/* รายการพัสดุ (Items) */}
-                        <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden">
-                            <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
-                                <h2 className="text-xs font-black uppercase tracking-[0.2em] flex items-center gap-3">
-                                    <Package className="w-5 h-5 text-indigo-400" /> 2. รายการพัสดุที่ต้องการย้ายตำแหน่ง
+                        {/* Section 2: Items list */}
+                        <div className="p-8 md:p-10 border-b border-slate-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest">
+                                    2. รายการพัสดุที่ต้องการย้ายตำแหน่ง
                                 </h2>
-                                <button onClick={addShipItem} className="bg-white/10 hover:bg-white/20 text-white font-black text-[10px] px-6 py-2.5 rounded-xl uppercase tracking-widest flex items-center gap-2 border border-white/10 transition-all">
-                                    <Plus className="w-3.5 h-3.5" /> เพิ่มรายการ
+                                <button onClick={addShipItem} className="bg-white text-[#1F3B8B] border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-bold uppercase transition-all shadow-sm flex items-center gap-2 active:scale-95">
+                                    <Plus className="w-4 h-4" /> เพิ่มรายการ
                                 </button>
                             </div>
-                            
-                            <div className="p-4 space-y-4">
+
+                            <div className="space-y-6">
                                 {shipItems.map((it, idx) => {
                                     const availableLocs = getAvailableLocations(it.productId);
                                     return (
-                                        <div key={idx} className="bg-slate-50/50 rounded-[2.5rem] p-8 border border-slate-100 space-y-6 relative group">
-                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-end">
-                                                {/* เลือกสินค้า */}
-                                                <div className="md:col-span-4 space-y-2">
-                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">เลือกสินค้า</label>
-                                                    <select className="w-full border-2 border-slate-200 rounded-2xl p-3.5 text-[11px] font-black uppercase outline-none focus:border-indigo-500 bg-white" value={it.productId} onChange={e => updateShipItem(idx, "productId", e.target.value)}>
-                                                        <option value="">-- ค้นหารหัส หรือ ชื่อพัสดุ --</option>
-                                                        {products.map(p => <option key={p.id} value={p.id}>[{p.sku}] {p.name}</option>)}
-                                                    </select>
-                                                </div>
-                                                {/* ตำแหน่งต้นทางแบบละเอียด */}
-                                                <div className="md:col-span-3 space-y-2">
-                                                    <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest ml-1 flex items-center gap-1"><MapPin className="w-3 h-3" /> ต้นทาง (Origin)</label>
-                                                    <select className="w-full border-2 border-rose-100 rounded-2xl p-3.5 text-[10px] font-bold outline-none focus:border-rose-500 bg-white" value={it.fromLocationId} onChange={e => updateShipItem(idx, "fromLocationId", e.target.value)}>
-                                                        <option value="">-- เลือกคลังต้นทาง --</option>
-                                                        {availableLocs.map(l => (
-                                                            <option key={l.locationId} value={l.locationId}>
-                                                                {formatLocationFull(l.location)} (คงเหลือ: {l.quantity})
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                {/* ตำแหน่งปลายทางแบบละเอียด */}
-                                                <div className="md:col-span-3 space-y-2">
-                                                    <label className="text-[9px] font-black text-emerald-600 uppercase tracking-widest ml-1 flex items-center gap-1"><MoveRight className="w-3 h-3" /> ปลายทาง (Destination)</label>
-                                                    <select className="w-full border-2 border-emerald-100 rounded-2xl p-3.5 text-[10px] font-bold outline-none focus:border-emerald-500 bg-white" value={it.toLocationId} onChange={e => updateShipItem(idx, "toLocationId", e.target.value)}>
-                                                        <option value="">-- เลือกคลังปลายทาง --</option>
-                                                        {locations.map(l => (
-                                                            <option key={l.id} value={l.id}>{formatLocationFull(l)}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                {/* จำนวน */}
-                                                <div className="md:col-span-1 space-y-2">
-                                                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center block">จำนวน</label>
-                                                    <input type="number" min="1" className="w-full border-2 border-slate-200 rounded-2xl p-3 text-sm font-mono font-black text-center outline-none focus:border-indigo-500" value={it.quantity} onChange={e => updateShipItem(idx, "quantity", e.target.value)} />
-                                                </div>
-                                                <div className="md:col-span-1 flex justify-center pb-2">
-                                                    <button onClick={() => removeShipItem(idx)} className="p-3 text-slate-300 hover:text-rose-600 transition-all"><Trash2 className="w-5 h-5" /></button>
-                                                </div>
+                                        <div key={idx} className="flex flex-col lg:flex-row gap-6 p-6 bg-slate-50/50 border border-slate-200 rounded-xl items-start lg:items-end hover:border-[#1F3B8B]/30 transition-all">
+                                            
+                                            {/* 1. เลือกสินค้า */}
+                                            <div className="w-full lg:flex-1 space-y-2">
+                                                <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                                                    เลือกสินค้า <span className="text-rose-500">*</span>
+                                                </label>
+                                                <select className="w-full border rounded-lg p-3.5 text-sm font-bold uppercase outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white text-slate-900" value={it.productId} onChange={e => updateShipItem(idx, "productId", e.target.value)}>
+                                                    <option value="">-- ค้นหารหัส หรือ ชื่อพัสดุ --</option>
+                                                    {products.map(p => <option key={p.id} value={p.id}>[{p.sku}] {p.name}</option>)}
+                                                </select>
                                             </div>
+
+                                            {/* 2. ต้นทาง */}
+                                            <div className="w-full lg:flex-1 space-y-2">
+                                                <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                                                    ต้นทาง (Origin) <span className="text-rose-500">*</span>
+                                                </label>
+                                                <select className="w-full border rounded-lg p-3.5 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white text-slate-900" value={it.fromLocationId} onChange={e => updateShipItem(idx, "fromLocationId", e.target.value)}>
+                                                    <option value="">-- เลือกคลังต้นทาง --</option>
+                                                    {availableLocs.map(l => (
+                                                        <option key={l.locationId} value={l.locationId}>
+                                                            {formatLocationFull(l.location)} (คงเหลือ: {l.quantity})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            {/* 3. ปลายทาง */}
+                                            <div className="w-full lg:flex-1 space-y-2">
+                                                <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                                                    ปลายทาง (Destination) <span className="text-rose-500">*</span>
+                                                </label>
+                                                <select className="w-full border rounded-lg p-3.5 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white text-slate-900" value={it.toLocationId} onChange={e => updateShipItem(idx, "toLocationId", e.target.value)}>
+                                                    <option value="">-- เลือกคลังปลายทาง --</option>
+                                                    {locations.map(l => (
+                                                        <option key={l.id} value={l.id}>{formatLocationFull(l)}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            {/* 4. จำนวน */}
+                                            <div className="w-full lg:w-32 space-y-2">
+                                                <label className="text-sm font-bold text-slate-500 uppercase tracking-widest lg:text-center block">
+                                                    จำนวน <span className="text-rose-500">*</span>
+                                                </label>
+                                                <input type="number" min="1" className="w-full border rounded-lg p-3.5 text-center font-bold text-base outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all text-slate-900" value={it.quantity} onChange={e => updateShipItem(idx, "quantity", e.target.value)} />
+                                            </div>
+
+                                            {/* 5. ปุ่มลบ */}
+                                            <div className="w-full lg:w-auto flex justify-end lg:justify-center pb-1">
+                                                <button type="button" onClick={() => removeShipItem(idx)} className="p-3 text-slate-400 hover:text-rose-600 bg-white border border-slate-200 rounded-lg hover:bg-rose-50 transition-all shadow-sm" disabled={shipItems.length === 1} title="ลบรายการ">
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            </div>
+
                                         </div>
                                     )
                                 })}
                             </div>
                         </div>
 
-                        {/* ปุ่มบันทึก */}
-                        <div className="bg-slate-900 p-8 rounded-[3rem] shadow-2xl flex justify-end items-center sticky bottom-6 border border-white/5">
-                            <button
-                                onClick={handleShip}
-                                disabled={!canShip || isSubmitting}
-                                className="bg-indigo-600 hover:bg-emerald-600 text-white px-14 py-5 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-xl transition-all flex items-center gap-3 disabled:bg-slate-800"
+                        {/* Section 3: Footer Submit */}
+                        <div className="p-8 md:p-10 bg-slate-50 flex justify-end">
+                            <button 
+                                onClick={handleShip} 
+                                disabled={!canShip || isSubmitting} 
+                                className="w-full md:w-auto min-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                <Truck className="w-5 h-5" /> {isSubmitting ? "กำลังบันทึก..." : "✓ ยืนยันการส่งออกสินค้า"}
+                                <Truck className="w-5 h-5" /> {isSubmitting ? "กำลังบันทึก..." : "ยืนยันการส่งออกสินค้า"}
                             </button>
                         </div>
                     </div>
                 )}
 
+                {/* ========================================== */}
                 {/* 📥 TAB: RECEIVE (รับของเข้า) */}
+                {/* ========================================== */}
                 {activeTab === "RECEIVE" && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        
+                        {/* 1. LIST MODE */}
                         {!selectedTransfer ? (
-                            /* หน้ารายการ In-Transit */
-                            <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm p-10">
-                                <h2 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-2">
-                                    <Truck className="w-5 h-5 text-emerald-500" /> รายการพัสดุอยู่ระหว่างจัดส่ง (In-Transit)
-                                </h2>
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                                <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
+                                    <h2 className="text-lg font-bold text-slate-800 tracking-wide uppercase">
+                                        รายการพัสดุอยู่ระหว่างจัดส่ง (In-Transit)
+                                    </h2>
+                                    <div className="bg-sky-50 text-sky-700 border border-sky-200 text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider">
+                                        {pendingTransfers.length} รายการ
+                                    </div>
+                                </div>
+
                                 {pendingTransfers.length === 0 ? (
-                                    <div className="text-center py-24 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 text-slate-400 font-bold uppercase tracking-widest text-sm">ไม่มีรายการค้างรับในขณะนี้</div>
+                                    <div className="text-center py-24 bg-white text-slate-400 font-bold uppercase text-sm">
+                                        ไม่มีรายการค้างรับในขณะนี้
+                                    </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {pendingTransfers.map(t => (
-                                            <div key={t.id} onClick={() => selectTransferToReceive(t)} className="p-8 border-2 border-slate-100 rounded-[2.5rem] hover:border-emerald-500 cursor-pointer transition-all bg-white hover:shadow-2xl group relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 bg-emerald-500 text-white px-6 py-1.5 text-[8px] font-black tracking-widest uppercase">Shipped</div>
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <span className="text-sm font-mono font-black text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100 uppercase italic">{t.transferNo}</span>
-                                                    <MoveRight className="w-6 h-6 text-slate-200 group-hover:text-emerald-500 transition-colors" />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-2"><WhIcon className="w-3 h-3"/> ผู้ส่ง: <span className="text-slate-800">{t.issuedUser?.firstName || 'System'}</span></p>
-                                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-2"><ClipboardList className="w-3 h-3"/> รายการ: <span className="text-slate-800">{t.items?.length || 0} รายการ</span></p>
-                                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-2"><Info className="w-3 h-3"/> เมื่อ: <span className="text-slate-800">{new Date(t.shippedAt).toLocaleString('th-TH')}</span></p>
-                                                </div>
-                                            </div>
-                                        ))}
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full border-collapse text-left">
+                                            <thead className="bg-slate-50 border-b border-slate-200">
+                                                <tr className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                                    <th className="p-6">เลขที่เอกสาร</th>
+                                                    <th className="p-6">ผู้ส่ง</th>
+                                                    <th className="p-6">จำนวนรายการ</th>
+                                                    <th className="p-6 text-center">วันที่ส่ง</th>
+                                                    <th className="p-6 text-right">ดำเนินการ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 bg-white/50">
+                                                {pendingTransfers.map(t => (
+                                                    <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
+                                                        <td className="p-6">
+                                                            <span className="text-sm font-bold text-[#1e3b8a] uppercase tracking-tight">{t.transferNo}</span>
+                                                        </td>
+                                                        <td className="p-6">
+                                                            <span className="text-sm font-bold text-slate-800">{t.issuedUser?.firstName || 'System'}</span>
+                                                        </td>
+                                                        <td className="p-6">
+                                                            <span className="text-sm font-bold text-slate-700">{t.items?.length || 0} รายการ</span>
+                                                        </td>
+                                                        <td className="p-6 text-center text-sm font-bold text-slate-500 tabular-nums">
+                                                            {new Date(t.shippedAt).toLocaleString('th-TH')}
+                                                        </td>
+                                                        <td className="p-6 text-right">
+                                                            <button 
+                                                                onClick={() => selectTransferToReceive(t)} 
+                                                                className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-sm active:scale-95 inline-flex items-center gap-2 ml-auto"
+                                                            >
+                                                                <CheckSquare className="w-4 h-4" /> ตรวจรับสินค้า
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 )}
                             </div>
                         ) : (
-                            /* หน้าฟอร์มรับของ */
-                            <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm overflow-hidden">
-                                <div className="bg-slate-900 p-10 flex justify-between items-center text-white">
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em]">Confirmation Process</p>
-                                        <h2 className="text-3xl font-black italic tracking-tighter uppercase">{selectedTransfer.transferNo}</h2>
+                            /* 2. FORM MODE (รับของเข้า) */
+                            <div className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col">
+                                <div className="p-8 md:p-10 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6 items-start md:items-center">
+                                    <div className="space-y-2">
+                                        <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">Confirmation Process</span>
+                                        <h2 className="text-3xl md:text-4xl font-black text-[#1F3B8B] tabular-nums whitespace-nowrap">
+                                            {selectedTransfer.transferNo}
+                                        </h2>
                                     </div>
-                                    <button onClick={() => setSelectedTransfer(null)} className="text-xs font-black text-slate-400 hover:text-white underline uppercase tracking-widest">ยกเลิกรายการ</button>
+                                    <button onClick={() => setSelectedTransfer(null)} className="text-sm font-bold text-slate-500 hover:text-[#1F3B8B] underline uppercase tracking-widest transition-colors">
+                                        ยกเลิกรายการ
+                                    </button>
                                 </div>
 
-                                <div className="p-10 space-y-6">
-                                    {receiveItems.map((it, idx) => {
-                                        const isMissing = it.receivedQty < it.shippedQty;
-                                        return (
-                                            <div key={idx} className={`grid grid-cols-1 md:grid-cols-12 gap-8 items-center p-8 rounded-[2.5rem] border-2 transition-all ${isMissing ? 'border-rose-200 bg-rose-50/20' : 'border-slate-100 bg-slate-50/30'}`}>
-                                                <div className="md:col-span-4">
-                                                    <p className="text-[10px] font-black text-indigo-600 font-mono uppercase mb-1">{it.sku}</p>
-                                                    <p className="text-base font-bold text-slate-800">{it.productName}</p>
-                                                </div>
-                                                <div className="md:col-span-4">
-                                                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest block mb-1">ตำแหน่งจัดเก็บ (Detailed Location)</span>
-                                                    <p className="text-xs font-black text-slate-600 leading-relaxed">{it.targetLocationDetail}</p>
-                                                </div>
-                                                <div className="md:col-span-2 text-center border-x border-slate-200">
-                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">ยอดส่งมา</span>
-                                                    <p className="text-2xl font-black font-mono text-slate-700">{it.shippedQty}</p>
-                                                </div>
-                                                <div className="md:col-span-2 text-center pl-4">
-                                                    <label className="text-[9px] font-black text-indigo-600 uppercase tracking-widest block mb-1">ยอดรับจริง *</label>
-                                                    <input type="number" min="0" max={it.shippedQty} className={`w-full border-2 rounded-2xl p-4 text-xl font-mono font-black text-center outline-none transition-all ${isMissing ? 'border-rose-500 text-rose-600 bg-white' : 'border-slate-200 bg-white focus:border-indigo-500'}`} value={it.receivedQty} onChange={e => updateReceiveItem(idx, e.target.value)} />
-                                                </div>
-                                                {isMissing && (
-                                                    <div className="md:col-span-12 flex items-center gap-3 p-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest animate-pulse">
-                                                        <AlertTriangle className="w-5 h-5" /> ตรวจพบสินค้าขาด (สูญหาย {it.shippedQty - it.receivedQty} ชิ้น) ระบบจะทำบันทึกแจ้งพนักงานความปลอดภัยอัตโนมัติ
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )
-                                    })}
+                                <div className="p-8 md:p-10 border-b border-slate-200">
+                                    <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-6">
+                                        รายการพัสดุและตำแหน่งรับเข้า
+                                    </h2>
+
+                                    <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                        <table className="w-full border-collapse text-left">
+                                            <thead className="bg-slate-100 border-b border-slate-200">
+                                                <tr className="text-sm font-bold text-slate-600 uppercase tracking-widest">
+                                                    <th className="p-5">พัสดุ / SKU</th>
+                                                    <th className="p-5 w-[35%]">ตำแหน่งจัดเก็บ (Location)</th>
+                                                    <th className="p-5 text-center w-32">ยอดส่งมา</th>
+                                                    <th className="p-5 text-center w-40">ยอดรับจริง <span className="text-rose-500">*</span></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 bg-white">
+                                                {receiveItems.map((it, idx) => {
+                                                    const isMissing = it.receivedQty < it.shippedQty;
+                                                    return (
+                                                        <React.Fragment key={idx}>
+                                                            <tr className={`hover:bg-slate-50/50 transition-colors ${isMissing ? 'bg-rose-50/30' : ''}`}>
+                                                                <td className="p-5">
+                                                                    <p className="font-bold text-slate-900 text-lg">{it.productName}</p>
+                                                                    <p className="text-sm text-blue-600 font-bold uppercase mt-1 tabular-nums">SKU: {it.sku}</p>
+                                                                </td>
+                                                                <td className="p-5">
+                                                                    <p className="text-base font-bold text-slate-700 leading-relaxed">{it.targetLocationDetail}</p>
+                                                                </td>
+                                                                <td className="p-5 text-center">
+                                                                    <span className="text-2xl font-black text-slate-400 tabular-nums">{it.shippedQty}</span>
+                                                                </td>
+                                                                <td className="p-5 text-center">
+                                                                    <input 
+                                                                        type="number" 
+                                                                        min="0" 
+                                                                        max={it.shippedQty} 
+                                                                        className={`w-full max-w-[120px] mx-auto border rounded-lg p-3 text-xl font-bold text-center outline-none transition-all tabular-nums ${isMissing ? 'border-rose-400 text-rose-600 bg-white focus:border-rose-500 focus:ring-2 focus:ring-rose-100' : 'border-slate-200 bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10'}`} 
+                                                                        value={it.receivedQty} 
+                                                                        onChange={e => updateReceiveItem(idx, e.target.value)} 
+                                                                    />
+                                                                </td>
+                                                            </tr>
+                                                            {isMissing && (
+                                                                <tr className="bg-rose-50 border-none">
+                                                                    <td colSpan="4" className="px-5 py-3">
+                                                                        <div className="flex items-center gap-2 text-rose-600 text-sm font-bold uppercase tracking-widest">
+                                                                            <AlertTriangle className="w-4 h-4" /> 
+                                                                            ตรวจพบสินค้าขาด (สูญหาย {it.shippedQty - it.receivedQty} ชิ้น) ระบบจะทำบันทึกแจ้งพนักงานความปลอดภัยอัตโนมัติ
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </React.Fragment>
+                                                    )
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
 
-                                <div className="p-10 bg-slate-50 border-t border-slate-100 flex justify-end">
-                                    <button onClick={handleReceive} disabled={!canReceive || isSubmitting} className="bg-emerald-600 hover:bg-emerald-700 text-white px-16 py-6 rounded-[2.5rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center gap-3">
-                                        <CheckSquare className="w-6 h-6" /> {isSubmitting ? "กำลังยืนยัน..." : "รับสินค้าและปิดตารางโอนย้าย"}
+                                <div className="p-8 md:p-10 bg-slate-50 flex justify-end">
+                                    <button 
+                                        onClick={handleReceive} 
+                                        disabled={!canReceive || isSubmitting} 
+                                        className="w-full md:w-auto min-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    >
+                                        <CheckSquare className="w-5 h-5" /> {isSubmitting ? "กำลังยืนยัน..." : "รับสินค้าและปิดตารางโอนย้าย"}
                                     </button>
                                 </div>
                             </div>

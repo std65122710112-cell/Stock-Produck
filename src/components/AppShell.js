@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { apiFetch, API_BASE } from "@/lib/api";
 import { clearAccessToken } from "@/lib/auth";
-import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera, ShieldAlert, Activity } from "lucide-react";
+import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera, ShieldAlert,Activity } from "lucide-react";
 
 // 💡 1. กำหนดสิทธิ์และโครงสร้างเมนู (อัปเดตสิทธิ์ L1, L2, L3 เรียบร้อยแล้ว)
 const menuGroups = [
@@ -108,6 +108,10 @@ export default function AppShell({ children }) {
     const [accessModal, setAccessModal] = useState({ isOpen: false, message: "", shouldRedirect: false });
 
     const [isUploading, setIsUploading] = useState(false);
+
+    // 🟢 เพิ่ม State สำหรับป็อปอัพยืนยันการออกจากระบบ
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const allMenuItems = useMemo(() => menuGroups.flatMap(g => g.items), []);
 
@@ -233,7 +237,11 @@ export default function AppShell({ children }) {
 
     async function logout() {
         if (!confirm("ยืนยันการออกจากระบบ?")) return;
-        try { await apiFetch("/auth/logout", { method: "POST" }); } catch (e) { }
+        try {
+            await apiFetch("/auth/logout", { method: "POST" });
+        } catch (e) {
+            console.error("Logout error", e);
+        }
         clearAccessToken();
         window.location.href = "/login";
     }
@@ -285,6 +293,42 @@ export default function AppShell({ children }) {
                             >
                                 เข้าใจแล้ว
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 🟢 Modal ยืนยันการออกจากระบบ (Logout Popup) */}
+            {showLogoutModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl shadow-slate-900/20 transform transition-all animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center border border-rose-100">
+                                <LogOut className="w-8 h-8 text-rose-600 ml-1" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-black text-slate-800 tracking-tight">ยืนยันการออกจากระบบ?</h3>
+                                <p className="text-sm text-slate-500 leading-relaxed">
+                                    คุณต้องการออกจากระบบใช่หรือไม่
+                                </p>
+                            </div>
+                            <div className="flex w-full gap-3 pt-4">
+                                <button
+                                    onClick={() => setShowLogoutModal(false)}
+                                    disabled={isLoggingOut}
+                                    className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-600 text-sm font-bold rounded-2xl transition-all"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    onClick={executeLogout}
+                                    disabled={isLoggingOut}
+                                    className="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-sm font-bold rounded-2xl transition-all shadow-md shadow-rose-900/20 flex items-center justify-center gap-2"
+                                >
+                                    {isLoggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+                                    ออกจากระบบ
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -368,11 +412,10 @@ export default function AppShell({ children }) {
                         </nav>
                     </div>
 
-                    {/* LOGOUT */}
-                    <div className="px-6 pb-8 pt-4 bg-white/50 border-t border-slate-100">
+                    <div className="px-5 pb-6 pt-4 bottom-0 bg-white/80 backdrop-blur-xl border-t border-slate-100/60">
                         <button
                             onClick={logout}
-                            className="group flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-slate-100 bg-white px-4 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600 active:scale-95 shadow-sm"
+                            className="group relative flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-100 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-500 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600 hover:shadow-sm active:scale-95"
                         >
                             <LogOut className="w-4 h-4" />
                             <span>ออกจากระบบ</span>

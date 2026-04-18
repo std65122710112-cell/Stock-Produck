@@ -19,6 +19,7 @@ export default function CompanySettingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     useEffect(() => {
         async function fetchSettings() {
@@ -50,14 +51,20 @@ export default function CompanySettingsPage() {
     };
 
     const executeSave = async () => {
-        setShowConfirmModal(false);
+        setShowConfirmModal(false); // ปิดป็อปอัพยืนยันก่อน
         setIsSaving(true);
         try {
             await apiFetch("/api/settings/company", {
                 method: "POST",
                 body: JSON.stringify(formData)
             });
-            toast.success("บันทึกข้อมูลบริษัทเรียบร้อยแล้ว");
+            
+            // 💡 เพิ่มบรรทัดนี้เพื่อเปิดป็อปอัพสำเร็จ
+            setShowSuccessModal(true); 
+            
+            // (เลือกเอา) ถ้ามีป็อปอัพแล้ว จะเอา toast ออกหรือเก็บไว้ก็ได้ครับ
+            toast.success("บันทึกข้อมูลบริษัทเรียบร้อยแล้ว"); 
+            
         } catch (error) {
             toast.error("เกิดข้อผิดพลาดในการบันทึก");
         } finally {
@@ -91,7 +98,7 @@ export default function CompanySettingsPage() {
                             </button>
                             <button
                                 onClick={executeSave}
-                                className="flex-1 bg-[#1F3B8B] text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-900 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                                className="flex-1 bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center justify-center gap-2"
                             >
                                 <CheckCircle2 className="w-4 h-4" /> ยืนยัน
                             </button>
@@ -100,11 +107,34 @@ export default function CompanySettingsPage() {
                 </div>
             )}
 
+
+            {/* 💡 ส่วนที่ 3: เพิ่มตรงนี้ครับ (SUCCESS MODAL) */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+                    <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+                        <div className="w-20 h-20 bg-emerald-50 rounded-[2.5rem] flex items-center justify-center mb-6 shadow-inner border border-emerald-100">
+                            <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-3">บันทึกข้อมูลสำเร็จ!</h3>
+                        <p className="text-sm font-bold text-slate-500 mb-8 leading-relaxed">
+                            ระบบได้ทำการบันทึกการตั้งค่าใหม่เรียบร้อยแล้ว <br />
+                            ข้อมูลจะมีผลต่อเอกสารชุดถัดไปทันที
+                        </p>
+                        <button
+                            onClick={() => setShowSuccessModal(false)}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-lg shadow-emerald-900/20 active:scale-95 transition-all"
+                        >
+                            ตกลง
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* พื้นหลังเทาอ่อนเพื่อให้ Content ขาวเด่นขึ้น */}
             <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-                
+
                 <div className="max-w-[1400px] mx-auto space-y-8">
-                    
+
                     {/* --- HEADER SECTION --- */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200 pb-8">
                         <div className="flex items-center gap-5">
@@ -121,10 +151,8 @@ export default function CompanySettingsPage() {
                                 </p>
                             </div>
                         </div>
-                        
-                        <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-widest shadow-sm">
-                            <Info className="w-4 h-4 text-[#1F3B8B]" /> Configuration Mode
-                        </div>
+
+
                     </div>
 
                     <form onSubmit={handlePreSubmit} className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
@@ -163,7 +191,7 @@ export default function CompanySettingsPage() {
 
                         {/* --- RIGHT COL: FORM DATA --- */}
                         <div className="xl:col-span-8 space-y-8">
-                            
+
                             {/* 1. Basic Info */}
                             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
                                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2.5 border-b border-slate-100 pb-4">
@@ -172,28 +200,28 @@ export default function CompanySettingsPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="md:col-span-2">
-                                        <FormInput 
-                                            label="ชื่อบริษัท (Company Name)" 
+                                        <FormInput
+                                            label="ชื่อบริษัท (Company Name)"
                                             icon={<Building2 size={16} className="text-slate-400" />}
-                                            value={formData.name} 
-                                            onChange={e => setFormData({ ...formData, name: e.target.value })} 
-                                            placeholder="เช่น บริษัท ทีเจซี คอร์ปอเรชั่น จำกัด" 
+                                            value={formData.name}
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            placeholder="เช่น บริษัท ทีเจซี คอร์ปอเรชั่น จำกัด"
                                             required
                                         />
                                     </div>
-                                    <FormInput 
-                                        label="สาขา (Branch)" 
+                                    <FormInput
+                                        label="สาขา (Branch)"
                                         icon={<MapPin size={16} className="text-slate-400" />}
-                                        value={formData.branch} 
-                                        onChange={e => setFormData({ ...formData, branch: e.target.value })} 
-                                        placeholder="เช่น สำนักงานใหญ่" 
+                                        value={formData.branch}
+                                        onChange={e => setFormData({ ...formData, branch: e.target.value })}
+                                        placeholder="เช่น สำนักงานใหญ่"
                                     />
-                                    <FormInput 
-                                        label="เลขประจำตัวผู้เสียภาษี (Tax ID)" 
+                                    <FormInput
+                                        label="เลขประจำตัวผู้เสียภาษี (Tax ID)"
                                         icon={<Hash size={16} className="text-slate-400" />}
-                                        value={formData.taxId} 
-                                        onChange={e => setFormData({ ...formData, taxId: e.target.value })} 
-                                        placeholder="0000000000000" 
+                                        value={formData.taxId}
+                                        onChange={e => setFormData({ ...formData, taxId: e.target.value })}
+                                        placeholder="0000000000000"
                                         isTabular
                                     />
                                 </div>
@@ -210,11 +238,11 @@ export default function CompanySettingsPage() {
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-1.5">
                                             <MapPin className="w-3.5 h-3.5" /> รายละเอียดที่อยู่ (เลขที่ / หมู่ / อาคาร / ถนน)
                                         </label>
-                                        <textarea 
-                                            value={formData.address} 
-                                            onChange={e => setFormData({ ...formData, address: e.target.value })} 
-                                            className="w-full border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] outline-none transition-all placeholder:text-slate-300 resize-none h-24 bg-slate-50 focus:bg-white" 
-                                            placeholder="กรอกรายละเอียดที่อยู่" 
+                                        <textarea
+                                            value={formData.address}
+                                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                            className="w-full border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] outline-none transition-all placeholder:text-slate-300 resize-none h-24 bg-slate-50 focus:bg-white"
+                                            placeholder="กรอกรายละเอียดที่อยู่"
                                         />
                                     </div>
 
@@ -243,7 +271,7 @@ export default function CompanySettingsPage() {
                                 <button
                                     disabled={isSaving}
                                     type="submit"
-                                    className="w-full md:w-auto bg-[#1F3B8B] text-white px-10 py-4 rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-blue-900 shadow-md transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
+                                    className="w-full md:w-auto bg-emerald-600 text-white px-10 py-4 rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-emerald-700 shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
                                 >
                                     {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                                     {isSaving ? "Saving Configuration..." : "บันทึกการตั้งค่าระบบ"}
@@ -269,13 +297,13 @@ function FormInput({ label, value, onChange, placeholder, type = "text", icon, i
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
                     {icon}
                 </div>
-                <input 
-                    type={type} 
-                    value={value} 
-                    onChange={onChange} 
+                <input
+                    type={type}
+                    value={value}
+                    onChange={onChange}
                     required={required}
-                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-sm font-bold text-slate-900 focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] focus:bg-white outline-none transition-all placeholder:text-slate-300 placeholder:font-medium ${isTabular ? 'tabular-nums tracking-wider' : ''}`} 
-                    placeholder={placeholder} 
+                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-sm font-bold text-slate-900 focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] focus:bg-white outline-none transition-all placeholder:text-slate-300 placeholder:font-medium ${isTabular ? 'tabular-nums tracking-wider' : ''}`}
+                    placeholder={placeholder}
                 />
             </div>
         </div>

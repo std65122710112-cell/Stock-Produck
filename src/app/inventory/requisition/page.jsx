@@ -225,9 +225,7 @@ export default function StockRequisitionListPage() {
                                                     </td>
                                                     <td className="py-4 px-6">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                                                                <User className="w-4 h-4 text-slate-500" />
-                                                            </div>
+                                                            
                                                             <div className="flex flex-col">
                                                                 <span className="text-sm font-bold text-slate-700">{req.user?.firstName} {req.user?.lastName}</span>
                                                                 <span className="text-[10px] text-slate-400 font-bold uppercase">{req.department?.name || "ระบุไม่ได้"}</span>

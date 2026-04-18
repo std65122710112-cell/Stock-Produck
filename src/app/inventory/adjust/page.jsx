@@ -22,7 +22,12 @@ import {
     Download,
     Trash2,
     Building2, Layers,
-    MessageSquareText
+    MessageSquareText,
+    Info,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight
 } from "lucide-react";
 
 export default function CountTasksPage() {
@@ -34,15 +39,24 @@ export default function CountTasksPage() {
     const [tasks, setTasks] = useState([]);
     const [masterData, setMasterData] = useState({ warehouses: [], zones: [] });
 
+    // 🟢 [ส่วนที่เพิ่ม] State สำหรับแบ่งหน้า
+    const [page, setPage] = useState(1);
+    const limit = 20;
+
     // ==========================================
     // 🪟 State for Modals (รวม State ป็อปอัพไว้ตรงนี้)
     // ==========================================
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    // 💡 นำ 2 บรรทัดนี้มาวางตรงนี้ครับ (State สำหรับ Pop-up ลบเอกสาร)
+    // ป็อปอัพสำหรับการลบ
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState(null);
+
+    // ป็อปอัพสำหรับการอนุมัติปรับสต๊อก
+    const [showCompleteConfirmModal, setShowCompleteConfirmModal] = useState(false);
+    const [showCompleteSuccessModal, setShowCompleteSuccessModal] = useState(false);
 
     // ==========================================
     // State for Create Form
@@ -86,11 +100,18 @@ export default function CountTasksPage() {
         } catch (e) { console.error(e); }
     };
 
+    // 🟢 [ส่วนที่เพิ่ม] คำนวณการแบ่งหน้า
+    const totalCount = tasks.length;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+    const paginatedTasks = useMemo(() => {
+        return tasks.slice((page - 1) * limit, page * limit);
+    }, [tasks, page]);
+
     // ==========================================
     // 📝 ACTION: CREATE TASK
     // ==========================================
     const handleCreateTask = async (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
         setIsLoading(true);
         try {
             const res = await apiFetch("/inventory/count-tasks", {
@@ -120,7 +141,6 @@ export default function CountTasksPage() {
             const res = await apiFetch(`/inventory/count-tasks/${id}`);
             if (res.success) {
                 setSelectedTask(res.data);
-                // Map ข้อมูลไอเทม เพื่อเตรียมรับ input
                 const mappedItems = (res.data.items || []).map(it => ({
                     ...it,
                     inputQty: it.countedQty !== null ? it.countedQty : ''
@@ -144,7 +164,6 @@ export default function CountTasksPage() {
     const handleSaveProgress = async () => {
         setIsLoading(true);
         try {
-            // กรองเฉพาะอันที่มีการพิมพ์ตัวเลขลงไป
             const payloadItems = taskItems
                 .filter(it => it.inputQty !== '')
                 .map(it => ({
@@ -163,7 +182,7 @@ export default function CountTasksPage() {
 
             if (res.success) {
                 toast.success("บันทึกผลการนับสำเร็จ");
-                openTaskDetail(selectedTask.id); // โหลดข้อมูลใหม่เพื่ออัปเดต Diff
+                openTaskDetail(selectedTask.id);
             }
         } catch (error) {
             toast.error("บันทึกล้มเหลว");
@@ -172,28 +191,34 @@ export default function CountTasksPage() {
         }
     };
 
-    const handleCompleteTask = async () => {
-        if (!confirm("⚠️ ยืนยันการปิดเอกสาร?\nระบบจะสร้างรายการปรับยอด (Stock Adjustment) ให้อัตโนมัติสำหรับรายการที่ยอดไม่ตรงกัน")) return;
+    // เปิด Popup ยืนยันการปิดเอกสาร
+    const handleCompleteTaskClick = () => {
+        setShowCompleteConfirmModal(true);
+    };
 
+    // ดำเนินการปิดเอกสารจริง
+    const executeCompleteTask = async () => {
         setIsLoading(true);
         try {
             const res = await apiFetch(`/inventory/count-tasks/${selectedTask.id}/complete`, {
                 method: "POST"
             });
             if (res.success) {
-                toast.success(res.message);
+                setShowCompleteConfirmModal(false);
+                setShowCompleteSuccessModal(true); // เปิด Popup สำเร็จ
                 setView('LIST');
                 fetchTasks();
             }
         } catch (error) {
             toast.error(error.message || "ปิดเอกสารล้มเหลว");
+            setShowCompleteConfirmModal(false);
         } finally {
             setIsLoading(false);
         }
     };
 
     // ==========================================
-    // 📊 ACTION: EXPORT TO EXCEL (CSV)
+    // 📊 ACTION: EXPORT TO EXCEL (PDF)
     // ==========================================
     const handleExportPDF = async () => {
         if (!selectedTask) return toast.error("ไม่พบข้อมูลเอกสาร");
@@ -203,7 +228,6 @@ export default function CountTasksPage() {
 
         try {
             const token = getAccessToken();
-
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'}/inventory/count-tasks/${selectedTask.id}/pdf`, {
                 method: 'GET',
                 headers: {
@@ -213,11 +237,8 @@ export default function CountTasksPage() {
 
             if (!response.ok) throw new Error("ไม่สามารถสร้าง PDF ได้");
 
-            // แปลง Response เป็น Blob (ไฟล์)
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
-
-            // เปิด PDF ในแท็บใหม่ให้สั่งปรินต์ได้เลย
             window.open(url, '_blank');
 
             toast.success("สร้างเอกสารสำเร็จ", { id: toastId });
@@ -228,26 +249,25 @@ export default function CountTasksPage() {
             setIsLoading(false);
         }
     };
+
     // ==========================================
     // 🗑️ ACTION: DELETE TASK
     // ==========================================
     const handleDeleteTask = async (taskId) => {
-        // 💡 เอา if(!confirm(...)) ออก เพราะเราไปเช็คใน Pop-up แล้ว
         setIsLoading(true);
         try {
             const res = await apiFetch(`/inventory/count-tasks/${taskId}`, {
                 method: "DELETE"
             });
             if (res.success) {
-                toast.success("ลบเอกสารสำเร็จ");
-                fetchTasks(); // โหลดข้อมูลใหม่
+                setShowDeleteModal(false);
+                setShowDeleteSuccessModal(true); // แสดง Popup ลบสำเร็จ
+                fetchTasks();
             }
         } catch (error) {
             toast.error(error.message || "ลบเอกสารล้มเหลว");
         } finally {
             setIsLoading(false);
-            setShowDeleteModal(false); // ปิด Pop-up หลังลบเสร็จ
-            setTaskToDelete(null); // เคลียร์ค่า
         }
     };
 
@@ -255,13 +275,13 @@ export default function CountTasksPage() {
     // 🎨 UI HELPERS
     // ==========================================
     const getStatusBadge = (status) => {
-        const baseClass = "px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-2 w-fit";
+        const baseClass = "px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm flex items-center gap-1.5 w-fit";
 
         switch (status) {
-            case 'PENDING': return <span className={`${baseClass} bg-amber-50 text-amber-600 border-amber-100`}><Clock className="w-4 h-4" /> รอตรวจนับ</span>;
-            case 'COUNTING': return <span className={`${baseClass} bg-blue-50 text-blue-600 border-blue-100`}><Search className="w-4 h-4" /> กำลังตรวจนับ</span>;
-            case 'REVIEW': return <span className={`${baseClass} bg-purple-50 text-purple-600 border-purple-100`}><AlertCircle className="w-4 h-4" /> รอตรวจสอบ</span>;
-            case 'COMPLETED': return <span className={`${baseClass} bg-emerald-50 text-emerald-600 border-emerald-100`}><CheckCircle2 className="w-4 h-4" /> เสร็จสิ้น (ปรับยอดแล้ว)</span>;
+            case 'PENDING': return <span className={`${baseClass} bg-amber-50 text-amber-600 border-amber-100`}><Clock className="w-3.5 h-3.5" /> รอตรวจนับ</span>;
+            case 'COUNTING': return <span className={`${baseClass} bg-blue-50 text-blue-600 border-blue-100`}><Search className="w-3.5 h-3.5" /> กำลังตรวจนับ</span>;
+            case 'REVIEW': return <span className={`${baseClass} bg-purple-50 text-purple-600 border-purple-100`}><AlertCircle className="w-3.5 h-3.5" /> รอตรวจสอบ</span>;
+            case 'COMPLETED': return <span className={`${baseClass} bg-emerald-50 text-emerald-600 border-emerald-100`}><CheckCircle2 className="w-3.5 h-3.5" /> เสร็จสิ้น (ปรับยอดแล้ว)</span>;
             default: return <span className={`${baseClass} bg-slate-50 text-slate-500 border-slate-200`}>{status}</span>;
         }
     };
@@ -269,55 +289,45 @@ export default function CountTasksPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="w-[96%] max-w-[1600px] mx-auto space-y-8 pt-10 pb-10">
+            <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
                 {/* --- HEADER --- */}
-                <div className="w-full mb-6 print:hidden">
-                    <div className="flex flex-col gap-6 px-6 md:px-10">
-
-                        {/* 💡 1. ปุ่มย้อนกลับทรงเหลี่ยม (แสดงเฉพาะหน้า DETAIL) จัดให้อยู่บรรทัดบนสุด */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6 print:hidden">
+                    <div className="flex flex-col gap-4">
+                        {/* ปุ่มย้อนกลับตาม Theme */}
                         {view === 'DETAIL' && (
-                            <div className="flex justify-start animate-in fade-in duration-300">
-                                <button
-                                    onClick={() => setView('LIST')}
-                                    className="group flex items-center gap-2.5 bg-white border-2 border-slate-200 px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:border-[#1F3B8B] hover:bg-slate-50 transition-all active:scale-95 w-fit"
-                                >
-                                    <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:text-[#1F3B8B] transition-colors" />
-                                    <span className="text-sm font-black text-slate-600 group-hover:text-[#1F3B8B] uppercase tracking-wider transition-colors">
-                                        ย้อนกลับ
-                                    </span>
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setView('LIST')}
+                                className="flex items-center gap-2 w-fit text-sm font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
+                            >
+                                <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
+                            </button>
                         )}
 
-                        {/* 💡 2. ส่วนแถวหัวข้อ และ ปุ่มสร้างใบสั่งนับ */}
-                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-
-                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                                    <ClipboardList className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
-                                </div>
-                                <div className="flex flex-col">
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                            Cycle Count System
-                                        </p>
-                                    </div>
-                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                                        ระบบตรวจนับสต๊อก
-                                    </h1>
-                                </div>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                                <ClipboardList className="w-6 h-6 text-[#1F3B8B]" />
                             </div>
-
-                            {view === 'LIST' && (
-                                <div className="flex items-center">
-                                    <button onClick={() => setShowCreateModal(true)} className="group flex items-center gap-2 bg-emerald-600 text-white px-7 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-emerald-900/10 transition-all active:scale-95 whitespace-nowrap">
-                                        <Plus className="w-5 h-5 shrink-0" strokeWidth={3} /> สร้างใบสั่งนับใหม่
-                                    </button>
-                                </div>
-                            )}
-
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                                    ระบบตรวจนับสต๊อก
+                                </h1>
+                                <p className="text-sm text-slate-500 mt-1 font-medium uppercase tracking-widest">
+                                    Cycle Count System
+                                </p>
+                            </div>
                         </div>
+                    </div>
+
+                    <div className="flex flex-row items-center gap-4 w-full md:w-auto">
+                        {view === 'LIST' && (
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm transition-all hover:bg-emerald-700 shadow-sm active:scale-95 whitespace-nowrap"
+                            >
+                                <Plus className="w-4 h-4" /> สร้างใบสั่งนับใหม่
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -325,62 +335,62 @@ export default function CountTasksPage() {
                 {/* 📝 MODE 1: LIST VIEW */}
                 {/* ========================================================================= */}
                 {view === 'LIST' && (
-                    <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-white/70 shadow-[0_20px_60px_-25px_rgba(15,23,42,0.12)] backdrop-blur-sm animate-in fade-in duration-500 mx-6 md:mx-10">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-500">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full text-base text-left border-collapse">
-                                <thead className="bg-slate-50 border-b-2 border-slate-100">
-                                    <tr className="text-slate-500 font-bold text-base tracking-wider">
-                                        <th className="p-6 pl-8">เลขที่เอกสาร</th>
-                                        <th className="p-6">สถานะ</th>
-                                        <th className="p-6">วันที่สร้าง</th>
-                                        <th className="p-6">หมายเหตุ</th>
-                                        <th className="p-6 text-center">ดำเนินการ</th>
-                                        <th className="p-6 text-center pr-8 w-16">ลบ</th>
+                            <table className="min-w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-slate-200">
+                                        <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">เลขที่เอกสาร</th>
+                                        <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">สถานะ</th>
+                                        <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">วันที่สร้าง</th>
+                                        <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">หมายเหตุ</th>
+                                        <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">ดำเนินการ</th>
+                                        <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-16">ลบ</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 bg-white/50">
+                                <tbody className="divide-y divide-slate-100">
                                     {tasks.length === 0 && (
                                         <tr>
-                                            <td colSpan="6" className="p-24 text-center">
-                                                <ClipboardList className="w-14 h-14 text-slate-200 mx-auto mb-4" />
-                                                <p className="text-slate-500 font-black tracking-wide text-sm">ไม่พบใบสั่งตรวจนับในระบบ</p>
+                                            <td colSpan="6" className="py-20 text-center text-slate-400 font-medium italic">
+                                                ไม่พบประวัติรายการใบสั่งตรวจนับ
                                             </td>
                                         </tr>
                                     )}
-                                    {tasks.map((task) => (
-                                        <tr key={task.id} className="hover:bg-slate-50/80 group transition-colors">
-                                            <td className="p-6 pl-8 font-black text-blue-800 uppercase tracking-tight text-base tabular-nums group-hover:text-blue-600">
-                                                {task.taskNo}
+                                    {/* 🟢 เปลี่ยนจากการ map tasks เดิม เป็น paginatedTasks ตรงนี้ครับ */}
+                                    {paginatedTasks.map((task) => (
+                                        <tr key={task.id} className="hover:bg-slate-50/50 transition-colors group">
+                                            <td className="py-4 px-6">
+                                                <span className="text-sm font-bold text-[#1F3B8B] uppercase tracking-tight tabular-nums">
+                                                    {task.taskNo}
+                                                </span>
                                             </td>
-                                            <td className="p-6">
+                                            <td className="py-4 px-6">
                                                 {getStatusBadge(task.status)}
                                             </td>
-                                            <td className="p-6">
-                                                <div className="font-mono text-sm text-slate-600 flex items-center gap-2">
-                                                    <div className="w-2 h-2 rounded-full bg-slate-300 group-hover:bg-blue-500 transition-colors"></div>
+                                            <td className="py-4 px-6">
+                                                <span className="text-xs font-bold text-slate-600 tabular-nums">
                                                     {new Date(task.createdAt).toLocaleDateString('th-TH')}
-                                                </div>
+                                                </span>
                                             </td>
-                                            <td className="p-6">
-                                                <p className="font-bold text-slate-800 text-sm truncate max-w-[200px]">{task.remarks || '-'}</p>
+                                            <td className="py-4 px-6">
+                                                <p className="text-sm font-semibold text-slate-800 line-clamp-1">{task.remarks || '-'}</p>
                                             </td>
-                                            <td className="p-6 text-center">
+                                            <td className="py-4 px-6 text-center">
                                                 <button
                                                     onClick={() => openTaskDetail(task.id)}
-                                                    className="bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white px-5 py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-wider shadow-sm hover:shadow-md active:scale-95 flex items-center gap-2 mx-auto"
+                                                    className="text-[11px] font-bold text-[#1F3B8B] hover:underline flex items-center justify-center gap-1 mx-auto"
                                                 >
                                                     {task.status === 'COMPLETED' ? 'ดูรายละเอียด' : 'เปิดคีย์ข้อมูล'}
                                                 </button>
                                             </td>
-                                            <td className="p-6 text-center pr-8">
+                                            <td className="py-4 px-6 text-center">
                                                 {task.status !== 'COMPLETED' ? (
                                                     <button
                                                         onClick={() => {
-                                                            // 💡 เปลี่ยนจากการเรียกฟังก์ชันลบตรงๆ เป็นการเก็บข้อมูลและเปิด Pop-up แทน
                                                             setTaskToDelete({ id: task.id, taskNo: task.taskNo });
                                                             setShowDeleteModal(true);
                                                         }}
-                                                        className="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 rounded-xl transition-all shadow-sm active:scale-95 mx-auto block"
+                                                        className="text-slate-400 hover:text-rose-600 p-1.5 rounded-md hover:bg-rose-50 transition-colors mx-auto block"
                                                         title="ลบเอกสาร"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -394,49 +404,53 @@ export default function CountTasksPage() {
                                 </tbody>
                             </table>
                         </div>
-                    </section>
+                        
+                        {/* 🟢 [ส่วนที่เพิ่ม] ส่วนควบคุมการเปลี่ยนหน้า (Pagination Controls) */}
+                        {tasks.length > 0 && totalPages > 1 && (
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 border-t border-slate-200 bg-slate-50/50 print:hidden">
+                                <p className="text-xs font-medium text-slate-500">
+                                    หน้า {page} จาก {totalPages} | รวม {totalCount.toLocaleString()} รายการ
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <PaginationButton onClick={() => setPage(1)} disabled={page === 1} icon={<ChevronsLeft className="w-4 h-4" />} />
+                                    <PaginationButton onClick={() => setPage((p) => Math.max(p - 1, 1))} disabled={page === 1} icon={<ChevronLeft className="w-4 h-4" />} />
+
+                                    <div className="px-4 py-1.5 text-xs font-bold text-[#1F3B8B] bg-white border border-slate-200 rounded-lg shadow-sm">
+                                        {page} / {totalPages}
+                                    </div>
+
+                                    <PaginationButton onClick={() => setPage((p) => Math.min(p + 1, totalPages))} disabled={page === totalPages} icon={<ChevronRight className="w-4 h-4" />} />
+                                    <PaginationButton onClick={() => setPage(totalPages)} disabled={page === totalPages} icon={<ChevronsRight className="w-4 h-4" />} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* ========================================================================= */}
                 {/* 📝 MODE 2: DETAIL / DATA ENTRY VIEW */}
                 {/* ========================================================================= */}
                 {view === 'DETAIL' && selectedTask && (
-                    <div className="px-6 md:px-10 space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="space-y-6 animate-in fade-in duration-500">
 
-
-
-                        <div className="bg-white rounded-[3.5rem] border-2 border-slate-200 shadow-2xl overflow-hidden w-full max-w-[1550px] mx-auto flex flex-col mb-10">
-
-                            {/* Card Header */}
-                            <div className="bg-white p-12 text-slate-950 border-b-2 border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-
-                                {/* 📍 ฝั่งซ้าย: หัวข้อและเลขที่เอกสาร */}
-                                <div>
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <p className="text-slate-500 text-sm font-black uppercase tracking-[0.3em]">
-                                            เอกสาร
-                                        </p>
-                                    </div>
-                                    <h2 className="text-2xl lg:text-3xl tabular-nums font-black tracking-tighter text-[#1F3B8B]">
-                                        {selectedTask.taskNo}
-                                    </h2>
+                        <div className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden">
+                            {/* Detail Header */}
+                            <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-4">
+                                <div className="space-y-1.5">
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">เลขที่ใบสั่งนับ</span>
+                                    <h2 className="text-2xl md:text-3xl font-black text-[#1F3B8B] tabular-nums">{selectedTask.taskNo}</h2>
                                 </div>
+                                <div className="flex flex-col items-start md:items-end gap-3">
+                                    <div className="flex justify-end">{getStatusBadge(selectedTask.status)}</div>
 
-                                {/* 📍 ฝั่งขวา: ป้ายสถานะ และ ปุ่ม Action ต่างๆ */}
-                                <div className="flex flex-col items-start md:items-end gap-4">
-
-                                    {/* 💡 ย้าย Badge ป้ายสถานะ มาไว้ฝั่งขวาตรงนี้ */}
-                                    {getStatusBadge(selectedTask.status)}
-
-                                    {/* กลุ่มปุ่ม Action */}
-                                    <div className="flex flex-wrap gap-3 mt-1">
+                                    <div className="flex flex-wrap gap-2 mt-2">
                                         {selectedTask.status !== 'COMPLETED' && (
                                             <button
                                                 onClick={handleExportPDF}
                                                 disabled={isLoading}
-                                                className="bg-white border-2 border-[#1F3B8B] text-[#1F3B8B] hover:bg-blue-50 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95 flex items-center gap-2"
+                                                className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95 flex items-center gap-2"
                                             >
-                                                <FileText className="w-4 h-4" /> ปรินต์ใบสั่งตรวจนับ (PDF)
+                                                <FileText className="w-4 h-4" /> ปรินต์ (PDF)
                                             </button>
                                         )}
 
@@ -445,15 +459,14 @@ export default function CountTasksPage() {
                                                 <button
                                                     onClick={handleSaveProgress}
                                                     disabled={isLoading}
-                                                    className="bg-slate-800 text-white hover:bg-slate-900 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95 flex items-center gap-2"
+                                                    className="bg-slate-800 text-white hover:bg-slate-900 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95 flex items-center gap-2"
                                                 >
-                                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                                    บันทึกยอด (Save)
+                                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} บันทึกยอด
                                                 </button>
                                                 <button
-                                                    onClick={handleCompleteTask}
+                                                    onClick={handleCompleteTaskClick}
                                                     disabled={isLoading}
-                                                    className="bg-emerald-600 text-white hover:bg-emerald-700 px-6 py-3.5 rounded-2xl font-black text-xs uppercase tracking-wider shadow-xl shadow-emerald-900/10 transition-all active:scale-95 flex items-center gap-2"
+                                                    className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95 flex items-center gap-2"
                                                 >
                                                     <CheckCircle2 className="w-4 h-4" /> อนุมัติปรับสต๊อก
                                                 </button>
@@ -463,77 +476,76 @@ export default function CountTasksPage() {
                                 </div>
                             </div>
 
-                            {/* Info Bar */}
-                            <div className="px-12 pt-8 pb-4">
-                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center gap-3 mb-2">
-                                    <Boxes className="w-6 h-6 text-indigo-500" /> รายการที่ต้องตรวจนับ
+                            {/* Info Section */}
+                            <div className="px-8 pt-6 pb-4">
+                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 mb-2">
+                                    <Boxes className="w-5 h-5 text-[#1F3B8B]" /> รายการที่ต้องตรวจนับ
                                 </h3>
-                                <p className="text-sm font-bold text-slate-500 ml-9">
-                                    คีย์ตัวเลขที่นับได้จากกระดาษลงในช่อง "ยอดนับจริง" หรือดาวน์โหลดไฟล์ไปจด
+                                <p className="text-xs font-bold text-slate-500 ml-7">
+                                    คีย์ตัวเลขที่นับได้จากกระดาษลงในช่อง "ยอดนับจริง"
                                 </p>
                             </div>
 
-                            {/* Data Entry Table */}
-                            <div className="p-12 pt-4">
-                                <div className="border-2 border-slate-200 rounded-[3.5rem] overflow-hidden shadow-2xl bg-white">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead className="bg-slate-50 border-b-2 border-slate-200">
-                                            <tr className="text-sm font-black uppercase text-slate-500 tracking-widest whitespace-nowrap">
-                                                <th className="p-8 pl-12 w-[25%]">ตำแหน่ง (Location)</th>
-                                                <th className="p-8 w-[35%]">สินค้า (Product)</th>
-                                                <th className="p-8 text-center bg-slate-100/50 w-[10%]">ยอดระบบ</th>
-                                                <th className="p-8 text-center text-[#1F3B8B] w-[20%]">ยอดนับจริง (Input)</th>
-                                                <th className="p-8 text-center pr-12 w-[10%]">ส่วนต่าง</th>
+                            {/* Items Table */}
+                            <div className="px-8 pb-8">
+                                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-100 border-b border-slate-200 text-xs font-bold uppercase text-slate-600 tracking-wider">
+                                                <th className="p-4 text-left w-[25%]">ตำแหน่ง (Location)</th>
+                                                <th className="p-4 text-left w-[35%]">สินค้า (Product)</th>
+                                                <th className="p-4 text-center bg-slate-200/50 w-[10%]">ยอดระบบ</th>
+                                                <th className="p-4 text-center text-[#1F3B8B] w-[20%]">ยอดนับจริง</th>
+                                                <th className="p-4 text-center w-[10%]">ส่วนต่าง</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
                                             {taskItems.map((item, index) => {
                                                 const diff = item.inputQty !== '' ? (Number(item.inputQty) - item.systemQty) : (item.diffQty || 0);
-
                                                 return (
-                                                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                                                        <td className="p-8 pl-12">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <MapPin className="w-5 h-5 text-indigo-500 shrink-0" />
-                                                                <span className="font-black text-lg text-slate-800">{item.location?.code}</span>
+                                                    <tr key={item.id} className="text-base hover:bg-slate-50/50 transition-colors">
+                                                        <td className="p-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <MapPin className="w-4 h-4 text-indigo-500" />
+                                                                <span className="font-bold text-slate-900">{item.location?.code}</span>
                                                             </div>
-                                                            <span className="text-xs font-bold text-slate-400 block ml-7 uppercase tracking-widest">
+                                                            <span className="text-[10px] font-bold text-slate-400 block ml-6 uppercase mt-0.5">
                                                                 {item.location?.warehouse?.name}
                                                             </span>
                                                         </td>
-                                                        <td className="p-8">
-                                                            <p className="font-black text-slate-900 text-lg uppercase mb-1.5">{item.product?.sku}</p>
-                                                            <span className="text-xs text-[#1F3B8B] font-black bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 tabular-nums line-clamp-1 w-fit">
+                                                        <td className="p-4">
+                                                            <p className="font-bold text-slate-900">{item.product?.sku}</p>
+                                                            <p className="text-xs text-[#1F3B8B] font-bold uppercase mt-0.5 line-clamp-1">
                                                                 {item.product?.name}
-                                                            </span>
+                                                            </p>
                                                         </td>
-                                                        <td className="p-8 text-center bg-slate-50/30">
-                                                            <span className="text-2xl font-black text-slate-400 tabular-nums">{item.systemQty}</span>
+                                                        <td className="p-4 text-center bg-slate-50/50">
+                                                            <span className="text-lg font-bold text-slate-500 tabular-nums">{item.systemQty}</span>
                                                         </td>
-                                                        <td className="p-8 text-center">
+                                                        <td className="p-4 text-center">
                                                             {selectedTask.status === 'COMPLETED' ? (
-                                                                <span className="text-3xl font-black text-[#1F3B8B] tabular-nums bg-slate-50 px-6 py-3 rounded-3xl border border-slate-100">{item.countedQty ?? '-'}</span>
+                                                                <span className="text-xl font-bold text-[#1F3B8B] tabular-nums">{item.countedQty ?? '-'}</span>
                                                             ) : (
                                                                 <input
                                                                     type="number"
                                                                     min="0"
                                                                     value={item.inputQty}
                                                                     onChange={(e) => handleQtyChange(index, e.target.value)}
-                                                                    className="w-32 mx-auto block text-center border-2 border-slate-200 focus:border-[#1F3B8B] bg-slate-50 text-[#1F3B8B] rounded-2xl py-3 text-2xl tabular-nums font-black outline-none focus:ring-4 focus:ring-blue-900/10 transition-all placeholder:text-slate-300"
+                                                                    className="w-24 mx-auto block text-center border border-slate-300 focus:border-[#1F3B8B] bg-slate-50 text-[#1F3B8B] rounded-lg py-2 text-lg tabular-nums font-bold outline-none focus:ring-2 focus:ring-blue-900/10 transition-all placeholder:text-slate-300"
                                                                     placeholder="ว่าง"
                                                                 />
                                                             )}
                                                         </td>
-                                                        <td className="p-8 text-center pr-12">
+                                                        <td className="p-4 text-center">
                                                             {item.inputQty !== '' || selectedTask.status === 'COMPLETED' ? (
-                                                                <span className={`inline-block min-w-[70px] px-4 py-2.5 rounded-xl text-base font-black tabular-nums border shadow-sm ${diff > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                                                                <span className={`inline-block px-3 py-1.5 rounded-md text-sm font-bold tabular-nums border shadow-sm ${diff > 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                                                     diff < 0 ? 'bg-rose-50 text-rose-600 border-rose-200' :
-                                                                        'bg-slate-100 text-slate-400 border-slate-200'
+                                                                        'bg-slate-100 text-slate-500 border-slate-200'
                                                                     }`}>
                                                                     {diff > 0 ? '+' : ''}{diff}
                                                                 </span>
                                                             ) : (
-                                                                <span className="text-slate-300 font-black text-xl">-</span>
+                                                                <span className="text-slate-300 font-bold">-</span>
                                                             )}
                                                         </td>
                                                     </tr>
@@ -555,85 +567,71 @@ export default function CountTasksPage() {
                         <form
                             onSubmit={(e) => {
                                 e.preventDefault();
-                                // 💡 Validation: ตรวจสอบก่อนส่งฟอร์ม ถ้าไม่มีให้แสดง Error
                                 if (!newForm.warehouseId) {
                                     setShowError(true);
                                     return;
                                 }
-
-                                // 💡 เปลี่ยนจากการเรียก confirm() ของ Browser เป็นการเปิด Modal ที่เราสร้างเอง
                                 setShowConfirmModal(true);
                             }}
-                            className="bg-white rounded-[3.5rem] p-10 max-w-lg w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-slate-100"
+                            className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-slate-200"
                         >
-
-                            <div className="flex justify-between items-center mb-8 border-b-2 border-slate-100 pb-6">
-                                <h3 className="text-xl font-black text-slate-900 uppercase tracking-widest flex items-center gap-3">
-                                    <div className="p-3 bg-[#1F3B8B]/10 rounded-2xl">
-                                        <ClipboardList className="w-6 h-6 text-[#1F3B8B]" />
-                                    </div>
+                            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                                <h3 className="text-lg font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                    <ClipboardList className="w-5 h-5 text-[#1F3B8B]" />
                                     สร้างใบสั่งนับสต๊อก
                                 </h3>
-                                {/* 💡 เอา Confirm ออก กดแล้วปิดทันที พร้อมเคลียร์ Error */}
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setShowCreateModal(false);
                                         setShowError(false);
                                     }}
-                                    className="bg-slate-50 hover:bg-rose-50 hover:text-rose-500 text-slate-400 p-3 rounded-full transition-colors active:scale-95"
+                                    className="text-slate-400 hover:text-rose-500 bg-slate-50 hover:bg-rose-50 p-2 rounded-lg transition-colors"
                                 >
-                                    <AlertCircle className="w-5 h-5" />
+                                    <AlertCircle className="w-4 h-4" />
                                 </button>
                             </div>
 
-                            <div className="space-y-8 mb-10">
-                                {/* เลือกคลังสินค้า */}
+                            <div className="space-y-6 mb-8">
                                 <div className="group">
-                                    <label className={`text-[12px] font-black uppercase tracking-widest flex items-center gap-2 mb-3 ${showError ? 'text-rose-500' : 'text-slate-400'}`}>
-                                        <div className={`p-1.5 rounded-lg transition-colors ${showError ? 'bg-rose-100' : 'bg-indigo-50 group-focus-within:bg-indigo-100'}`}>
-                                            <Building2 className={`w-4 h-4 ${showError ? 'text-rose-600' : 'text-indigo-600'}`} />
-                                        </div>
-                                        เลือกคลังสินค้า *
+                                    <label
+                                        className={`text-xs font-bold uppercase tracking-widest flex items-center gap-2 mb-2 ${showError ? 'text-rose-500' : 'text-slate-500'
+                                            }`}
+                                    >
+
+                                        เลือกคลังสินค้า <span className="text-red-500">*</span>
                                     </label>
                                     <select
                                         value={newForm.warehouseId}
                                         onChange={e => {
                                             setNewForm({ ...newForm, warehouseId: e.target.value, zoneId: '' });
-                                            if (e.target.value) setShowError(false); // พิมพ์แล้วให้ Error หายไป
+                                            if (e.target.value) setShowError(false);
                                         }}
-                                        // 💡 เปลี่ยนสีขอบและพื้นหลังเมื่อเกิด Error
-                                        className={`w-full border-2 rounded-2xl p-4 text-base font-bold outline-none transition-all shadow-sm ${showError
+                                        className={`w-full border rounded-lg p-3 text-sm font-bold outline-none transition-all ${showError
                                             ? 'border-rose-400 bg-rose-50 text-rose-900 focus:border-rose-500'
-                                            : 'border-slate-200 bg-slate-50 focus:bg-white focus:border-[#1F3B8B]'
+                                            : 'border-slate-300 bg-slate-50 focus:bg-white focus:border-[#1F3B8B]'
                                             }`}
                                     >
                                         <option value="">-- เลือกคลังสินค้า --</option>
                                         {masterData.warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
                                     </select>
-
-                                    {/* 💡 ข้อความ Alert ใต้ช่อง */}
                                     {showError && (
-                                        <div className="flex items-center gap-1.5 mt-3 text-rose-500 animate-in slide-in-from-top-1">
-                                            <AlertCircle className="w-4 h-4" />
-                                            <span className="text-xs font-bold tracking-wide">กรุณาเลือกคลังสินค้า</span>
+                                        <div className="flex items-center gap-1.5 mt-2 text-rose-500 animate-in slide-in-from-top-1">
+                                            <AlertCircle className="w-3.5 h-3.5" />
+                                            <span className="text-xs font-bold">กรุณาเลือกคลังสินค้า</span>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* เลือกโซน */}
                                 <div className="group">
-                                    <label className="text-[12px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                                        <div className="p-1.5 bg-amber-50 rounded-lg group-focus-within:bg-amber-100 transition-colors">
-                                            <Layers className="w-4 h-4 text-amber-600" />
-                                        </div>
-                                        เลือกโซน (Optional)
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-2">
+                                        เลือกโซน <span className="text-slate-400 normal-case font-medium">(Optional)</span>
                                     </label>
                                     <select
                                         value={newForm.zoneId}
                                         disabled={!newForm.warehouseId}
                                         onChange={e => setNewForm({ ...newForm, zoneId: e.target.value })}
-                                        className="w-full border-2 border-slate-200 rounded-2xl p-4 text-base font-bold outline-none focus:border-[#1F3B8B] bg-slate-50 focus:bg-white transition-all disabled:opacity-50 disabled:bg-slate-100 shadow-sm"
+                                        className="w-full border border-slate-300 rounded-lg p-3 text-sm font-bold outline-none focus:border-[#1F3B8B] bg-slate-50 focus:bg-white transition-all disabled:opacity-50 disabled:bg-slate-100"
                                     >
                                         <option value="">-- นับทุกโซนในคลังนี้ --</option>
                                         {masterData.zones
@@ -643,12 +641,8 @@ export default function CountTasksPage() {
                                     </select>
                                 </div>
 
-                                {/* หมายเหตุสั่งการ */}
                                 <div className="group">
-                                    <label className="text-[12px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                                        <div className="p-1.5 bg-sky-50 rounded-lg group-focus-within:bg-sky-100 transition-colors">
-                                            <MessageSquareText className="w-4 h-4 text-sky-600" />
-                                        </div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 mb-2">
                                         หมายเหตุสั่งการ
                                     </label>
                                     <input
@@ -656,60 +650,52 @@ export default function CountTasksPage() {
                                         value={newForm.remarks}
                                         onChange={e => setNewForm({ ...newForm, remarks: e.target.value })}
                                         placeholder="เช่น ตรวจนับประจำเดือนเมษายน"
-                                        className="w-full border-2 border-slate-200 rounded-2xl p-4 text-base font-bold outline-none focus:border-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-300 shadow-sm"
+                                        className="w-full border border-slate-300 rounded-lg p-3 text-sm font-bold outline-none focus:border-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-400"
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex gap-4 mt-8">
-                                {/* 💡 เอา Confirm ออก กดแล้วปิดทันที */}
+                            <div className="flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setShowCreateModal(false);
                                         setShowError(false);
                                     }}
-                                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
+                                    className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all"
                                 >
                                     ยกเลิก
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-emerald-900/10 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    className="flex-1 py-3 bg-emerald-600 text-white rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-sm"
                                 >
-                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} สร้างเอกสาร
+                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} สร้างเอกสาร
                                 </button>
                             </div>
                         </form>
                     </div>
                 )}
-                {/* 📍 นำโค้ด ขั้นตอนที่ 3 มาวางต่อท้ายตรงนี้ได้เลยครับ 📍 */}
+
                 {/* ========================================================================= */}
-                {/* 🪟 MODAL: CONFIRM CREATE TASK (ป็อปอัพยืนยันการสร้าง) */}
+                {/* 🪟 MODAL: CONFIRM CREATE TASK */}
                 {/* ========================================================================= */}
                 {showConfirmModal && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                        <div className="bg-white rounded-[3.5rem] p-10 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-slate-100 flex flex-col items-center text-center">
-
-                            {/* ไอคอนตรงกลาง */}
-                            <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner border border-indigo-100">
-                                <ClipboardList className="w-10 h-10 text-indigo-600" />
+                        <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-slate-200 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-[#1F3B8B]/10 rounded-full flex items-center justify-center mb-5 border border-[#1F3B8B]/20">
+                                <ClipboardList className="w-8 h-8 text-[#1F3B8B]" />
                             </div>
-
-                            <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">
-                                ยืนยันการสร้างเอกสาร
-                            </h3>
-                            <p className="text-sm font-bold text-slate-500 mb-8">
-                                ยืนยันการสร้างใบสั่งนับสต๊อกใช่หรือไม่?
+                            <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">ยืนยันการสร้างเอกสาร</h3>
+                            <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                                ยืนยันการสร้างใบสั่งนับสต๊อกตามข้อมูลที่ระบุ<br />ใช่หรือไม่?
                             </p>
-
-                            {/* ปุ่มกดยืนยัน / ยกเลิก */}
-                            <div className="flex w-full gap-4">
+                            <div className="flex w-full gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirmModal(false)}
-                                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
+                                    className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all"
                                 >
                                     ยกเลิก
                                 </button>
@@ -717,47 +703,99 @@ export default function CountTasksPage() {
                                     type="button"
                                     onClick={(e) => {
                                         setShowConfirmModal(false);
-                                        // 💡 ส่ง mock event ไปให้ ป้องกัน Error เพราะใน handleCreateTask มีการเรียก e.preventDefault()
-                                        handleCreateTask({ preventDefault: () => { } });
+                                        handleCreateTask(e);
                                     }}
                                     disabled={isLoading}
-                                    className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-emerald-900/10 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    className="flex-1 py-3 bg-emerald-600 text-white rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-sm transition-all flex items-center justify-center gap-2"
                                 >
-                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />} ยืนยัน
+                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} ยืนยัน
                                 </button>
                             </div>
                         </div>
                     </div>
                 )}
+
                 {/* ========================================================================= */}
-                {/* 🪟 MODAL: CONFIRM DELETE TASK (ป็อปอัพยืนยันการลบ สีแดง) */}
+                {/* 🪟 MODAL: CONFIRM APPROVE STOCK (ยืนยันปรับสต๊อก) */}
+                {/* ========================================================================= */}
+                {showCompleteConfirmModal && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                        <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-slate-200 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-5 border border-amber-200">
+                                <Info className="w-8 h-8 text-amber-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900 mb-3 tracking-tight">ยืนยันการปิดเอกสาร</h3>
+                            <p className="text-sm font-semibold text-slate-600 mb-8 leading-relaxed bg-slate-50 p-4 rounded-lg border border-slate-100">
+                                ระบบจะสร้างรายการปรับยอด (Stock Adjustment) <br />
+                                ให้อัตโนมัติสำหรับรายการที่ยอด <span className="text-rose-500 font-bold">"ไม่ตรงกัน"</span>
+                            </p>
+                            <div className="flex w-full gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCompleteConfirmModal(false)}
+                                    className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all"
+                                >
+                                    ยกเลิก
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={executeCompleteTask}
+                                    disabled={isLoading}
+                                    className="flex-1 py-3 bg-emerald-600 text-white rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-sm transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} อนุมัติยอด
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ========================================================================= */}
+                {/* 🪟 MODAL: SUCCESS APPROVE STOCK (ปรับสต๊อกสำเร็จ) */}
+                {/* ========================================================================= */}
+                {showCompleteSuccessModal && (
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                        <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-5 border border-emerald-200">
+                                <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">ปรับสต๊อกสำเร็จ</h3>
+                            <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                                ระบบได้ดำเนินการปรับยอดสต๊อก<br />เรียบร้อยแล้ว
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setShowCompleteSuccessModal(false)}
+                                className="w-full py-3 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all"
+                            >
+                                ปิดหน้าต่าง
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ========================================================================= */}
+                {/* 🪟 MODAL: CONFIRM DELETE TASK */}
                 {/* ========================================================================= */}
                 {showDeleteModal && taskToDelete && (
                     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                        <div className="bg-white rounded-[3.5rem] p-10 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-slate-100 flex flex-col items-center text-center">
-
-                            {/* ไอคอนตรงกลาง (โทนสีแดง) */}
-                            <div className="w-20 h-20 bg-rose-50 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner border border-rose-100">
-                                <Trash2 className="w-10 h-10 text-rose-600" />
+                        <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-rose-100 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mb-5 border border-rose-200">
+                                <Trash2 className="w-8 h-8 text-rose-600" />
                             </div>
-
-                            <h3 className="text-xl font-black text-slate-900 mb-3 tracking-tight">
-                                ยืนยันการลบเอกสาร
-                            </h3>
-                            <p className="text-sm font-bold text-slate-500 mb-8 leading-relaxed">
-                                คุณต้องการลบเอกสาร <span className="text-rose-600 font-black">{taskToDelete.taskNo}</span> ใช่หรือไม่? <br />
-                                <span className="text-xs font-normal mt-1 block">ข้อมูลการนับในเอกสารนี้จะถูกลบทิ้งทั้งหมด</span>
+                            <h3 className="text-lg font-bold text-slate-900 mb-3 tracking-tight">ยืนยันการลบเอกสาร</h3>
+                            <p className="text-sm font-semibold text-slate-600 mb-8 leading-relaxed">
+                                คุณต้องการลบเอกสาร <span className="text-rose-600 font-bold">{taskToDelete.taskNo}</span><br />ใช่หรือไม่?
+                                <span className="text-xs font-normal mt-2 block text-slate-400 bg-slate-50 p-2 rounded-md">ข้อมูลการนับจะถูกลบทิ้งทั้งหมด<br />และไม่สามารถกู้คืนได้</span>
                             </p>
-
-                            {/* ปุ่มกดยืนยัน / ยกเลิก */}
-                            <div className="flex w-full gap-4">
+                            <div className="flex w-full gap-3">
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setShowDeleteModal(false);
-                                        setTaskToDelete(null); // เคลียร์ค่าทิ้งถ้ายกเลิก
+                                        setTaskToDelete(null);
                                     }}
-                                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
+                                    className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all"
                                 >
                                     ยกเลิก
                                 </button>
@@ -765,16 +803,53 @@ export default function CountTasksPage() {
                                     type="button"
                                     onClick={() => handleDeleteTask(taskToDelete.id)}
                                     disabled={isLoading}
-                                    className="flex-1 py-4 bg-rose-600 text-white rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-rose-700 shadow-xl shadow-rose-900/10 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    className="flex-1 py-3 bg-rose-600 text-white rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-rose-700 shadow-sm transition-all flex items-center justify-center gap-2"
                                 >
-                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />} ยืนยันลบ
+                                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} ยืนยันลบ
                                 </button>
                             </div>
                         </div>
                     </div>
                 )}
 
+                {/* ========================================================================= */}
+                {/* 🪟 MODAL: SUCCESS DELETE TASK (ลบสำเร็จ) */}
+                {/* ========================================================================= */}
+                {showDeleteSuccessModal && (
+                    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                        <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-5 border border-emerald-200">
+                                <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">ลบเอกสารสำเร็จ</h3>
+                            <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                                ข้อมูลถูกลบออกจากระบบ<br />เรียบร้อยแล้ว
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteSuccessModal(false)}
+                                className="w-full py-3 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all"
+                            >
+                                ปิดหน้าต่าง
+                            </button>
+                        </div>
+                    </div>
+                )}
+
             </div>
         </AuthGate>
+    );
+}
+
+// 🟢 [ส่วนที่เพิ่ม] Component ปุ่มกดสำหรับ Pagination
+function PaginationButton({ onClick, disabled, icon }) {
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className="p-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-30 transition-colors shadow-sm"
+        >
+            {icon}
+        </button>
     );
 }

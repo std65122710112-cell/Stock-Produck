@@ -328,12 +328,6 @@ export default function MasterSettingsPage() {
                             icon={Tag}
                         />
                     </div>
-
-                    {/* --- FOOTER HINT --- */}
-                    <div className="flex justify-center items-center gap-2 py-6 opacity-50">
-                        <Database className="w-4 h-4 text-slate-400" />
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">ข้อมูลตั้งต้นจะถูกนำไปใช้งานร่วมกันในทุกฟังก์ชันของระบบ</span>
-                    </div>
                 </div>
             </div>
         </AuthGate>

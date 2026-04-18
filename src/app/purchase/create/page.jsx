@@ -6,12 +6,11 @@ import AuthGate from "@/components/AuthGate";
 import { apiFetch } from "@/lib/api";
 import { getAccessToken } from "@/lib/auth";
 import toast, { Toaster } from "react-hot-toast";
+import { createPortal } from "react-dom";
 import {
-    FileSignature, Database, ArrowLeft, ShoppingCart,
-    Hash, CheckCircle2, ShieldCheck, Trash2, Building2,
-    ClipboardList, Truck, PenTool, Upload, Package,
-    Clock, Loader2, MessageSquare, FileText, AlertCircle, CheckCircle, Lock,
-    User, Calendar, MapPin, Tag
+    ArrowLeft, ShoppingCart, CheckCircle2, Trash2, Building2,
+    ClipboardList, Truck, Upload, Package, Clock, Loader2, 
+    FileText, AlertCircle, CheckCircle, Lock, User, Calendar, MapPin, Tag, X
 } from "lucide-react";
 
 export default function CreatePurchaseOrderPage() {
@@ -19,6 +18,7 @@ export default function CreatePurchaseOrderPage() {
     const [viewMode, setViewMode] = useState('LIST');
     const [filterTab, setFilterTab] = useState('READY');
     const [isLoading, setIsLoading] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
 
     // --- Master Data ---
     const [products, setProducts] = useState([]);
@@ -35,8 +35,13 @@ export default function CreatePurchaseOrderPage() {
     const [signatureImage, setSignatureImage] = useState(null);
     const [procurementNote, setProcurementNote] = useState('');
     const [warehouses, setWarehouses] = useState([]);
+    
+    const [hasSubmittedForm, setHasSubmittedForm] = useState(false);
+    const [successModal, setSuccessModal] = useState(false);
+    const [generatedPdfUrl, setGeneratedPdfUrl] = useState(null); // 💡 เก็บ URL PDF เพื่อรอเปิดตอนกดตกลง
 
     useEffect(() => {
+        setIsMounted(true);
         async function loadInitialData() {
             setIsLoading(true);
             try {
@@ -62,6 +67,15 @@ export default function CreatePurchaseOrderPage() {
         }
         loadInitialData();
     }, [viewMode, filterTab]);
+
+    useEffect(() => {
+        if (successModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [successModal]);
 
     const handleViewPDF = async (pdfPath) => {
         if (!pdfPath) {
@@ -144,6 +158,7 @@ export default function CreatePurchaseOrderPage() {
                 setSignatureImage(null);
                 setProcurementNote('');
                 setOrderStatus('ORDERED');
+                setHasSubmittedForm(false); // Reset form submission state
                 setViewMode('FORM');
             }
         } catch (error) {
@@ -164,15 +179,20 @@ export default function CreatePurchaseOrderPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!signatureImage) return toast.error("กรุณาลงนามกำกับใบสั่งซื้อก่อนดำเนินการ");
-        if (!vendorName.trim()) return toast.error("กรุณาระบุชื่อผู้จัดจำหน่าย");
+        setHasSubmittedForm(true);
+
+        // 💡 เช็คความครบถ้วน ถ้าไม่ครบให้หยุดทำงาน เพื่อให้กรอบแดงเด้งเตือน
+        if (!vendorName.trim() || !selectedPRData?.deliveryLocation || !signatureImage) {
+            toast.error("กรุณาตรวจสอบข้อมูลที่ต้องระบุให้ครบถ้วน");
+            return;
+        }
 
         setIsLoading(true);
         try {
             toast.loading("กำลังออกใบสั่งซื้อ และสร้าง PDF...", { id: "submit-po" });
             const payload = {
                 poNumber,
-                vendorName,
+                vendorName: vendorName.trim(),
                 supplierId: supplierId || null,
                 prId: selectedPRData?.id,
                 status: orderStatus,
@@ -192,11 +212,14 @@ export default function CreatePurchaseOrderPage() {
             });
 
             toast.success("บันทึกการสั่งซื้อและออก PDF เรียบร้อย", { id: "submit-po" });
-            if (response && response.pdfUrl) { handleViewPDF(response.pdfUrl, 'PO'); }
-            setTimeout(() => {
-                setViewMode('LIST');
-                setFilterTab('TRACKING');
-            }, 1000);
+            
+            // 💡 บันทึก URL เอกสารไว้ แล้วเปิด Popup สำเร็จ (ยังไม่เปิดหน้าต่างทันที)
+            if (response && response.pdfUrl) { 
+                setGeneratedPdfUrl(response.pdfUrl); 
+            }
+            
+            setSuccessModal(true);
+
         } catch (error) {
             toast.error(error.message || "เกิดข้อผิดพลาดในการบันทึก", { id: "submit-po" });
         } finally {
@@ -207,74 +230,93 @@ export default function CreatePurchaseOrderPage() {
     const totalAmount = items.reduce((sum, item) => sum + (Number(item.orderedQuantity) * Number(item.unitPrice)), 0);
     const activeList = filterTab === 'READY' ? approvedPRs : activePOs;
 
+    // --- Components for Modals ---
+    const SuccessPortal = () => {
+        if (!isMounted || !successModal) return null;
+        return createPortal(
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col items-center max-w-sm w-full border border-slate-200 animate-in zoom-in-95 duration-300">
+                    <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-200">
+                        <CheckCircle2 className="w-10 h-10" />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-wider">สร้างใบสั่งซื้อสำเร็จ!</h3>
+                    <p className="text-sm font-bold text-slate-500 text-center mb-8">
+                        ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว<br/>คลิกตกลงเพื่อเปิดเอกสารและกลับสู่หน้ารายการ
+                    </p>
+
+                    <button
+                        onClick={() => {
+                            setSuccessModal(false);
+                            if (generatedPdfUrl) {
+                                handleViewPDF(generatedPdfUrl);
+                            }
+                            setViewMode('LIST');
+                            setFilterTab('TRACKING');
+                        }}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95"
+                    >
+                        ตกลง
+                    </button>
+                </div>
+            </div>, document.body
+        );
+    };
+
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            {/* 💡 ขยายความกว้างสูงสุดเป็น max-w-[1440px] เพื่อให้ฟอร์มกว้างขึ้น */}
-            <div className="max-w-[1440px] mx-auto space-y-8 py-8 px-4 md:px-10 animate-in fade-in duration-500">
+            <SuccessPortal />
 
-                {/* HEADER SECTION */}
-                <div className="w-full pt-10 mb-6 print:hidden">
-                    <div className="w-full px-6 md:px-10 flex flex-col gap-6">
+            <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-500">
 
-                        {/* 💡 แถวบน: ปุ่มย้อนกลับ (ย้ายมาไว้บนซ้ายตามคอนเซปต์ แสดงเฉพาะโหมด FORM) */}
+                {/* --- HEADER SECTION --- */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6 print:hidden">
+                    <div className="flex flex-col gap-4 w-full">
                         {viewMode === 'FORM' && (
-                            <div>
-                                <button
-                                    onClick={() => setViewMode('LIST')}
-                                    className="group flex items-center gap-3 bg-white border-2 border-slate-200 text-slate-600 px-7 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm w-fit"
-                                >
-                                    <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-[#1F3B8B] transition-colors" />
-                                    ย้อนกลับ
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setViewMode('LIST')}
+                                className="flex items-center gap-2 w-fit text-base font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
+                            >
+                                <ArrowLeft className="w-5 h-5" /> ย้อนกลับ
+                            </button>
                         )}
 
-                        {/* แถวล่าง: ส่วนเนื้อหา Header และ Tab ตัวกรอง */}
-                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8">
-                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                                    <ShoppingCart className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
+                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                                    <ShoppingCart className="w-7 h-7 text-[#1F3B8B]" />
                                 </div>
-                                <div className="flex flex-col">
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <ClipboardList className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                            Purchasing Management System
-                                        </p>
-                                    </div>
-                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
+                                <div>
+                                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
                                         {viewMode === 'LIST' ? "ศูนย์กลางการจัดซื้อ" : "ออกใบสั่งซื้อ (PO)"}
                                     </h1>
-                                    <div className="flex items-center gap-2 pt-1 opacity-90">
-                                        <CheckCircle className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                            ฝ่ายจัดซื้อ: ดำเนินการออกใบสั่งซื้อและติดตามสถานะจาก PR
-                                        </p>
-                                    </div>
+                                    <p className="text-base text-slate-500 mt-1.5 font-medium flex items-center gap-2">
+                                        <ClipboardList className="w-4 h-4" /> Purchasing Management System • ฝ่ายจัดซื้อ: ดำเนินการออกใบสั่งซื้อและติดตามสถานะจาก PR
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* แสดง Tab ตัวกรองเฉพาะหน้า LIST */}
                             {viewMode === 'LIST' && (
-                                <div className="flex bg-white p-2 rounded-[2.5rem] shadow-sm border-2 border-slate-100 overflow-x-auto w-full md:w-auto">
+                                <div className="flex bg-slate-100 p-1.5 rounded-xl w-full xl:w-auto">
                                     <button
                                         onClick={() => setFilterTab("READY")}
-                                        className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'READY'
-                                            ? 'bg-amber-50 text-amber-700 border-amber-200 shadow-sm'
-                                            : 'border-transparent text-slate-400 hover:bg-slate-50'
-                                            }`}
+                                        className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                                            filterTab === 'READY'
+                                                ? 'bg-white text-amber-600 shadow-sm border border-slate-200/50'
+                                                : 'text-slate-500 hover:text-slate-700'
+                                        }`}
                                     >
-                                        <Clock className="w-5 h-5" /> รายการรอออก PO ({approvedPRs.length})
+                                        <Clock className="w-4 h-4" /> รายการรอออก PO ({approvedPRs.length})
                                     </button>
                                     <button
                                         onClick={() => setFilterTab("TRACKING")}
-                                        className={`px-8 py-3.5 rounded-[2rem] font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 whitespace-nowrap flex-1 md:flex-none border-2 ${filterTab === 'TRACKING'
-                                            ? 'bg-[#1F3B8B]/5 text-[#1F3B8B] border-[#1F3B8B]/20 shadow-sm'
-                                            : 'border-transparent text-slate-400 hover:bg-slate-50'
-                                            }`}
+                                        className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                                            filterTab === 'TRACKING'
+                                                ? 'bg-white text-[#1F3B8B] shadow-sm border border-slate-200/50'
+                                                : 'text-slate-500 hover:text-slate-700'
+                                        }`}
                                     >
-                                        <Package className="w-5 h-5" /> ประวัติการสั่งซื้อ (PO)
+                                        <Package className="w-4 h-4" /> ประวัติการสั่งซื้อ (PO)
                                     </button>
                                 </div>
                             )}
@@ -284,337 +326,328 @@ export default function CreatePurchaseOrderPage() {
 
                 {/* --- VIEW 1: LIST --- */}
                 {viewMode === 'LIST' && (
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
-                            <h2 className="text-sm font-black text-slate-900 tracking-wide flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${filterTab === 'READY' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center border shadow-sm ${filterTab === 'READY' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
                                     {filterTab === 'READY' ? <Clock className="w-5 h-5" /> : <ClipboardList className="w-5 h-5" />}
                                 </div>
-                                {filterTab === 'READY' ? 'รายการใบขอซื้อที่ผ่านการอนุมัติแล้ว' : 'ประวัติการดำเนินการสั่งซื้อพัสดุ'}
-                            </h2>
+                                <h2 className="text-lg font-bold text-slate-800 tracking-wide uppercase">
+                                    {filterTab === 'READY' ? 'รายการใบขอซื้อที่ผ่านการอนุมัติแล้ว' : 'ประวัติการดำเนินการสั่งซื้อพัสดุ'}
+                                </h2>
+                            </div>
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="bg-white border-b border-slate-200">
-                                    <tr className="text-sm font-black uppercase text-slate-500 tracking-wider">
-                                        <th className="p-6">วันที่</th>
-                                        <th className="p-6">เลขที่อ้างอิง (PR/PO)</th>
-                                        <th className="p-6">ผู้ขอซื้อ / ผู้จัดจำหน่าย</th>
-                                        <th className="p-6 text-center">สถานะ</th>
-                                        <th className="p-6 text-right">ดำเนินการ</th>
+                            <table className="min-w-full border-collapse">
+                                <thead className="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">วันที่</th>
+                                        <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">เลขที่อ้างอิง (PR/PO)</th>
+                                        <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ผู้ขอซื้อ / ผู้จัดจำหน่าย</th>
+                                        <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">สถานะ</th>
+                                        <th className="py-4 px-6 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">ดำเนินการ</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 bg-white/50">
                                     {isLoading ? (
-                                        <tr><td colSpan="5" className="p-24 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-indigo-500" /></td></tr>
-                                    ) : activeList.length === 0 ? (
                                         <tr>
-                                            <td colSpan="5" className="p-32 text-center">
-                                                <AlertCircle className="w-14 h-14 text-slate-200 mx-auto mb-4" />
-                                                <p className="text-slate-500 font-black text-sm tracking-wide">
-                                                    {filterTab === 'READY' ? 'ไม่มีใบขอซื้อ (PR) ที่รอการดำเนินการ' : 'ยังไม่มีประวัติการสั่งซื้อ (PO)'}
-                                                </p>
-                                            </td>
-                                        </tr>
-                                    ) : activeList.map((item) => (
-                                        <tr key={item.id} className="hover:bg-blue-50 transition-colors group">
-                                            <td className="p-6 font-bold text-slate-500 text-sm">{new Date(item.createdAt).toLocaleDateString('th-TH')}</td>
-                                            <td className="p-6 tabular-nums font-black text-[#1e3b8a] text-base tracking-tight">{item.poNumber || item.prNumber}</td>
-                                            <td className="p-6">
-                                                <p className="font-black text-slate-800 text-sm uppercase">{item.vendorName || `${item.user?.firstName} ${item.user?.lastName}`}</p>
-                                                <p className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mt-1">
-                                                    <Building2 className="w-3.5 h-3.5" /> {item.department?.name || 'External Vendor'}
-                                                </p>
-                                            </td>
-                                            <td className="p-6 text-center">
-                                                <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border shadow-sm ${item.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                                                    item.status === 'ORDERED' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                                        item.status === 'SHIPPED' ? 'bg-purple-50 text-purple-600 border-purple-200' :
-                                                            'bg-amber-50 text-amber-600 border-amber-200'
-                                                    }`}>
-                                                    {item.status === 'APPROVED' ? 'รอออก PO' : item.status}
-                                                </span>
-                                            </td>
-                                            <td className="p-6 text-right">
-                                                <div className="flex items-center justify-end gap-3">
-                                                    {filterTab === 'READY' ? (
-                                                        <>
-                                                            <button
-                                                                onClick={() => handleViewPDF(item.pdfPath, 'PR')}
-                                                                className="bg-white text-emerald-600 border border-emerald-200 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-emerald-50 transition-colors flex items-center gap-2"
-                                                            >
-                                                                <FileText className="w-4 h-4" /> ดู PR
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleSelectPRFromList(item)}
-                                                                className="bg-white text-[#1F3B8B] border-2 border-slate-200 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm hover:shadow-md active:scale-95 inline-flex items-center justify-center"
-                                                            >
-                                                                สร้างใบ PO
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleViewPDF(item.pdfPath, 'PO')}
-                                                            disabled={!item.pdfPath}
-                                                            className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm ${item.pdfPath
-                                                                ? 'bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white hover:shadow-md active:scale-95'
-                                                                : 'bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed'
-                                                                }`}
-                                                        >
-                                                            <FileText className="w-4 h-4" /> ดูเอกสาร PO
-                                                        </button>
-                                                    )}
+                                            <td colSpan="5" className="py-20 text-center">
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="w-8 h-8 border-4 border-slate-200 border-t-[#1F3B8B] rounded-full animate-spin"></div>
+                                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">กำลังโหลดข้อมูล...</p>
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))}
+                                    ) : activeList.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="py-20 text-center text-slate-400 font-medium italic">
+                                                <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                                                {filterTab === 'READY' ? 'ไม่มีใบขอซื้อ (PR) ที่รอการดำเนินการ' : 'ยังไม่มีประวัติการสั่งซื้อ (PO)'}
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        activeList.map((item) => (
+                                            <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="py-4 px-6 text-sm font-bold text-slate-500 tabular-nums">
+                                                    {new Date(item.createdAt).toLocaleDateString('th-TH')}
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-sm font-bold text-[#1e3b8a] uppercase tracking-tight">
+                                                        {item.poNumber || item.prNumber}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold text-slate-800 uppercase">
+                                                            {item.vendorName || `${item.user?.firstName} ${item.user?.lastName}`}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
+                                                            {item.department?.name || 'External Vendor'}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-6 text-center">
+                                                    <span className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm flex items-center justify-center gap-1.5 w-fit mx-auto ${
+                                                        item.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                        item.status === 'ORDERED' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                        item.status === 'SHIPPED' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                        'bg-amber-50 text-amber-600 border-amber-100'
+                                                    }`}>
+                                                        {item.status === 'APPROVED' ? 'รอออก PO' : item.status}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-6 text-right">
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        {filterTab === 'READY' ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleViewPDF(item.pdfPath, 'PR')}
+                                                                    className="bg-white text-emerald-600 border border-emerald-200 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-emerald-50 transition-colors flex items-center gap-2 shadow-sm"
+                                                                >
+                                                                    <FileText className="w-4 h-4" /> ดู PR
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleSelectPRFromList(item)}
+                                                                    className="bg-white text-[#1F3B8B] border border-slate-200 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 inline-flex items-center justify-center"
+                                                                >
+                                                                    สร้างใบ PO
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => handleViewPDF(item.pdfPath, 'PO')}
+                                                                disabled={!item.pdfPath}
+                                                                className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm ${
+                                                                    item.pdfPath
+                                                                        ? 'bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white active:scale-95'
+                                                                        : 'bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed'
+                                                                }`}
+                                                            >
+                                                                <FileText className="w-4 h-4" /> ดูเอกสาร PO
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 )}
-{/* --- VIEW 2: APPROVAL FORM --- */}
-                {viewMode === 'FORM' && (
-                    <div className="w-full max-w-[1440px] mx-auto animate-in slide-in-from-bottom-4 duration-500 relative">
-                        <form onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] shadow-2xl border-2 border-slate-200 overflow-hidden flex flex-col">
 
-                            {/* 1. ส่วนหัวเอกสารและผู้จัดจำหน่าย (โทนสว่าง) */}
-                            <div className="p-8 md:p-10 border-b-2 border-slate-100 border-dashed flex flex-col md:flex-row justify-between items-start gap-8 bg-white">
-                                <div className="space-y-2 flex-1">
-                                    <div className="flex items-center gap-3 text-indigo-600 mb-2">
-                                        <ShoppingCart className="w-6 h-6" />
-                                        <span className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">อ้างอิงใบขอซื้อ (Source PR)</span>
-                                    </div>
-                                    <h2 className="text-3xl md:text-5xl font-black text-[#1F3B8B] tracking-tighter tabular-nums">
-                                        {selectedPRData?.prNumber}
-                                    </h2>
+                {/* --- VIEW 2: APPROVAL FORM --- */}
+                {viewMode === 'FORM' && selectedPRData && (
+                    <form onSubmit={handleSubmit} noValidate className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500">
+
+                        {/* 1. Header Document */}
+                        <div className="p-8 md:p-10 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
+                            <div className="space-y-2">
+                                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">อ้างอิงใบขอซื้อ (Source PR):</span>
+                                <h2 className="text-3xl md:text-4xl font-black text-[#1F3B8B] tabular-nums whitespace-nowrap">
+                                    {selectedPRData?.prNumber}
+                                </h2>
+                            </div>
+                            <div className="flex flex-col items-start md:items-end justify-center">
+                                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1.5">วันที่ส่งคำขอ:</span>
+                                <p className="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
+                                    <Clock className="w-5 h-5 text-blue-500" /> {new Date(selectedPRData.createdAt).toLocaleDateString('th-TH')}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* 2. PR Information & Vendor Input */}
+                        <div className="p-8 md:p-10 border-b border-slate-200">
+                            <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-8">ข้อมูลพื้นฐานจากใบขอซื้อ (PR Information)</h2>
+                            
+                            {/* Basic Info Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-10">
+                                <div className="flex flex-col justify-center space-y-2">
+                                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">ผู้ขอซื้อ</span>
+                                    <span className="text-lg md:text-xl font-bold text-slate-900">{selectedPRData?.user?.firstName} {selectedPRData?.user?.lastName}</span>
                                 </div>
+                                <div className="flex flex-col justify-center space-y-2">
+                                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">แผนก</span>
+                                    <span className="text-lg md:text-xl font-bold text-slate-900">{selectedPRData?.department?.name || '-'}</span>
+                                </div>
+                                <div className="flex flex-col justify-center space-y-2">
+                                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">ผู้อนุมัติสั่งซื้อ</span>
+                                    <span className="text-lg md:text-xl font-bold text-slate-900">{selectedPRData?.approver ? `${selectedPRData.approver.firstName} ${selectedPRData.approver.lastName}` : (selectedPRData?.status === 'APPROVED' ? 'ผู้บริหาร (อนุมัติแล้ว)' : '-')}</span>
+                                </div>
+                            </div>
 
-                                <div className="bg-slate-50 border-2 border-slate-200 rounded-[2rem] p-6 flex flex-col w-full md:max-w-md shadow-sm">
-                                    <label className="text-xs font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                        <Building2 className="w-5 h-5 text-emerald-600" /> ระบุผู้จัดจำหน่าย (Vendor Name) *
+                            {/* Purpose and Remarks */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">วัตถุประสงค์ / โครงการ</span>
+                                        {selectedPRData?.referenceNo && <span className="text-xs font-bold text-[#1F3B8B] tracking-wider uppercase">REF: {selectedPRData.referenceNo}</span>}
+                                    </div>
+                                    <p className="text-base text-slate-800 font-semibold leading-relaxed p-6 bg-slate-50 rounded-xl border border-slate-100 italic">"{selectedPRData?.purpose || '-'}"</p>
+                                </div>
+                                <div className="space-y-4">
+                                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">หมายเหตุจากผู้ขอซื้อ</span>
+                                    <p className="text-base text-slate-800 font-semibold leading-relaxed p-6 bg-slate-50 rounded-xl border border-slate-100 italic">"{selectedPRData?.remarks || 'ไม่มีการระบุหมายเหตุ'}"</p>
+                                </div>
+                            </div>
+                            
+                            {/* Inputs: Vendor & Delivery Location */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-200">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                                        ระบุผู้จัดจำหน่าย (Vendor Name) <span className="text-rose-500">*</span>
                                     </label>
-                                    <input
-                                        type="text"
-                                        className="bg-white border-2 border-slate-200 rounded-xl px-4 py-3 text-lg font-black uppercase text-slate-900 w-full outline-none focus:border-[#1F3B8B] transition-all placeholder:text-slate-400 shadow-sm"
-                                        placeholder="ชื่อบริษัทคู่ค้าที่จะสั่งซื้อ..."
-                                        value={vendorName}
-                                        onChange={(e) => setVendorName(e.target.value)}
-                                        required
+                                    <input 
+                                        type="text" 
+                                        value={vendorName} 
+                                        onChange={(e) => setVendorName(e.target.value)} 
+                                        className={`w-full border rounded-lg p-3.5 text-base font-bold outline-none transition-all ${
+                                            hasSubmittedForm && !vendorName.trim()
+                                                ? 'border-rose-400 bg-rose-50 text-rose-900 placeholder-rose-300'
+                                                : 'border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 placeholder:text-slate-400'
+                                        }`}
+                                        placeholder="ชื่อบริษัทคู่ค้าที่จะสั่งซื้อ..." 
+                                    />
+                                    {hasSubmittedForm && !vendorName.trim() && (
+                                        <span className="text-[11px] font-bold text-rose-500 mt-1.5 block">กรุณาระบุชื่อผู้จัดจำหน่าย</span>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                                        สถานที่ส่งมอบ (Delivery Location) <span className="text-rose-500">*</span>
+                                    </label>
+                                    <select 
+                                        value={selectedPRData?.deliveryLocation || ''} 
+                                        onChange={(e) => setSelectedPRData({...selectedPRData, deliveryLocation: e.target.value})} 
+                                        className={`w-full border rounded-lg p-3.5 text-base font-bold outline-none transition-all ${
+                                            hasSubmittedForm && !selectedPRData?.deliveryLocation
+                                                ? 'border-rose-400 bg-rose-50 text-rose-900'
+                                                : 'border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10'
+                                        }`}
+                                    >
+                                        <option value="">-- เลือกคลังสินค้าที่ต้องการให้ส่งของ --</option>
+                                        {warehouses.map(w => <option key={w.id} value={w.name}>{w.name}</option>)}
+                                        <option value="อื่นๆ (ระบุในหมายเหตุ)">อื่นๆ (ระบุในหมายเหตุ)</option>
+                                    </select>
+                                    {hasSubmittedForm && !selectedPRData?.deliveryLocation && (
+                                        <span className="text-[11px] font-bold text-rose-500 mt-1.5 block">กรุณาเลือกสถานที่ส่งมอบ</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. Items Table */}
+                        <div className="px-8 md:px-10 py-8 md:py-10 border-b border-slate-200">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                                <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wider">รายการพัสดุและราคาที่สั่งซื้อ</h3>
+                                <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-md border border-slate-200">
+                                    <Lock className="w-3.5 h-3.5" /> ข้อมูลล็อกตามใบ PR
+                                </span>
+                            </div>
+                            
+                            <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-100 border-b border-slate-200 text-sm font-bold uppercase text-slate-600">
+                                            <th className="p-5 text-left">รายการพัสดุ (Product)</th>
+                                            <th className="p-5 text-center w-32">จำนวนสั่ง</th>
+                                            <th className="p-5 text-right w-48">ราคา/หน่วย</th>
+                                            <th className="p-5 text-right w-48">รวม (บาท)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {items.map(item => (
+                                            <tr key={item.id} className="text-base hover:bg-slate-50/50 transition-colors">
+                                                <td className="p-5">
+                                                    <p className="font-bold text-slate-900 text-lg">{item.productName}</p>
+                                                    <p className="text-sm text-blue-600 font-bold uppercase mt-1">SKU: {item.productSku}</p>
+                                                </td>
+                                                <td className="p-5 text-center">
+                                                    <span className="px-4 py-1.5 bg-slate-100 rounded-md font-bold text-[#1F3B8B] text-lg">{item.orderedQuantity}</span>
+                                                </td>
+                                                <td className="p-5 text-right tabular-nums font-semibold text-slate-700 text-lg">
+                                                    ฿{Number(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="p-5 text-right tabular-nums font-bold text-slate-900 text-lg">
+                                                    ฿{(item.orderedQuantity * item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* 4. Execution Area */}
+                        <div className="p-8 md:p-10 bg-slate-50/30">
+                            <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-8">ดำเนินการออกใบสั่งซื้อ (PO Finalize)</h2>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 mb-10">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">สถานะเริ่มต้นของ PO</label>
+                                    <select 
+                                        value={orderStatus} 
+                                        onChange={e => setOrderStatus(e.target.value)} 
+                                        className="w-full border rounded-lg p-3.5 text-base font-bold outline-none transition-all border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
+                                    >
+                                        <option value="ORDERED">ORDERED (สั่งซื้อแล้ว รอจัดส่ง)</option>
+                                        <option value="SHIPPED">SHIPPED (กำลังจัดส่ง)</option>
+                                        <option value="URGENT">URGENT (รายการเร่งด่วน)</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">บันทึกถึงผู้จำหน่าย (Note)</label>
+                                    <textarea 
+                                        value={procurementNote} 
+                                        onChange={e => setProcurementNote(e.target.value)} 
+                                        placeholder="ระบุรายละเอียดการจัดส่งหรือเงื่อนไขเพิ่มเติม..." 
+                                        className="w-full border rounded-lg p-3.5 text-base font-medium outline-none transition-all border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 min-h-[140px] placeholder:text-slate-400" 
                                     />
                                 </div>
-                            </div>
-
-                            {/* 2. รายละเอียด PR (PR Details - โทนเดียวกับด้านบน) */}
-                            <div className="px-8 md:px-10 py-8 bg-white flex flex-col gap-8 border-b-2 border-slate-100">
-                                <h2 className="text-sm font-black text-[#1F3B8B] uppercase tracking-wider flex items-center gap-2.5">
-                                    <div className="p-2 bg-slate-100 rounded-lg"><FileText className="w-5 h-5 text-[#1F3B8B]" /></div>
-                                    ข้อมูลพื้นฐานจากใบขอซื้อ (PR Information)
-                                </h2>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-200">
-                                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5">
-                                            <User className="w-5 h-5 text-blue-500" /> ผู้ขอซื้อ
-                                        </h3>
-                                        <p className="text-base font-black text-slate-900">{selectedPRData?.user?.firstName} {selectedPRData?.user?.lastName}</p>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">ลายเซ็นจัดซื้อ <span className="text-rose-500">*</span></label>
+                                    <div className="relative h-[140px]">
+                                        {signatureImage ? (
+                                            <div className="w-full h-full border-2 border-dashed border-emerald-400 rounded-xl bg-white p-4 flex items-center justify-center relative overflow-hidden group shadow-sm">
+                                                <img src={signatureImage} alt="Signature" className="max-h-full object-contain mix-blend-multiply" />
+                                                <button type="button" onClick={() => setSignatureImage(null)} className="absolute top-3 right-3 text-white bg-rose-500 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all opacity-0 group-hover:opacity-100 shadow-md hover:bg-rose-600">ลบทิ้ง</button>
+                                            </div>
+                                        ) : (
+                                            <label className={`w-full h-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all group shadow-sm ${
+                                                hasSubmittedForm && !signatureImage 
+                                                    ? 'border-rose-400 bg-rose-50 hover:bg-rose-100 hover:border-rose-500' 
+                                                    : 'border-slate-300 bg-slate-50 hover:border-[#1F3B8B] hover:bg-[#1F3B8B]/5'
+                                            }`}>
+                                                <Upload className={`w-8 h-8 mb-3 transition-colors ${hasSubmittedForm && !signatureImage ? 'text-rose-400 group-hover:text-rose-500' : 'text-slate-300 group-hover:text-[#1F3B8B]'}`} />
+                                                <span className={`text-xs font-bold uppercase tracking-widest transition-colors ${hasSubmittedForm && !signatureImage ? 'text-rose-500 group-hover:text-rose-600' : 'text-slate-500 group-hover:text-[#1F3B8B]'}`}>
+                                                    อัปโหลดลายเซ็น
+                                                </span>
+                                                <input type="file" accept="image/*" onChange={handleSignatureUpload} className="hidden" />
+                                            </label>
+                                        )}
                                     </div>
-                                    <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-200">
-                                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5">
-                                            <Building2 className="w-5 h-5 text-fuchsia-500" /> แผนก
-                                        </h3>
-                                        <p className="text-base font-black text-slate-900">{selectedPRData?.department?.name || '-'}</p>
-                                    </div>
-                                    <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-200">
-                                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5">
-                                            <Calendar className="w-5 h-5 text-orange-500" /> วันที่ขอเบิก
-                                        </h3>
-                                        <p className="text-base font-black text-slate-900 tabular-nums">{selectedPRData ? new Date(selectedPRData.createdAt).toLocaleDateString('th-TH') : '-'}</p>
-                                    </div>
-                                    <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-200">
-                                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5">
-                                            <ShieldCheck className="w-5 h-5 text-emerald-600" /> ผู้อนุมัติสั่งซื้อ
-                                        </h3>
-                                        <p className="text-base font-black text-slate-900">
-                                            {selectedPRData?.approver?.firstName
-                                                ? `${selectedPRData.approver.firstName} ${selectedPRData.approver.lastName}`
-                                                : (selectedPRData?.status === 'APPROVED' ? 'ผู้บริหาร (อนุมัติแล้ว)' : '-')}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div className="bg-white p-6 rounded-[1.5rem] border-2 border-slate-100 shadow-sm">
-                                        <h3 className="text-xs font-black text-slate-600 uppercase tracking-[0.2em] mb-3 flex items-center gap-2.5">
-                                            <MapPin className="w-5 h-5 text-rose-500" /> สถานที่ส่งมอบ (Delivery Location) *
-                                        </h3>
-                                        <select
-                                            value={selectedPRData?.deliveryLocation || ''}
-                                            onChange={(e) => {
-                                                setSelectedPRData({ ...selectedPRData, deliveryLocation: e.target.value });
-                                            }}
-                                            className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-3 text-sm font-black text-slate-900 outline-none focus:border-[#1F3B8B] transition-all cursor-pointer"
-                                            required
-                                        >
-                                            <option value="">-- เลือกคลังสินค้าที่ต้องการให้ส่งของ --</option>
-                                            {warehouses.map(wh => (
-                                                <option key={wh.id} value={wh.name}>{wh.name}</option>
-                                            ))}
-                                            <option value="อื่นๆ (ระบุในหมายเหตุ)">อื่นๆ (ระบุในหมายเหตุ)</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="bg-white p-6 rounded-[1.5rem] border-2 border-slate-100 shadow-sm">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h3 className="text-xs font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-2.5">
-                                                <Tag className="w-5 h-5 text-indigo-500" /> วัตถุประสงค์ / โครงการ
-                                            </h3>
-                                            {selectedPRData?.referenceNo && <span className="text-[10px] font-black bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md uppercase border border-slate-200">Ref: {selectedPRData.referenceNo}</span>}
-                                        </div>
-                                        <p className="text-sm font-bold text-slate-900">{selectedPRData?.purpose || '-'}</p>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-200">
-                                        <p className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5"><MessageSquare className="w-5 h-5 text-amber-500" /> หมายเหตุจากผู้ขอซื้อ</p>
-                                        <p className="text-sm font-bold text-slate-700 leading-relaxed italic">"{selectedPRData?.remarks || 'ไม่มีการระบุหมายเหตุ'}"</p>
-                                    </div>
-                                    <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-200">
-                                        <p className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-2 flex items-center gap-2.5"><CheckCircle2 className="w-5 h-5 text-teal-500" /> ความเห็นผู้อนุมัติ</p>
-                                        <p className="text-sm font-bold text-slate-700 leading-relaxed italic">"{selectedPRData?.comments || 'ไม่มีความเห็นเพิ่มเติม'}"</p>
-                                    </div>
+                                    {hasSubmittedForm && !signatureImage && (
+                                        <span className="text-[11px] font-bold text-rose-500 mt-1.5 block text-center">กรุณาลงนามกำกับใบสั่งซื้อก่อนดำเนินการ</span>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* 3. ตารางรายการสินค้า (คุมโทนสะอาด) */}
-                            <div className="px-8 md:px-10 py-10 bg-white border-b-2 border-slate-100">
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                                    <h2 className="text-sm font-black text-slate-950 uppercase tracking-wider flex items-center gap-2.5">
-                                        <div className="p-2 bg-slate-100 rounded-lg"><ClipboardList className="w-5 h-5 text-sky-600" /></div>
-                                        รายการพัสดุและราคาที่สั่งซื้อ
-                                    </h2>
-                                    <div className="flex items-center gap-2 bg-white text-slate-400 px-4 py-2 rounded-full border border-slate-200 shadow-sm">
-                                        <Lock className="w-4 h-4" />
-                                        <span className="text-xs font-black uppercase tracking-widest">ข้อมูลล็อกตามใบ PR</span>
-                                    </div>
+                            {/* Footer Submit */}
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-10 border-t border-slate-200">
+                                <div className="flex flex-col items-center md:items-start text-center md:text-left w-full md:w-auto">
+                                    <p className="text-xs uppercase font-bold text-slate-500 tracking-widest mb-1">ยอดรวมมูลค่าการสั่งซื้อทั้งหมด (Grand Total)</p>
+                                    <p className="text-4xl font-black text-emerald-600 tabular-nums">
+                                        ฿{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </p>
                                 </div>
-
-                                <div className="overflow-x-auto rounded-[2rem] border-2 border-slate-100">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead className="bg-slate-50 text-xs font-black text-slate-600 uppercase tracking-widest border-b border-slate-200">
-                                            <tr>
-                                                <th className="p-6">รายการพัสดุ (Product)</th>
-                                                <th className="p-6 text-center w-32">จำนวนสั่ง</th>
-                                                <th className="p-6 text-right w-48">ราคา/หน่วย</th>
-                                                <th className="p-6 text-right text-slate-900 w-48">รวม (บาท)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50 bg-white">
-                                            {items.map((item) => (
-                                                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                                                    <td className="p-6">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] text-slate-400 font-black tracking-wider mb-1 uppercase">#{item.productSku}</span>
-                                                            <span className="text-base font-black text-slate-800">{item.productName}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-6 text-center">
-                                                        <span className="bg-slate-50 border border-slate-200 text-slate-900 px-5 py-2 rounded-xl font-black text-base tabular-nums">
-                                                            {item.orderedQuantity}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-6 text-right">
-                                                        <span className="font-bold text-slate-500 text-base tabular-nums">
-                                                            ฿{Number(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-6 text-right font-black text-[#1F3B8B] text-lg tabular-nums">
-                                                        ฿{(item.orderedQuantity * item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <button type="submit" disabled={isLoading} className="w-full md:w-auto px-10 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95">
+                                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CheckCircle2 className="w-5 h-5" /> ยืนยันการสั่งซื้อและออก PO</>}
+                                </button>
                             </div>
-
-                            {/* 4. ดำเนินการสั่งซื้อ (Execution Area - โทนเดียวกับฟอร์ม) */}
-                            <div className="p-8 md:p-10 bg-white flex flex-col gap-10">
-                                <h2 className="text-sm font-black text-slate-950 uppercase tracking-wider flex items-center gap-2.5 border-b-2 border-slate-100 pb-4">
-                                    <div className="p-2 bg-slate-100 rounded-lg"><ShoppingCart className="w-5 h-5 text-blue-600" /></div>
-                                    ดำเนินการออกใบสั่งซื้อ (PO Finalize)
-                                </h2>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                                    <div className="space-y-4">
-                                        <label className="text-xs font-black text-slate-600 uppercase tracking-widest flex items-center gap-2 ml-1">
-                                            <Package className="w-5 h-5 text-sky-500" /> สถานะเริ่มต้นของ PO
-                                        </label>
-                                        <select
-                                            value={orderStatus}
-                                            onChange={(e) => setOrderStatus(e.target.value)}
-                                            className="w-full border-2 border-slate-200 bg-slate-50 rounded-2xl p-4 text-base font-black uppercase outline-none focus:border-[#1F3B8B] transition-all text-slate-800"
-                                        >
-                                            <option value="ORDERED">ORDERED (สั่งซื้อแล้ว รอจัดส่ง)</option>
-                                            <option value="SHIPPED">SHIPPED (กำลังจัดส่ง)</option>
-                                            <option value="URGENT">URGENT (รายการเร่งด่วน)</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-xs font-black text-slate-600 uppercase tracking-widest flex items-center gap-2 ml-1">
-                                            <MessageSquare className="w-5 h-5 text-violet-500" /> บันทึกถึงผู้จำหน่าย (Note)
-                                        </label>
-                                        <textarea
-                                            className="w-full border-2 border-slate-200 bg-slate-50 rounded-2xl p-4 text-sm font-bold text-slate-700 outline-none focus:border-violet-500 min-h-[140px] transition-all"
-                                            placeholder="ระบุรายละเอียดการจัดส่งหรือเงื่อนไขเพิ่มเติม..."
-                                            value={procurementNote}
-                                            onChange={(e) => setProcurementNote(e.target.value)}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <label className="text-xs font-black text-slate-600 uppercase tracking-widest flex items-center gap-2 ml-1">
-                                            <PenTool className="w-5 h-5 text-pink-500" /> ลายเซ็นจัดซื้อ <span className="text-rose-500">*</span>
-                                        </label>
-                                        <div className="relative h-[140px]">
-                                            {signatureImage ? (
-                                                <div className="w-full h-full border-2 border-dashed border-emerald-400 rounded-2xl bg-white p-4 flex items-center justify-center relative overflow-hidden group">
-                                                    <img src={signatureImage} alt="Signature" className="max-h-full object-contain mix-blend-multiply" />
-                                                    <button type="button" onClick={() => setSignatureImage(null)} className="absolute top-2 right-2 text-white bg-rose-500 px-3 py-1.5 rounded-full text-[10px] font-black uppercase shadow-lg transition-all opacity-0 group-hover:opacity-100">ลบทิ้ง</button>
-                                                </div>
-                                            ) : (
-                                                <label className="w-full h-full border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center bg-slate-50 cursor-pointer hover:border-[#1F3B8B] hover:bg-white transition-all group">
-                                                    <Upload className="w-6 h-6 text-slate-400 group-hover:text-[#1F3B8B] mb-2 transition-colors" />
-                                                    <span className="text-xs font-black text-slate-500 group-hover:text-[#1F3B8B] transition-colors text-center">อัปโหลดลายเซ็น</span>
-                                                    <input type="file" accept="image/*" onChange={handleSignatureUpload} className="hidden" />
-                                                </label>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Summary & Action */}
-                                <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-10 border-t-2 border-slate-100">
-                                    <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                                        <p className="text-xs uppercase font-black text-slate-400 tracking-[0.2em] mb-2">ยอดรวมมูลค่าการสั่งซื้อทั้งหมด (Grand Total)</p>
-                                        <p className="text-4xl md:text-6xl font-black text-[#1F3B8B] tabular-nums tracking-tighter">
-                                            ฿{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                        </p>
-                                    </div>
-                                    <button
-                                        type="submit"
-                                        disabled={isLoading || !signatureImage}
-                                        className="w-full md:w-auto px-16 py-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-3xl font-black text-lg uppercase tracking-wider shadow-xl shadow-emerald-900/20 transition-all disabled:opacity-50 flex items-center justify-center gap-4 active:scale-[0.98]"
-                                    >
-                                        {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CheckCircle2 className="w-7 h-7" /> ยืนยันการสั่งซื้อและออก PO</>}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 )}
             </div>
         </AuthGate>
