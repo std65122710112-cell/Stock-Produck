@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AuthGate from "@/components/AuthGate";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, API_BASE } from "@/lib/api";
 import toast, { Toaster } from "react-hot-toast";
 import {
     ClipboardList,
@@ -17,24 +17,29 @@ import {
     XCircle,
     Truck,
     ChevronRight,
+    ChevronLeft,
+    ChevronsRight,
+    ChevronsLeft,
     Package,
     ArrowUpRight,
     ArrowLeft,
-    Building2,
-    Briefcase,
-    MessageSquareText,
-    Info,
     Calendar,
-    Wallet
+    LayoutGrid,
+    TrendingUp,
+    Info,
+    MessageSquareText,
+    Briefcase,
+    Loader2
 } from "lucide-react";
 
 export default function StockRequisitionListPage() {
     const [requisitions, setRequisitions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-
-    // 💡 เพิ่ม State สำหรับจัดการ View Mode และข้อมูลที่เลือก
     const [viewMode, setViewMode] = useState('LIST');
     const [selectedSR, setSelectedSR] = useState(null);
+
+    const [page, setPage] = useState(1);
+    const limit = 20;
 
     useEffect(() => {
         async function fetchRequisitions() {
@@ -50,7 +55,6 @@ export default function StockRequisitionListPage() {
         fetchRequisitions();
     }, []);
 
-    // 💡 ฟังก์ชันสลับหน้าไปดูรายละเอียด
     const handleSelectSR = (sr) => {
         setSelectedSR(sr);
         setViewMode('DETAIL');
@@ -58,26 +62,23 @@ export default function StockRequisitionListPage() {
     };
 
     const getStatusBadge = (status) => {
-        // 💡 เปลี่ยนจาก mx-auto เป็น ml-0 เพื่อให้ป้ายชิดซ้ายตรงกับไอคอนนาฬิกาด้านบน
-        const baseClass = "px-4 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-2 w-fit ml-0";
-
+        const baseClass = "px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm flex items-center gap-1.5 w-fit";
         switch (status) {
             case 'PENDING':
-                return <span className={`${baseClass} bg-amber-50 text-amber-600 border-amber-100`}><Clock className="w-4 h-4" /> รออนุมัติ</span>;
+                return <span className={`${baseClass} bg-amber-50 text-amber-600 border-amber-100`}><Clock className="w-3.5 h-3.5" /> รออนุมัติ</span>;
             case 'APPROVED':
-                return <span className={`${baseClass} bg-emerald-50 text-emerald-600 border-emerald-100`}><CheckCircle2 className="w-4 h-4" /> อนุมัติแล้ว</span>;
+                return <span className={`${baseClass} bg-emerald-50 text-emerald-600 border-emerald-100`}><CheckCircle2 className="w-3.5 h-3.5" /> อนุมัติแล้ว</span>;
             case 'REJECTED':
-                return <span className={`${baseClass} bg-rose-50 text-rose-600 border-rose-100`}><XCircle className="w-4 h-4" /> ไม่อนุมัติ</span>;
+                return <span className={`${baseClass} bg-rose-50 text-rose-600 border-rose-100`}><XCircle className="w-3.5 h-3.5" /> ไม่อนุมัติ</span>;
             case 'DISPATCHED':
-                return <span className={`${baseClass} bg-indigo-50 text-indigo-600 border-indigo-100`}><Truck className="w-4 h-4" /> จ่ายของแล้ว</span>;
+                return <span className={`${baseClass} bg-indigo-50 text-indigo-600 border-indigo-100`}><Truck className="w-3.5 h-3.5" /> จ่ายของแล้ว</span>;
             case 'COMPLETED':
-                return <span className={`${baseClass} bg-blue-50 text-blue-600 border-blue-100`}><CheckCircle2 className="w-4 h-4" /> เสร็จสิ้น</span>;
+                return <span className={`${baseClass} bg-blue-50 text-blue-600 border-blue-100`}><CheckCircle2 className="w-3.5 h-3.5" /> เสร็จสิ้น</span>;
             default:
-                return <span className={`${baseClass} bg-slate-50 text-slate-500 border-slate-200`}>{status}</span>;
+                return <span className={`${baseClass} bg-slate-50 text-slate-600 border-slate-200`}>{status}</span>;
         }
     };
 
-    // 💡 คำนวณมูลค่ารวม
     const calculateGrandTotal = () => {
         if (!selectedSR || !selectedSR.items) return 0;
         return selectedSR.items.reduce((sum, item) => {
@@ -89,177 +90,159 @@ export default function StockRequisitionListPage() {
 
     const grandTotalValue = viewMode === 'DETAIL' ? calculateGrandTotal() : 0;
 
+    const totalCount = requisitions.length;
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+    const paginatedRequisitions = requisitions.slice((page - 1) * limit, page * limit);
+
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            {/* ปรับคอนเทนเนอร์หลักให้กว้างและชิดขอบมากขึ้น */}
-            <div className="w-[96%] max-w-[1600px] mx-auto space-y-8">
+            <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
                 {/* HEADER SECTION */}
-                <div className="w-full pt-10 mb-6 print:hidden">
-                    <div className="w-full px-6 md:px-10 flex flex-col gap-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6 print:hidden">
 
-                        {/* --- ปุ่มย้อนกลับ: แสดงเฉพาะหน้ารายละเอียด (viewMode !== 'LIST') --- */}
-                        {viewMode !== 'LIST' && (
-                            <div className="flex justify-start">
-                                <button
-                                    onClick={() => setViewMode('LIST')}
-                                    className="group flex items-center gap-2.5 bg-white border border-slate-200 px-5 py-2 rounded-full shadow-sm hover:shadow-md hover:border-[#1F3B8B]/30 hover:bg-slate-50 transition-all active:scale-95 w-fit"
-                                >
-                                    {/* ไอคอน ArrowLeft */}
-                                    <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:text-[#1F3B8B] transition-colors" />
-
-                                    {/* ข้อความ ย้อนกลับ */}
-                                    <span className="text-sm font-bold text-slate-600 group-hover:text-[#1F3B8B] transition-colors">
-                                        ย้อนกลับ
-                                    </span>
-                                </button>
-                            </div>
+                    {/* ฝั่งซ้าย: กลุ่มหัวข้อ และ ปุ่มย้อนกลับ */}
+                    <div className="flex flex-col gap-4">
+                        {/* ปุ่มย้อนกลับ (แสดงเฉพาะเมื่ออยู่หน้า DETAIL) */}
+                        {viewMode === 'DETAIL' && (
+                            <button
+                                onClick={() => setViewMode('LIST')}
+                                className="flex items-center gap-2 w-fit text-sm font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
+                            >
+                                <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
+                            </button>
                         )}
 
-                        {/* แถวล่าง: ส่วนเนื้อหา Icon & Title */}
-                        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                                {/* Icon รถบรรทุก */}
-                                <div className="w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-white flex items-center justify-center shadow-sm shrink-0 border-2 border-slate-100">
-                                    <Truck className="w-8 h-8 text-[#1F3B8B]" strokeWidth={2} />
-                                </div>
-
-                                <div className="flex flex-col">
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <ArrowUpRight className="w-4 h-4 text-[#1F3B8B]" strokeWidth={2.5} />
-                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-[#1F3B8B]">
-                                            Inventory Outbound Management
-                                        </p>
-                                    </div>
-                                    <h1 className="text-4xl md:text-5xl font-black text-slate-950 tracking-tighter leading-none mb-2">
-                                        {/* ถ้าไม่ใช่หน้า LIST แสดงว่าเป็นหน้ารายละเอียด */}
-                                        {viewMode === 'LIST' ? 'รายการใบขอเบิก (SR)' : 'รายละเอียดใบเบิก'}
-                                    </h1>
-                                    <div className="flex items-center gap-2 pt-1 opacity-90">
-                                        <History className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-wide">
-                                            รายการประวัติใบขอเบิกพัสดุ (Requisition Queue)
-                                        </p>
-                                    </div>
-                                </div>
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                                <Truck className="w-6 h-6 text-[#1F3B8B]" />
                             </div>
-
-                            {/* ปุ่มสร้างใบเบิก: แสดงเฉพาะหน้ารายการหลัก */}
-                            {viewMode === 'LIST' && (
-                                <div className="flex items-center">
-                                    <Link
-                                        href="/inventory/requisition/create"
-                                        className="group flex items-center gap-2 bg-emerald-600 text-white px-7 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-xl shadow-emerald-900/10 transition-all active:scale-95 whitespace-nowrap"
-                                    >
-                                        <Plus className="w-5 h-5 shrink-0" strokeWidth={3} />
-                                        สร้างใบขอเบิกใหม่
-                                    </Link>
-                                </div>
-                            )}
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                                    {viewMode === 'LIST' ? 'รายการใบขอเบิก (SR)' : 'รายละเอียดใบเบิก'}
+                                </h1>
+                                <p className="text-sm text-slate-500 mt-1 font-medium">
+                                    Inventory Outbound Management & History
+                                </p>
+                            </div>
                         </div>
+                    </div>
+
+                    {/* ฝั่งขวา: ปุ่มสร้างใหม่ / ยอดรวม */}
+                    <div className="flex flex-row items-center gap-4 w-full md:w-auto">
+                        {viewMode === 'LIST' ? (
+                            <Link
+                                href="/inventory/requisition/create"
+                                className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-lg font-bold text-sm transition-all hover:bg-emerald-700 shadow-sm active:scale-95"
+                            >
+                                <Plus className="w-4 h-4" /> สร้างใบขอเบิกใหม่
+                            </Link>
+                        ) : (
+                            <div className="bg-slate-50 border border-slate-200 px-6 py-4 rounded-xl flex flex-col items-end min-w-[220px] shadow-sm">
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                                    มูลค่ารวมใบเบิก (Total Value)
+                                </span>
+                                <span className="text-2xl font-bold text-emerald-600 tabular-nums">
+                                    ฿ {grandTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* --- LIST VIEW --- */}
                 {viewMode === 'LIST' && (
                     <>
-                        {/* STATUS SUMMARY BAR */}
-                        <div className="flex items-center gap-4 px-2">
-                            <div className="flex items-center gap-2 bg-indigo-50 px-5 py-2.5 rounded-2xl border-2 border-indigo-200 shadow-sm">
-                                <History className="w-5 h-5 text-indigo-500" />
-                                <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
-                                    รายการที่รอประมวลผล: {requisitions.length} รายการ
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2 bg-emerald-50 px-5 py-2.5 rounded-2xl border-2 border-emerald-200 shadow-sm">
-                                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                                <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
-                                    เฉพาะผู้ที่มีสิทธิ์เข้าถึงข้อมูลเท่านั้น
-                                </span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <SummaryCard
+                                title="รายการใบเบิกทั้งหมด"
+                                count={totalCount}
+                                unit="รายการ"
+                                color="slate"
+                                icon={<LayoutGrid className="w-5 h-5 text-slate-600" />}
+                            />
+                            <SummaryCard
+                                title="รอการอนุมัติ"
+                                count={requisitions.filter(r => r.status === 'PENDING').length}
+                                unit="รายการ"
+                                color="amber"
+                                icon={<Clock className="w-5 h-5 text-amber-600" />}
+                            />
+                            <div className="bg-emerald-50/30 border border-emerald-200 border-l-4 border-l-emerald-500 p-5 rounded-xl flex items-center gap-4 shadow-sm">
+                                <div className="p-2.5 bg-white rounded-lg shadow-sm border border-slate-100">
+                                    <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                                </div>
+                                <p className="text-xs font-bold text-slate-600 tracking-tight">เฉพาะผู้ที่มีสิทธิ์เข้าถึงข้อมูลเท่านั้น</p>
                             </div>
                         </div>
 
-                        {/* DATA TABLE */}
-                        <section className="overflow-hidden rounded-[2.5rem] border border-white/60 bg-white/70 shadow-[0_20px_60px_-25px_rgba(15,23,42,0.12)] backdrop-blur-sm animate-in fade-in duration-500">
+                        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                             <div className="overflow-x-auto">
-                                <table className="min-w-full text-base text-left border-collapse">
-                                    <thead className="bg-slate-50 border-b border-slate-200">
-                                        <tr className="text-slate-900 font-black text-sm tracking-wide">
-                                            <th className="p-6 w-32">วันที่ขอเบิก</th>
-                                            <th className="p-6">เลขที่เอกสาร (SR)</th>
-                                            <th className="p-6">วัตถุประสงค์ / โครงการ</th>
-                                            <th className="p-6">ผู้ขอเบิก / แผนก</th>
-                                            <th className="p-6 text-center">สถานะ</th>
-                                            <th className="p-6 text-right">ดำเนินการ</th>
+                                <table className="min-w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-200">
+                                            <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">วันที่ขอเบิก</th>
+                                            <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">เลขที่เอกสาร (SR)</th>
+                                            <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">วัตถุประสงค์ / โครงการ</th>
+                                            <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ผู้ขอเบิก / แผนก</th>
+                                            <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">สถานะ</th>
+                                            <th className="py-4 px-6 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">ดำเนินการ</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100 bg-white/50">
+                                    <tbody className="divide-y divide-slate-100">
                                         {isLoading ? (
                                             <tr>
-                                                <td colSpan="6" className="p-24 text-center">
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <div className="w-12 h-12 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                                                        <p className="text-slate-400 font-black tracking-wide text-sm mt-2">กำลังโหลดข้อมูลรายการใบเบิก...</p>
-                                                    </div>
-                                                </td>
+                                                <td colSpan="6" className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-slate-300" /></td>
                                             </tr>
-                                        ) : requisitions.length === 0 ? (
+                                        ) : paginatedRequisitions.length === 0 ? (
                                             <tr>
-                                                <td colSpan="6" className="p-32 text-center">
-                                                    <ClipboardList className="w-14 h-14 text-slate-200 mx-auto mb-4" />
-                                                    <p className="text-slate-500 font-black tracking-wide text-sm">ไม่พบประวัติรายการใบเบิก</p>
-                                                </td>
+                                                <td colSpan="6" className="py-20 text-center text-slate-400 font-medium italic">ไม่พบประวัติรายการใบเบิก</td>
                                             </tr>
                                         ) : (
-                                            requisitions.map((req) => (
-                                                <tr key={req.id} className="hover:bg-slate-50/80 group cursor-default transition-colors">
-                                                    <td className="p-6 whitespace-nowrap">
-                                                        <div className="font-mono text-sm text-slate-600 flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-slate-300 group-hover:bg-blue-500 transition-colors"></div>
+                                            paginatedRequisitions.map((req) => (
+                                                <tr key={req.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="py-4 px-6">
+                                                        <span className="text-xs font-bold text-slate-600 tabular-nums">
                                                             {new Date(req.createdAt).toLocaleDateString('th-TH')}
-                                                        </div>
+                                                        </span>
                                                     </td>
-                                                    <td className="p-6">
+                                                    <td className="py-4 px-6">
                                                         <div className="flex flex-col">
-                                                            <span className="font-black text-blue-800 uppercase tracking-tight text-base tabular-nums group-hover:text-blue-600 transition-colors">
+                                                            <span className="text-[11px] font-bold text-blue-600 uppercase tracking-tight mb-0.5">
                                                                 {req.srNumber}
                                                             </span>
-                                                            <span className="text-xs font-bold text-slate-500 mt-1 flex items-center gap-1.5">
-                                                                <Package className="w-3.5 h-3.5" /> จำนวน {req._count?.items || req.items?.length || 0} รายการ
+                                                            <span className="text-[10px] text-slate-400 font-bold flex items-center gap-1">
+                                                                <Package className="w-3 h-3" /> {req._count?.items || req.items?.length || 0} รายการ
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="p-6">
-                                                        <div className="max-w-[250px]">
-                                                            <p className="font-bold text-slate-800 text-sm truncate">"{req.purpose}"</p>
-                                                            <p className="text-xs font-bold text-slate-500 mt-1.5 tracking-tight">อ้างอิง: {req.referenceNo || "---"}</p>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-sm font-semibold text-slate-800 line-clamp-1">"{req.purpose}"</span>
+                                                            <span className="text-[10px] text-slate-400 font-bold uppercase">Ref: {req.referenceNo || "---"}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="p-6">
+                                                    <td className="py-4 px-6">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="bg-indigo-100 p-2 rounded-full shadow-sm group-hover:bg-white transition-colors">
-                                                                <User className="w-4 h-4 text-indigo-600" />
+                                                            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
+                                                                <User className="w-4 h-4 text-slate-500" />
                                                             </div>
-                                                            <div className="min-w-0">
-                                                                <p className="text-sm font-black text-slate-800 truncate">
-                                                                    {req.user?.firstName} {req.user?.lastName}
-                                                                </p>
-                                                                <p className="text-xs text-slate-500 font-bold tracking-tight mt-0.5">
-                                                                    {req.department?.name || "ระบุไม่ได้"}
-                                                                </p>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-bold text-slate-700">{req.user?.firstName} {req.user?.lastName}</span>
+                                                                <span className="text-[10px] text-slate-400 font-bold uppercase">{req.department?.name || "ระบุไม่ได้"}</span>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="p-6 text-center">
-                                                        <div className="inline-flex justify-center w-full">
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex justify-center">
                                                             {getStatusBadge(req.status)}
                                                         </div>
                                                     </td>
-                                                    <td className="p-6 text-right">
+                                                    <td className="py-4 px-6 text-right">
                                                         <button
                                                             onClick={() => handleSelectSR(req)}
-                                                            className="bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white px-5 py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-wider shadow-sm hover:shadow-md active:scale-95 flex items-center gap-2 ml-auto"
+                                                            className="text-[11px] font-bold text-[#1F3B8B] hover:underline flex items-center gap-1 ml-auto"
                                                         >
                                                             ดูข้อมูล <ChevronRight className="w-4 h-4" />
                                                         </button>
@@ -270,151 +253,87 @@ export default function StockRequisitionListPage() {
                                     </tbody>
                                 </table>
                             </div>
-                        </section>
 
-                        {/* BOTTOM COMPLIANCE NOTE */}
-                        <div className="flex flex-col md:flex-row justify-between items-center px-8 py-5 bg-slate-50 rounded-2xl border border-slate-200 mb-10">
-                            <div className="flex items-center gap-2.5 text-nowrap">
-                                <ShieldCheck className="w-5 h-5 text-emerald-500" />
-                                <span className="text-xs font-black text-slate-800 tracking-wider">
-                                    บันทึกข้อมูลการเบิกจ่ายภายใน
-                                </span>
-                            </div>
-                            <div className="text-xs font-bold text-slate-700 tracking-wider mt-3 md:mt-0">
-                                จำนวนรายการประวัติทั้งหมด: {requisitions.length} รายการ
-                            </div>
+                            {!isLoading && totalPages > 1 && (
+                                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 border-t border-slate-200 bg-slate-50/50 print:hidden">
+                                    <p className="text-xs font-medium text-slate-500">
+                                        หน้า {page} จาก {totalPages} | รวม {totalCount.toLocaleString()} รายการ
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <PaginationButton onClick={() => setPage(1)} disabled={page === 1} icon={<ChevronsLeft className="w-4 h-4" />} />
+                                        <PaginationButton onClick={() => setPage((p) => Math.max(p - 1, 1))} disabled={page === 1} icon={<ChevronLeft className="w-4 h-4" />} />
+
+                                        <div className="px-4 py-1.5 text-xs font-bold text-[#1F3B8B] bg-white border border-slate-200 rounded-lg shadow-sm">
+                                            {page} / {totalPages}
+                                        </div>
+
+                                        <PaginationButton onClick={() => setPage((p) => Math.min(p + 1, totalPages))} disabled={page === totalPages} icon={<ChevronRight className="w-4 h-4" />} />
+                                        <PaginationButton onClick={() => setPage(totalPages)} disabled={page === totalPages} icon={<ChevronsRight className="w-4 h-4" />} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </>
                 )}
 
-                {/* --- DETAIL VIEW (ปรับปรุงให้ใหญ่และตรงกันเป๊ะ) --- */}
+                {/* --- DETAIL VIEW --- */}
                 {viewMode === 'DETAIL' && selectedSR && (
-                    <div className="bg-white rounded-[3.5rem] border-2 border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500 w-full max-w-[1550px] mx-auto flex flex-col mb-10">
+                    <div className="space-y-6 animate-in fade-in duration-500">
 
-                        {/* 1. Header Section */}
-                        <div className="bg-white p-12 text-slate-950 border-b-2 border-slate-100">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-                                <div>
-                                    <div className="flex items-center gap-3 mb-2">
-                                        {/* 💡 ปรับจาก text-xs เป็น text-sm เพื่อให้หัวข้อใหญ่ขึ้น และเข้มขึ้นด้วย text-slate-500 */}
-                                        <p className="text-slate-500 text-sm font-black uppercase tracking-[0.3em]">
-                                            เลขที่ใบเบิก
-                                        </p>
+
+                        {/* กล่องเนื้อหาหลัก (กรอบนอกชัดขึ้น shadow ลอยขึ้น) */}
+                        <div className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden">
+
+                            {/* Detail Header */}
+                            <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-4">
+                                <div className="space-y-1.5">
+                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">เลขที่ใบเบิก</span>
+                                    <h2 className="text-2xl md:text-3xl font-black text-[#1F3B8B] tabular-nums">{selectedSR.srNumber}</h2>
+                                </div>
+                                <div className="flex gap-8">
+                                    <div className="text-right">
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">วันที่ส่งคำขอ</p>
+                                        <p className="text-base font-bold text-slate-900">{new Date(selectedSR.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                     </div>
-                                    {/* 💡 ปรับขนาดลงจาก 4xl/5xl เหลือ 2xl/3xl เพื่อให้ดูพอดีกับหัวข้อ */}
-                                    <h2 className="text-2xl lg:text-3xl tabular-nums font-black tracking-tighter text-[#1F3B8B]">
-                                        {selectedSR.srNumber}
-                                    </h2>
-                                </div>
-                                <div className="bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 shadow-sm min-w-[280px]">
-                                    <p className="text-slate-500 text-[11px] font-black uppercase tracking-widest mb-2 flex items-center gap-2">
-                                        <Calendar className="w-5 h-5 text-[#1F3B8B]" /> วันที่ส่งคำขอ
-                                    </p>
-                                    <p className="text-2xl font-black text-slate-900 tabular-nums">
-                                        {new Date(selectedSR.createdAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 2. Content Body */}
-                        <div className="p-12 space-y-12">
-
-                            {/* Meta Data Grid - ปรับขนาดไอคอนและจัดแนวใหม่ */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 pb-12 border-b-2 border-dashed border-slate-200">
-
-                                <div className="flex flex-col gap-4">
-                                    <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
-                                        <User className="w-6 h-6 text-indigo-500" strokeWidth={2.5} /> ผู้ขอเบิกพัสดุ
-                                    </p>
-                                    <div>
-                                        <p className="text-lg font-black text-slate-900 uppercase leading-tight mb-2">
-                                            {selectedSR.user?.firstName} {selectedSR.user?.lastName}
-                                        </p>
-                                        <span className="text-xs font-black text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100 uppercase">
-                                            {selectedSR.department?.name || 'ส่วนกลาง'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-4">
-                                    <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
-                                        <Hash className="w-6 h-6 text-amber-500" strokeWidth={2.5} /> เลขอ้างอิงโครงการ
-                                    </p>
-                                    <p className="text-2xl font-black text-[#1F3B8B] tabular-nums uppercase">
-                                        {selectedSR.referenceNo || '---'}
-                                    </p>
-                                </div>
-
-                                <div className="flex flex-col gap-4">
-                                    <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
-                                        <ShieldCheck className="w-6 h-6 text-emerald-500" strokeWidth={2.5} /> ผู้อนุมัติเอกสาร
-                                    </p>
-                                    <div>
-                                        <p className="text-2xl font-black text-slate-900 uppercase">
-                                            {selectedSR.approver?.firstName ? `${selectedSR.approver.firstName} ${selectedSR.approver.lastName}` : "-"}
-                                        </p>
-                                        <p className="text-xs font-bold text-slate-400 italic mt-1 uppercase">Authorized Personnel</p>
-                                    </div>
-                                </div>
-
-                                {/* 💡 ปรับส่วนสถานะเอกสาร: เอา justify-between ออกเพื่อให้ชิดหัวข้อ */}
-                                <div className="flex flex-col gap-4">
-                                    <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-3">
-                                        <Clock className="w-6 h-6 text-blue-500" strokeWidth={2.5} /> สถานะเอกสาร
-                                    </p>
-                                    <div className="flex justify-start items-center">
-                                        {getStatusBadge(selectedSR.status)}
+                                    <div className="text-right">
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">สถานะปัจจุบัน</p>
+                                        <div className="flex justify-end">{getStatusBadge(selectedSR.status)}</div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* วัตถุประสงค์และหมายเหตุ */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                                <div className="bg-slate-50 p-10 rounded-[3rem] border-2 border-slate-100 shadow-inner">
-                                    <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-3">
-                                        <Briefcase className="w-6 h-6 text-sky-600" /> วัตถุประสงค์การใช้งาน
-                                    </p>
-                                    <p className="text-xl font-semibold text-slate-700 italic leading-relaxed">
-                                        "{selectedSR.purpose}"
-                                    </p>
-                                </div>
+                            {/* Detail Content Grid (โครงเดิม ฟอนต์เข้มและใหญ่ขึ้น) */}
+                            <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8 border-b border-slate-200">
+                                <DetailInfoItem icon={<User className="text-indigo-500" />} label="ผู้ขอเบิกพัสดุ" value={`${selectedSR.user?.firstName} ${selectedSR.user?.lastName}`} subValue={selectedSR.department?.name || 'ส่วนกลาง'} />
+                                <DetailInfoItem icon={<Hash className="text-amber-500" />} label="เลขอ้างอิงโครงการ" value={selectedSR.referenceNo || '---'} />
+                                <DetailInfoItem icon={<ShieldCheck className="text-emerald-500" />} label="ผู้อนุมัติเอกสาร" value={selectedSR.approver?.firstName ? `${selectedSR.approver.firstName} ${selectedSR.approver.lastName}` : "-"} />
+                            </div>
 
-                                <div className={`${selectedSR.remarks ? 'bg-amber-50/40 border-amber-100' : 'bg-slate-50 border-slate-100'} p-10 rounded-[3rem] border-2 shadow-inner`}>
-                                    <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-3">
-                                        <MessageSquareText className={`w-6 h-6 ${selectedSR.remarks ? 'text-amber-500' : 'text-slate-400'}`} />
-                                        หมายเหตุ (Remarks)
-                                    </p>
-                                    <p className="text-xl font-semibold text-slate-700 leading-relaxed">
-                                        {selectedSR.remarks || "--- ไม่มีการระบุข้อมูลเพิ่มเติม ---"}
-                                    </p>
+                            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-3">
+                                    {/* ลบแท็ก icon ออก และลบ flex ออกจาก class */}
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">วัตถุประสงค์การใช้งาน</p>
+                                    <p className="text-base text-slate-800 font-semibold leading-relaxed p-5 bg-slate-50 rounded-xl border border-slate-100 italic">"{selectedSR.purpose}"</p>
+                                </div>
+                                <div className="space-y-3">
+                                    {/* ลบแท็ก icon ออก และลบ flex ออกจาก class */}
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">หมายเหตุ (Remarks)</p>
+                                    <p className="text-base text-slate-800 font-semibold leading-relaxed p-5 bg-slate-50 rounded-xl border border-slate-100">{selectedSR.remarks || "--- ไม่มีการระบุข้อมูลเพิ่มเติม ---"}</p>
                                 </div>
                             </div>
 
-                            {/* รายการพัสดุ */}
-                            <div className="space-y-8">
-                                <div className="flex items-center justify-between px-4">
-                                    <h3 className="text-xl font-black text-slate-950 uppercase tracking-widest flex items-center gap-4">
-                                        <div className="p-4 bg-[#1F3B8B] rounded-3xl shadow-lg shadow-blue-900/20">
-                                            <Package className="w-8 h-8 text-white" />
-                                        </div>
-                                        รายการพัสดุและมูลค่าเบิกจ่าย
-                                    </h3>
-                                    <p className="text-base font-black text-slate-500 bg-white border-2 border-slate-100 px-8 py-3 rounded-2xl shadow-sm">
-                                        จำนวนทั้งหมด {selectedSR.items?.length || 0} รายการ
-                                    </p>
-                                </div>
-
-                                <div className="border-2 border-slate-200 rounded-[3.5rem] overflow-hidden shadow-2xl bg-white">
-                                    <table className="w-full text-left border-collapse">
-                                        <thead className="bg-slate-50 border-b-2 border-slate-200">
-                                            <tr className="text-sm font-black uppercase text-slate-500 tracking-widest">
-                                                <th className="p-8 pl-12 w-24 text-center">ลำดับ</th>
-                                                <th className="p-8">รายการพัสดุ / SKU</th>
-                                                <th className="p-8 text-right">ราคา/หน่วย</th>
-                                                <th className="p-8 text-center">จำนวนเบิก</th>
-                                                <th className="p-8 text-right text-[#1F3B8B]">รวมมูลค่า</th>
-                                                <th className="p-8 pr-12">หมายเหตุ</th>
+                            {/* Items Table */}
+                            <div className="px-8 pb-8">
+                                <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-5 flex items-center gap-2"><Package className="w-5 h-5 text-[#1F3B8B]" /> รายการพัสดุและมูลค่าเบิกจ่าย</h3>
+                                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                                    <table className="w-full border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-100 border-b border-slate-200 text-xs font-bold uppercase text-slate-600">
+                                                <th className="p-4 text-center w-16">ลำดับ</th>
+                                                <th className="p-4 text-left">รายการพัสดุ / SKU</th>
+                                                <th className="p-4 text-right">ราคา/หน่วย</th>
+                                                <th className="p-4 text-center w-32">จำนวนเบิก</th>
+                                                <th className="p-4 text-right">รวมมูลค่า</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -422,42 +341,23 @@ export default function StockRequisitionListPage() {
                                                 const unitCost = Number(item.product?.unitCost) || Number(item.product?.price) || 0;
                                                 const rowTotal = unitCost * Number(item.quantity);
                                                 return (
-                                                    <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                                                        <td className="p-8 text-center font-bold text-slate-300 tabular-nums text-xl group-hover:text-[#1F3B8B]">{idx + 1}</td>
-                                                        <td className="p-8">
-                                                            <p className="font-black text-slate-900 text-lg uppercase mb-1">{item.product?.name}</p>
-                                                            <span className="text-xs text-[#1F3B8B] font-black bg-blue-50 px-3 py-1 rounded-lg border border-blue-100 tabular-nums">SKU: {item.product?.sku}</span>
+                                                    <tr key={idx} className="text-base">
+                                                        <td className="p-4 text-center text-slate-500 font-bold">{idx + 1}</td>
+                                                        <td className="p-4">
+                                                            <p className="font-bold text-slate-900">{item.product?.name}</p>
+                                                            <p className="text-xs text-blue-600 font-bold uppercase mt-0.5">SKU: {item.product?.sku}</p>
                                                         </td>
-                                                        <td className="p-8 text-right font-bold text-slate-500 tabular-nums text-xl">
-                                                            ฿{unitCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                        </td>
-                                                        <td className="p-8 text-center">
-                                                            <span className="font-black text-[#1F3B8B] text-3xl tabular-nums bg-slate-50 px-6 py-3 rounded-3xl border border-slate-100">{item.quantity}</span>
-                                                        </td>
-                                                        <td className="p-8 text-right font-black text-[#1F3B8B] text-2xl tabular-nums">
-                                                            ฿{rowTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                        </td>
-                                                        <td className="p-8 pr-12">
-                                                            {item.remark ? (
-                                                                <div className="flex items-start gap-2 bg-amber-50 px-4 py-3 rounded-2xl border border-amber-100 w-fit max-w-[280px]">
-                                                                    <Info className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                                                                    <p className="text-xs font-bold text-slate-600 leading-tight">{item.remark}</p>
-                                                                </div>
-                                                            ) : <span className="text-slate-300">-</span>}
-                                                        </td>
+                                                        <td className="p-4 text-right tabular-nums font-semibold text-slate-700">฿{unitCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                                        <td className="p-4 text-center"><span className="px-3 py-1 bg-slate-100 rounded-md font-bold text-[#1F3B8B]">{item.quantity}</span></td>
+                                                        <td className="p-4 text-right tabular-nums font-bold text-slate-900">฿{rowTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                                     </tr>
                                                 );
                                             })}
                                         </tbody>
-                                        <tfoot className="bg-[#1F3B8B]/5 border-t-2 border-slate-200">
+                                        <tfoot className="bg-[#1F3B8B]/5 font-bold">
                                             <tr>
-                                                <td colSpan="4" className="p-12 text-right text-base font-black uppercase tracking-[0.2em] text-slate-500">
-                                                    มูลค่าประมาณการสุทธิ (Total Valuation)
-                                                </td>
-                                                <td className="p-12 text-right font-black text-3xl text-[#1F3B8B] tabular-nums tracking-tighter">
-                                                    ฿{grandTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                                </td>
-                                                <td></td>
+                                                <td colSpan="4" className="p-5 text-right text-sm uppercase text-slate-600 tracking-wider">มูลค่าประมาณการสุทธิ</td>
+                                                <td className="p-5 text-right text-xl text-emerald-600 tabular-nums">฿{grandTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -468,5 +368,48 @@ export default function StockRequisitionListPage() {
                 )}
             </div>
         </AuthGate>
+    );
+}
+
+// --- SUB-COMPONENTS ---
+
+function SummaryCard({ title, count, unit, color, icon }) {
+    const themes = {
+        slate: "border-l-slate-400 bg-slate-50/50",
+        amber: "border-l-amber-500 bg-amber-50/30",
+    };
+    return (
+        <div className={`bg-white border border-slate-200 border-l-4 ${themes[color] || themes.slate} p-5 rounded-xl flex items-center gap-4 shadow-sm transition-all hover:shadow-md`}>
+            <div className="p-2.5 bg-white rounded-lg shadow-sm border border-slate-100">{icon}</div>
+            <div>
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{title}</p>
+                <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-slate-900 tabular-nums">{count.toLocaleString()}</span>
+                    {unit && <span className="text-xs font-bold text-slate-500 uppercase">{unit}</span>}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function DetailInfoItem({ label, value, subValue }) {
+    return (
+        <div className="flex flex-col justify-center">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+            <span className="text-base font-bold text-slate-900">{value}</span>
+            {subValue && <span className="text-xs font-bold text-[#1F3B8B] uppercase mt-0.5">{subValue}</span>}
+        </div>
+    );
+}
+
+function PaginationButton({ onClick, disabled, icon }) {
+    return (
+        <button
+            onClick={onClick}
+            disabled={disabled}
+            className="p-2 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-30 transition-colors shadow-sm"
+        >
+            {icon}
+        </button>
     );
 }
