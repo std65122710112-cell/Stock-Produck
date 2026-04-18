@@ -48,7 +48,7 @@ export default function GoodsReceiptDetailPage({ params }) {
       <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
         
         {/* คอนเทนเนอร์หลักที่ขยายกว้างขึ้นเพื่อลดช่องว่างข้างเครื่อง */}
-        <div className="max-w-[1400px] mx-auto space-y-6">
+        <div className="max-w-350 mx-auto space-y-6">
           
           {/* แถบนำทางและเครื่องมือ */}
           <div className="flex justify-between items-center print:hidden">
@@ -109,7 +109,7 @@ export default function GoodsReceiptDetailPage({ params }) {
             </div>
 
             {/* ส่วนรายการสินค้า (Items Table) */}
-            <div className="flex-1 min-h-[400px]">
+            <div className="flex-1 min-h-100">
               <table className="min-w-full border-collapse">
                 <thead>
                   <tr className="bg-white border-b-4 border-slate-900">

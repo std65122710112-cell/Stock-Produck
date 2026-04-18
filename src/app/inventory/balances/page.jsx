@@ -140,7 +140,7 @@ export default function BalancesPage() {
   return (
     <AuthGate>
       <Toaster position="top-right" />
-      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         {/* HEADER SECTION - ปรับให้มี Icon และความกว้างที่เหมาะสม */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-8 gap-6 print:hidden">
@@ -159,7 +159,7 @@ export default function BalancesPage() {
           </div>
 
           <div className="flex flex-row items-center gap-4 w-full md:w-auto">
-            <div className="bg-slate-50 border border-slate-200 px-6 py-4 rounded-xl flex flex-col items-end min-w-[220px] shadow-sm">
+            <div className="bg-slate-50 border border-slate-200 px-6 py-4 rounded-xl flex flex-col items-end min-w-55 shadow-sm">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                 มูลค่ารวมทั้งหมด (Grand Total)
               </span>

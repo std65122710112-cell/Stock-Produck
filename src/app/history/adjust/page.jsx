@@ -1,19 +1,20 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import AuthGate from "@/components/AuthGate";
 import { apiFetch } from "@/lib/api";
 import Link from 'next/link';
 import {
-    History,
     FileText,
     ChevronRight,
-    UserCheck,
     AlertCircle,
-    Database,
     ClipboardList,
-    Search
+    UserCheck,
+    Search,
+    Clock,
+    CheckCircle2,
+    Package // เพิ่มไอคอน Package
 } from "lucide-react";
+import { Toaster } from "react-hot-toast";
 
 export default function CountTaskHistoryPage() {
     const [history, setHistory] = useState([]);
@@ -22,11 +23,9 @@ export default function CountTaskHistoryPage() {
 
     useEffect(() => {
         let isMounted = true;
-
         async function fetchHistory() {
             try {
                 const res = await apiFetch("/inventory/count-tasks");
-
                 if (!isMounted) return;
 
                 let cleanData = [];
@@ -37,7 +36,6 @@ export default function CountTaskHistoryPage() {
                 } else if (Array.isArray(res?.data)) {
                     cleanData = res.data;
                 }
-
                 setHistory(cleanData);
             } catch (error) {
                 console.error("Load Error:", error);
@@ -46,7 +44,6 @@ export default function CountTaskHistoryPage() {
                 if (isMounted) setIsLoading(false);
             }
         }
-
         fetchHistory();
         return () => { isMounted = false; };
     }, []);
@@ -70,192 +67,137 @@ export default function CountTaskHistoryPage() {
     }, [history, searchTerm]);
 
     const getStatusBadge = (status) => {
+        const baseClass = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold border shadow-sm";
         switch (status) {
             case "PENDING":
-                return (
-                    <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-200">
-                        รอตรวจนับ
-                    </span>
-                );
+                return <span className={`${baseClass} bg-amber-50 text-amber-700 border-amber-200`}>รอตรวจนับ</span>;
             case "COUNTING":
-                return (
-                    <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-200">
-                        กำลังตรวจนับ
-                    </span>
-                );
+                return <span className={`${baseClass} bg-blue-50 text-blue-700 border-blue-200`}>กำลังตรวจนับ</span>;
             case "REVIEW":
-                return (
-                    <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-purple-200">
-                        รอตรวจสอบ
-                    </span>
-                );
+                return <span className={`${baseClass} bg-purple-50 text-purple-700 border-purple-200`}><Clock className="w-3 h-3" /> รอตรวจสอบ</span>;
             case "COMPLETED":
-                return (
-                    <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-200">
-                        เสร็จสิ้น
-                    </span>
-                );
+                return <span className={`${baseClass} bg-emerald-50 text-emerald-700 border-emerald-200`}><CheckCircle2 className="w-3 h-3" /> เสร็จสิ้น</span>;
             default:
-                return (
-                    <span className="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200">
-                        {status || "-"}
-                    </span>
-                );
+                return <span className={`${baseClass} bg-slate-50 text-slate-600 border-slate-200`}>{status || "-"}</span>;
         }
     };
 
     return (
-        <AuthGate>
-            <div className="w-full space-y-8">
-                <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-200 pb-8 gap-6">
-                    <div className="space-y-3">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-black uppercase tracking-wider w-fit shadow-sm">
-                            <ClipboardList className="w-4 h-4 text-slate-500" />
-                            Cycle Count Registry
-                        </div>
+        <div className="w-full space-y-6">
+            <Toaster position="top-right" />
 
-                        <h4 className="text-4xl font-black text-slate-950 tracking-tight flex items-center gap-3">
-                            ประวัติการตรวจนับสต๊อก (CNT)
-                        </h4>
-
-                        <p className="text-slate-600 text-base font-bold flex items-center gap-2">
-                            <Database className="w-5 h-5 text-slate-400" />
-                            ประวัติเอกสารตรวจนับสต๊อกและผลการตรวจนับทั้งหมด
-                        </p>
-                    </div>
-
-                    <div className="relative w-full md:w-96">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="ค้นหาเลขที่เอกสาร, หมายเหตุ, สถานะ..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-11 pr-4 py-3 bg-white border-2 border-slate-100 rounded-2xl focus:border-indigo-500 outline-none font-bold text-sm transition-all shadow-sm"
-                        />
-                    </div>
+            {/* --- TOP CONTROL BAR --- */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-1">
+                <div className="relative w-full sm:w-80 group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#1F3B8B] transition-colors" />
+                    <input
+                        type="text"
+                        placeholder="ค้นหาเลขที่เอกสาร, หมายเหตุ..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/5 outline-none font-bold text-sm transition-all shadow-sm"
+                    />
                 </div>
-
-                <div className="flex items-center gap-4 px-2">
-                    <div className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-2xl border-2 border-slate-100 shadow-sm">
-                        <History className="w-5 h-5 text-slate-500" />
-                        <span className="text-xs font-black text-slate-900 uppercase tracking-wide tabular-nums">
-                            รายการทั้งหมด: {filteredHistory.length} เอกสาร
-                        </span>
-                    </div>
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    พบทั้งหมด {filteredHistory.length} รายการ
                 </div>
+            </div>
 
-                <section className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-[0_20px_60px_-25px_rgba(15,23,42,0.1)] relative">
-                    <div className="overflow-x-auto relative z-10">
-                        <table className="min-w-full text-base text-left border-collapse">
-                            <thead className="bg-slate-50 border-b border-slate-200">
-                                <tr className="text-slate-950 font-black text-sm tracking-wide">
-                                    <th className="p-6">วันที่ทำรายการ / เวลา</th>
-                                    <th className="p-6">เลขที่เอกสาร (CNT)</th>
-                                 
-                                    <th className="p-6">หมายเหตุ / เหตุผล</th>
-                                    <th className="p-6 text-center">จำนวนรายการ</th>
-                                    <th className="p-6">ผู้ตรวจสอบ</th>
-                                    <th className="p-6 text-right">ดำเนินการ</th>
+            {/* --- DATA TABLE SECTION --- */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse text-left">
+                        <thead className="bg-slate-50 border-b border-slate-200">
+                            <tr className="text-slate-500 font-bold text-xs uppercase tracking-wider">
+                                <th className="py-4 px-6">วันที่ทำรายการ / เวลา</th>
+                                <th className="py-4 px-6">เลขที่เอกสาร (CNT)</th>
+                                <th className="py-4 px-6">สถานะ</th>
+                                <th className="py-4 px-6 text-center">จำนวนรายการ</th>
+                                <th className="py-4 px-6">ผู้สร้างเอกสาร</th>
+                                <th className="py-4 px-6 text-right">ดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                            {isLoading ? (
+                                <tr><td colSpan="6" className="py-20 text-center text-slate-400">กำลังดึงข้อมูลประวัติการตรวจนับ...</td></tr>
+                            ) : filteredHistory.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="py-24 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <AlertCircle className="w-12 h-12 text-slate-200" />
+                                            <p className="text-slate-400 font-medium text-sm">ไม่พบข้อมูลประวัติการตรวจนับ</p>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-
-                            <tbody className="divide-y divide-slate-100 bg-white">
-                                {isLoading ? (
-                                    <tr>
-                                        <td colSpan="7" className="p-32 text-center">
-                                            <div className="flex flex-col items-center gap-4">
-                                                <div className="w-12 h-12 border-4 border-slate-100 border-t-slate-600 rounded-full animate-spin"></div>
-                                                <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-xs">
-                                                    Synchronizing Count Registry...
-                                                </p>
+                            ) : (
+                                filteredHistory.map((doc) => (
+                                    <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors group">
+                                        {/* วันที่ / เวลา */}
+                                        <td className="py-4 px-6">
+                                            <div className="flex flex-col text-slate-600">
+                                                <span className="text-sm font-bold tabular-nums">
+                                                    {new Date(doc.createdAt).toLocaleDateString('th-TH')}
+                                                </span>
+                                                <span className="text-[10px] font-medium opacity-70">
+                                                    {new Date(doc.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
+                                                </span>
                                             </div>
                                         </td>
-                                    </tr>
-                                ) : filteredHistory.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="7" className="p-40 text-center">
-                                            <AlertCircle className="w-16 h-16 text-rose-100 mx-auto mb-4" />
-                                            <p className="text-slate-400 font-black uppercase tracking-widest text-sm">
-                                                ไม่พบข้อมูลประวัติการตรวจนับ
-                                            </p>
+
+                                        {/* CNT Number */}
+                                        <td className="py-4 px-6">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded bg-slate-100 flex items-center justify-center text-slate-500 border border-slate-200">
+                                                    <ClipboardList className="w-3.5 h-3.5" />
+                                                </div>
+                                                <span className="font-bold text-[#1F3B8B] tabular-nums tracking-tight">
+                                                    {doc.taskNo}
+                                                </span>
+                                            </div>
+                                        </td>
+
+                                        {/* Status */}
+                                        <td className="py-4 px-6">
+                                            {getStatusBadge(doc.status)}
+                                        </td>
+
+                                        {/* --- ส่วนที่แก้ไข: เพิ่มไอคอน Package ให้เหมือนหน้าอื่นๆ --- */}
+                                        <td className="py-4 px-6 text-center">
+                                            <div className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1 rounded-lg border border-slate-200 font-bold text-xs tabular-nums">
+                                                <Package className="w-3.5 h-3.5 text-slate-500" />
+                                                {doc._count?.items ?? 0}
+                                            </div>
+                                        </td>
+
+                                        {/* Creator */}
+                                        <td className="py-4 px-6">
+                                            <div className="flex items-center gap-3">
+                                                
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-slate-700">
+                                                        {doc.creator ? `${doc.creator.firstName} ${doc.creator.lastName}` : "ผู้ใช้งานระบบ"}
+                                                    </span>
+                                                    <span className="text-[9px] text-slate-400 uppercase font-black">Authorized Creator</span>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {/* Action */}
+                                        <td className="py-4 px-6 text-right">
+                                            <Link
+                                                href={`/history/adjust/${doc.id}`}
+                                                className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-[#1F3B8B] px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-slate-50 hover:border-[#1F3B8B] transition-all shadow-sm"
+                                            >
+                                                VIEW <ChevronRight className="w-3.5 h-3.5" />
+                                            </Link>
                                         </td>
                                     </tr>
-                                ) : (
-                                    filteredHistory.map((doc) => (
-                                        <tr key={doc.id} className="hover:bg-slate-50/80 transition-colors group">
-                                            <td className="p-6 whitespace-nowrap">
-                                                <div className="tabular-nums text-sm font-bold text-slate-500 flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full bg-slate-300 group-hover:bg-slate-600 transition-colors"></div>
-                                                    {new Date(doc.createdAt).toLocaleString('th-TH', {
-                                                        year: 'numeric',
-                                                        month: '2-digit',
-                                                        day: '2-digit',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit'
-                                                    })}
-                                                </div>
-                                            </td>
-
-                                            <td className="p-6">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-600 border border-slate-100 shadow-sm">
-                                                        <FileText className="w-4 h-4" />
-                                                    </div>
-                                                    <span className="font-black text-[#1e3b8a] uppercase tracking-tighter text-base tabular-nums">
-                                                        {doc.taskNo || "-"}
-                                                    </span>
-                                                </div>
-                                            </td>
-
-                                            
-
-                                            <td className="p-6">
-                                                <span className="bg-orange-50 text-orange-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest shadow-sm border border-orange-100">
-                                                    {doc.remarks || "-"}
-                                                </span>
-                                            </td>
-
-                                            <td className="p-6 text-center">
-                                                <div className="inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-xl bg-slate-100 text-slate-900 font-black text-sm tabular-nums border border-slate-200">
-                                                    {doc._count?.items ?? 0}
-                                                </div>
-                                            </td>
-
-                                            <td className="p-6">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="bg-indigo-50 p-2 rounded-full border border-indigo-100 group-hover:bg-white transition-colors shadow-sm">
-                                                        <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-xs font-black text-slate-800 uppercase truncate tracking-tight">
-                                                            {doc.creator
-                                                                ? `${doc.creator.firstName || ""} ${doc.creator.lastName || ""}`.trim()
-                                                                : "ผู้ใช้งานระบบ"}
-                                                        </p>
-                                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-                                                            ผู้สร้างเอกสาร
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            <td className="p-6 text-right">
-                                                <Link
-                                                    href={`/history/adjust/${doc.id}`}
-                                                    className="inline-flex items-center gap-2 bg-white border-2 border-slate-100 text-[#1e3b8a] px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[#1e3b8a] hover:text-white hover:border-[#1e3b8a] transition-all shadow-sm hover:shadow-xl hover:shadow-blue-900/20 active:scale-95"
-                                                >
-                                                    รายละเอียด <ChevronRight className="w-4 h-4" />
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </AuthGate>
+        </div>
     );
 }

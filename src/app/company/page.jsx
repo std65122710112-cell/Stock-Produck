@@ -7,7 +7,7 @@ import toast, { Toaster } from "react-hot-toast";
 import {
     Building2, Save, Upload, MapPin, Hash,
     Phone, Mail, Globe, Image as ImageIcon, Loader2, Info,
-    CheckCircle2, X, AlertTriangle, Map, Navigation
+    CheckCircle2, AlertTriangle, Map, Navigation, Settings
 } from "lucide-react";
 
 export default function CompanySettingsPage() {
@@ -18,18 +18,13 @@ export default function CompanySettingsPage() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-
-    // State สำหรับ Pop-up ยืนยันการบันทึก
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    // 💡 1. ดึงข้อมูลบริษัทจากหลังบ้านเมื่อเปิดหน้าเว็บ
     useEffect(() => {
         async function fetchSettings() {
             try {
                 const data = await apiFetch("/api/settings/company");
-                if (data) {
-                    setFormData(data);
-                }
+                if (data) setFormData(data);
             } catch (error) {
                 toast.error("ไม่สามารถโหลดข้อมูลบริษัทได้");
             } finally {
@@ -39,28 +34,21 @@ export default function CompanySettingsPage() {
         fetchSettings();
     }, []);
 
-    // 💡 2. จัดการการเปลี่ยนรูปโลโก้ (แปลงเป็น Base64)
     const handleLogoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                return toast.error("ขนาดไฟล์โลโก้ต้องไม่เกิน 2MB");
-            }
+            if (file.size > 2 * 1024 * 1024) return toast.error("ขนาดไฟล์โลโก้ต้องไม่เกิน 2MB");
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setFormData(prev => ({ ...prev, logoUrl: reader.result }));
-            };
+            reader.onloadend = () => setFormData(prev => ({ ...prev, logoUrl: reader.result }));
             reader.readAsDataURL(file);
         }
     };
 
-    // 💡 3. ฟังก์ชันดักฟอร์มเพื่อเรียก Pop-up
     const handlePreSubmit = (e) => {
         e.preventDefault();
         setShowConfirmModal(true);
     };
 
-    // 💡 4. บันทึกข้อมูลจริง (เมื่อกดยืนยันใน Pop-up)
     const executeSave = async () => {
         setShowConfirmModal(false);
         setIsSaving(true);
@@ -77,38 +65,33 @@ export default function CompanySettingsPage() {
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-slate-50">
-                <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
-            </div>
-        );
-    }
+    if (isLoading) return <SystemLoader />;
 
     return (
         <AuthGate>
             <Toaster position="top-right" />
 
-            {/* 🔴 CONFIRMATION MODAL */}
+            {/* --- CONFIRMATION MODAL --- */}
             {showConfirmModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full mx-4 shadow-2xl border-2 border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mb-6 border-2 border-amber-100 shadow-inner">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-6 border border-amber-100">
                             <AlertTriangle className="w-8 h-8 text-amber-500" />
                         </div>
-                        <h3 className="text-xl font-black text-slate-950 uppercase tracking-tight mb-2">ยืนยันการบันทึกข้อมูล?</h3>
-                        <p className="text-xs font-bold text-slate-500 mb-8">ข้อมูลนี้จะถูกนำไปใช้ในหัวเอกสาร PDF ทั้งหมด (PR/PO/GR) ตรวจสอบความถูกต้องก่อนยืนยัน</p>
-
+                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">ยืนยันการบันทึกข้อมูล?</h3>
+                        <p className="text-xs font-bold text-slate-500 mb-8 leading-relaxed">
+                            ข้อมูลนี้จะถูกนำไปใช้ในหัวเอกสาร PDF (PR/PO/GR/DO/TF) ทั้งหมดในระบบ โปรดตรวจสอบความถูกต้องก่อนยืนยัน
+                        </p>
                         <div className="flex w-full gap-3">
                             <button
                                 onClick={() => setShowConfirmModal(false)}
-                                className="flex-1 bg-slate-100 text-slate-600 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all active:scale-95"
+                                className="flex-1 bg-slate-50 text-slate-600 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-200"
                             >
                                 ยกเลิก
                             </button>
                             <button
                                 onClick={executeSave}
-                                className="flex-1 bg-emerald-600 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/30 active:scale-95 flex items-center justify-center gap-2"
+                                className="flex-1 bg-[#1F3B8B] text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-900 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
                             >
                                 <CheckCircle2 className="w-4 h-4" /> ยืนยัน
                             </button>
@@ -117,177 +100,193 @@ export default function CompanySettingsPage() {
                 </div>
             )}
 
-            <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 min-h-screen pb-20">
-
-                {/* HEADER SECTION */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-2 border-slate-100 pb-8">
-                    <div className="flex items-center gap-5">
-                        {/* 💡 เปลี่ยน bg-slate-950 เป็น bg-[#1F3B8B] และเปลี่ยนสีไอคอนเป็น text-white */}
-                        <div className="p-4 bg-[#1F3B8B] text-white rounded-[1.5rem] shadow-xl shadow-[#1F3B8B]/20 border-2 border-[#1F3B8B]">
-                            <Building2 className="w-8 h-8 text-white" />
+            {/* พื้นหลังเทาอ่อนเพื่อให้ Content ขาวเด่นขึ้น */}
+            <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+                
+                <div className="max-w-[1400px] mx-auto space-y-8">
+                    
+                    {/* --- HEADER SECTION --- */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200 pb-8">
+                        <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 bg-white text-[#1F3B8B] rounded-xl shadow-sm border border-slate-200 flex items-center justify-center shrink-0">
+                                <Settings className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                                    ตั้งค่าข้อมูลบริษัท (Company Profile)
+                                </h1>
+                                <p className="text-slate-500 font-medium text-sm mt-1 flex items-center gap-2">
+                                    <Building2 className="w-4 h-4 text-slate-400" />
+                                    จัดการข้อมูลและโลโก้เพื่อใช้สำหรับออกเอกสารภายในระบบ
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-600 mb-1">Company Profile Settings</p>
-                            <h1 className="text-4xl font-black text-slate-950 tracking-tighter uppercase">
-                                ตั้งค่าข้อมูลบริษัท
-                            </h1>
-                            <p className="text-slate-500 font-bold text-xs uppercase tracking-widest flex items-center gap-2 mt-2">
-                                <Info className="w-4 h-4 text-sky-500" /> ข้อมูลที่แสดงในหัวเอกสาร PDF (PR/PO/GR)
-                            </p>
+                        
+                        <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white rounded-lg border border-slate-200 text-xs font-bold text-slate-400 uppercase tracking-widest shadow-sm">
+                            <Info className="w-4 h-4 text-[#1F3B8B]" /> Configuration Mode
                         </div>
                     </div>
-                </div>
 
-                <form onSubmit={handlePreSubmit} className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                    <form onSubmit={handlePreSubmit} className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
 
-                    {/* LEFT COL: LOGO UPLOAD */}
-                    <div className="xl:col-span-4 space-y-6">
-                        <div className="bg-white p-8 rounded-[2.5rem] border-2 border-slate-100 shadow-sm transition-all hover:shadow-lg">
-                            <h2 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2.5 mb-6">
-                                <ImageIcon className="w-5 h-5 text-indigo-500" /> โลโก้บริษัท (Company Logo)
+                        {/* --- LEFT COL: LOGO UPLOAD --- */}
+                        <div className="xl:col-span-4 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm sticky top-8">
+                            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2.5 mb-6 border-b border-slate-100 pb-4">
+                                <ImageIcon className="w-5 h-5 text-[#1F3B8B]" /> โลโก้บริษัท (Company Logo)
                             </h2>
 
-                            <div className="relative group w-full aspect-square max-w-[300px] mx-auto">
-                                <div className="border-4 border-dashed border-slate-200 rounded-[2.5rem] p-4 flex flex-col items-center justify-center bg-slate-50 w-full h-full overflow-hidden transition-all group-hover:border-indigo-400 group-hover:bg-indigo-50/30">
+                            <div className="relative group w-full aspect-square max-w-[280px] mx-auto">
+                                <div className="border-2 border-dashed border-slate-300 rounded-2xl p-4 flex flex-col items-center justify-center bg-slate-50 w-full h-full overflow-hidden transition-all group-hover:border-[#1F3B8B] group-hover:bg-blue-50/30">
                                     {formData.logoUrl ? (
                                         <img src={formData.logoUrl} className="w-full h-full object-contain mix-blend-multiply" alt="Company Logo" />
                                     ) : (
                                         <div className="flex flex-col items-center text-slate-300">
-                                            <Building2 className="w-16 h-16 mb-4 opacity-50" />
-                                            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">No Logo Attached</span>
+                                            <Building2 className="w-16 h-16 mb-4 opacity-40" />
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">ยังไม่มีรูปโลโก้</span>
                                         </div>
                                     )}
 
-                                    <label className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-white rounded-[2rem] backdrop-blur-sm">
-                                        <Upload className="w-8 h-8 mb-3 text-sky-400 animate-bounce" />
-                                        <span className="text-xs font-black uppercase tracking-widest">อัปโหลดโลโก้ใหม่</span>
+                                    <label className="absolute inset-0 bg-slate-900/70 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-white rounded-2xl backdrop-blur-sm">
+                                        <Upload className="w-8 h-8 mb-3 text-white animate-bounce" />
+                                        <span className="text-xs font-bold uppercase tracking-widest">อัปโหลดรูปภาพ</span>
                                         <input type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
                                     </label>
                                 </div>
                             </div>
 
-                            <div className="mt-6 pt-5 border-t-2 border-slate-50 text-center">
-                                <p className="text-[10px] text-amber-600 font-black uppercase tracking-widest bg-amber-50 px-4 py-2 rounded-xl inline-flex items-center gap-2 border border-amber-100">
-                                    <Info className="w-3 h-3" /> แนะนำ: ใช้ไฟล์พื้นหลังโปร่งใส (PNG) ขนาดไม่เกิน 2MB
+                            <div className="mt-8 text-center border-t border-slate-100 pt-6">
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5">
+                                    <Info className="w-3.5 h-3.5" /> แนะนำ: PNG โปร่งใส ขนาดไม่เกิน 2MB
                                 </p>
                             </div>
                         </div>
-                    </div>
 
-                    {/* RIGHT COL: FORM DATA */}
-                    <div className="xl:col-span-8 space-y-6">
-                        <div className="bg-white p-8 md:p-10 rounded-[2.5rem] border-2 border-slate-100 shadow-sm space-y-8 transition-all hover:shadow-lg">
-
-                            {/* 1. Basic Info - แยกเป็นการ์ดย่อย */}
-                            <div className="bg-slate-50/50 p-6 md:p-8 rounded-[2rem] border border-slate-100 space-y-6">
-                                <h2 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2.5 pb-4 border-b-2 border-slate-200/60">
-                                    <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center">
-                                        <Building2 className="w-4 h-4 text-sky-600" />
-                                    </div>
-                                    ข้อมูลพื้นฐาน (Basic Information)
+                        {/* --- RIGHT COL: FORM DATA --- */}
+                        <div className="xl:col-span-8 space-y-8">
+                            
+                            {/* 1. Basic Info */}
+                            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2.5 border-b border-slate-100 pb-4">
+                                    <Building2 className="w-5 h-5 text-[#1F3B8B]" /> ข้อมูลพื้นฐานองค์กร (General Information)
                                 </h2>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="md:col-span-2 space-y-2">
-                                        <label className="text-[11px] font-black uppercase tracking-widest text-slate-950 ml-1 flex items-center gap-2">
-                                            <Building2 className="w-4 h-4 text-indigo-500" /> ชื่อบริษัท (เต็ม)
-                                        </label>
-                                        <input type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-2xl p-4 text-sm font-black text-slate-900 focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm placeholder:text-slate-300" placeholder="เช่น บริษัท ทีเจซี คอร์ปอเรชั่น จำกัด" />
+                                    <div className="md:col-span-2">
+                                        <FormInput 
+                                            label="ชื่อบริษัท (Company Name)" 
+                                            icon={<Building2 size={16} className="text-slate-400" />}
+                                            value={formData.name} 
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })} 
+                                            placeholder="เช่น บริษัท ทีเจซี คอร์ปอเรชั่น จำกัด" 
+                                            required
+                                        />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black uppercase tracking-widest text-slate-950 ml-1 flex items-center gap-2">
-                                            <MapPin className="w-4 h-4 text-rose-500" /> สาขา / Branch
-                                        </label>
-                                        <input type="text" value={formData.branch} onChange={e => setFormData({ ...formData, branch: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-2xl p-4 text-sm font-black text-slate-900 focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm placeholder:text-slate-300" placeholder="เช่น สำนักงานใหญ่" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black uppercase tracking-widest text-slate-950 ml-1 flex items-center gap-2">
-                                            <Hash className="w-4 h-4 text-amber-500" /> เลขผู้เสียภาษี (Tax ID)
-                                        </label>
-                                        <input type="text" value={formData.taxId} onChange={e => setFormData({ ...formData, taxId: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-2xl p-4 text-sm font-black text-slate-900 tabular-nums focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm placeholder:text-slate-300 tracking-wider" placeholder="0000000000000" />
-                                    </div>
+                                    <FormInput 
+                                        label="สาขา (Branch)" 
+                                        icon={<MapPin size={16} className="text-slate-400" />}
+                                        value={formData.branch} 
+                                        onChange={e => setFormData({ ...formData, branch: e.target.value })} 
+                                        placeholder="เช่น สำนักงานใหญ่" 
+                                    />
+                                    <FormInput 
+                                        label="เลขประจำตัวผู้เสียภาษี (Tax ID)" 
+                                        icon={<Hash size={16} className="text-slate-400" />}
+                                        value={formData.taxId} 
+                                        onChange={e => setFormData({ ...formData, taxId: e.target.value })} 
+                                        placeholder="0000000000000" 
+                                        isTabular
+                                    />
                                 </div>
                             </div>
 
-                            {/* 2. Address Info - แยกเป็นการ์ดย่อย */}
-                            <div className="bg-slate-50/50 p-6 md:p-8 rounded-[2rem] border border-slate-100 space-y-6">
-                                <h2 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2.5 pb-4 border-b-2 border-slate-200/60">
-                                    <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
-                                        <Navigation className="w-4 h-4 text-emerald-600" />
-                                    </div>
-                                    ที่อยู่และที่ตั้ง (Address Details)
+                            {/* 2. Address Info */}
+                            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2.5 border-b border-slate-100 pb-4">
+                                    <Navigation className="w-5 h-5 text-[#1F3B8B]" /> ที่อยู่และที่ตั้ง (Address Details)
                                 </h2>
 
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black uppercase tracking-widest text-slate-950 ml-1 flex items-center gap-2">
-                                            <MapPin className="w-4 h-4 text-emerald-600" /> ที่อยู่ (เลขที่ / หมู่ / อาคาร / ถนน)
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-1.5">
+                                            <MapPin className="w-3.5 h-3.5" /> รายละเอียดที่อยู่ (เลขที่ / หมู่ / อาคาร / ถนน)
                                         </label>
-                                        <input type="text" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-2xl p-4 text-sm font-black text-slate-900 focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm placeholder:text-slate-300" placeholder="กรอกรายละเอียดที่อยู่" />
+                                        <textarea 
+                                            value={formData.address} 
+                                            onChange={e => setFormData({ ...formData, address: e.target.value })} 
+                                            className="w-full border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] outline-none transition-all placeholder:text-slate-300 resize-none h-24 bg-slate-50 focus:bg-white" 
+                                            placeholder="กรอกรายละเอียดที่อยู่" 
+                                        />
                                     </div>
 
-                                    {/* ปรับจาก 4 คอลัมน์เบียดๆ เป็น 2 คอลัมน์กว้างๆ */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 ml-1 flex items-center gap-1.5"><Map className="w-3.5 h-3.5 text-emerald-400" /> ตำบล</label>
-                                            <input type="text" placeholder="แขวง/ตำบล" value={formData.subDistrict} onChange={e => setFormData({ ...formData, subDistrict: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-xl p-3.5 text-sm font-black text-slate-900 focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 ml-1 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-emerald-500" /> อำเภอ</label>
-                                            <input type="text" placeholder="เขต/อำเภอ" value={formData.district} onChange={e => setFormData({ ...formData, district: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-xl p-3.5 text-sm font-black text-slate-900 focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 ml-1 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-emerald-600" /> จังหวัด</label>
-                                            <input type="text" placeholder="จังหวัด" value={formData.province} onChange={e => setFormData({ ...formData, province: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-xl p-3.5 text-sm font-black text-slate-900 focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 ml-1 flex items-center gap-1.5"><Hash className="w-3.5 h-3.5 text-emerald-700" /> รหัสไปรษณีย์</label>
-                                            <input type="text" placeholder="10000" value={formData.zipCode} onChange={e => setFormData({ ...formData, zipCode: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-xl p-3.5 text-sm font-black text-slate-900 tabular-nums focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm tracking-widest" />
-                                        </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <FormInput label="ตำบล / แขวง" icon={<Map size={16} className="text-slate-400" />} value={formData.subDistrict} onChange={e => setFormData({ ...formData, subDistrict: e.target.value })} placeholder="ระบุตำบล" />
+                                        <FormInput label="อำเภอ / เขต" icon={<MapPin size={16} className="text-slate-400" />} value={formData.district} onChange={e => setFormData({ ...formData, district: e.target.value })} placeholder="ระบุอำเภอ" />
+                                        <FormInput label="จังหวัด" icon={<Globe size={16} className="text-slate-400" />} value={formData.province} onChange={e => setFormData({ ...formData, province: e.target.value })} placeholder="ระบุจังหวัด" />
+                                        <FormInput label="รหัสไปรษณีย์" icon={<Hash size={16} className="text-slate-400" />} value={formData.zipCode} onChange={e => setFormData({ ...formData, zipCode: e.target.value })} placeholder="10000" isTabular />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* 3. Contact Info - แยกเป็นการ์ดย่อย */}
-                            <div className="bg-slate-50/50 p-6 md:p-8 rounded-[2rem] border border-slate-100 space-y-6">
-                                <h2 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2.5 pb-4 border-b-2 border-slate-200/60">
-                                    <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center">
-                                        <Phone className="w-4 h-4 text-violet-600" />
-                                    </div>
-                                    ข้อมูลติดต่อ (Contact Information)
+                            {/* 3. Contact Info */}
+                            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2.5 border-b border-slate-100 pb-4">
+                                    <Phone className="w-5 h-5 text-[#1F3B8B]" /> ข้อมูลติดต่อ (Contact Information)
                                 </h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black uppercase tracking-widest text-slate-950 ml-1 flex items-center gap-2">
-                                            <Phone className="w-4 h-4 text-violet-500" /> เบอร์โทรศัพท์
-                                        </label>
-                                        <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-2xl p-4 text-sm font-black text-slate-900 tabular-nums focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm placeholder:text-slate-300" placeholder="02-XXX-XXXX" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black uppercase tracking-widest text-slate-950 ml-1 flex items-center gap-2">
-                                            <Mail className="w-4 h-4 text-sky-500" /> อีเมลติดต่อ
-                                        </label>
-                                        <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full border-2 border-slate-200/60 rounded-2xl p-4 text-sm font-black text-slate-900 focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-sm placeholder:text-slate-300" placeholder="contact@company.com" />
-                                    </div>
+                                    <FormInput label="เบอร์โทรศัพท์" icon={<Phone size={16} className="text-slate-400" />} value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} placeholder="02-XXX-XXXX" isTabular />
+                                    <FormInput label="อีเมลติดต่อ" icon={<Mail size={16} className="text-slate-400" />} value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="contact@company.com" type="email" />
                                 </div>
                             </div>
-                            {/* Actions */}
-                            <div className="pt-8 border-t-2 border-slate-100 flex justify-end">
+
+                            {/* --- ACTION BUTTON --- */}
+                            <div className="flex justify-end pt-4">
                                 <button
                                     disabled={isSaving}
                                     type="submit"
-
-                                    className="w-full md:w-auto bg-emerald-600 text-white px-14 py-4 rounded-full font-black text-xs uppercase tracking-[0.3em] hover:bg-emerald-700 shadow-xl shadow-emerald-600/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
+                                    className="w-full md:w-auto bg-[#1F3B8B] text-white px-10 py-4 rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-blue-900 shadow-md transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
                                 >
                                     {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                    {isSaving ? "SAVING DATA..." : "บันทึกข้อมูลบริษัท"}
+                                    {isSaving ? "Saving Configuration..." : "บันทึกการตั้งค่าระบบ"}
                                 </button>
                             </div>
 
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </AuthGate>
+    );
+}
+
+// --- SUB-COMPONENT ---
+function FormInput({ label, value, onChange, placeholder, type = "text", icon, isTabular = false, required = false }) {
+    return (
+        <div className="space-y-2 relative">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1 flex items-center gap-1.5">
+                {label} {required && <span className="text-rose-500">*</span>}
+            </label>
+            <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                    {icon}
+                </div>
+                <input 
+                    type={type} 
+                    value={value} 
+                    onChange={onChange} 
+                    required={required}
+                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-sm font-bold text-slate-900 focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] focus:bg-white outline-none transition-all placeholder:text-slate-300 placeholder:font-medium ${isTabular ? 'tabular-nums tracking-wider' : ''}`} 
+                    placeholder={placeholder} 
+                />
+            </div>
+        </div>
+    );
+}
+
+function SystemLoader() {
+    return (
+        <div className="h-screen flex flex-col items-center justify-center bg-slate-50 gap-6">
+            <div className="w-12 h-12 border-4 border-slate-200 border-t-[#1F3B8B] rounded-full animate-spin"></div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] animate-pulse">Loading Company Configuration...</p>
+        </div>
     );
 }

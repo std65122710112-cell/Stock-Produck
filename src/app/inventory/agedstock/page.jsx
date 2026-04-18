@@ -108,7 +108,7 @@ export default function AgedStockPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+            <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
                 {/* --- HEADER SECTION --- */}
                 <div className="flex flex-col gap-6 border-b border-slate-200 pb-8 print:hidden">
@@ -138,7 +138,7 @@ export default function AgedStockPage() {
                             </div>
                         </div>
 
-                        <div className="bg-slate-50 border border-slate-200 px-6 py-4 rounded-xl flex flex-col items-end min-w-[240px] shadow-sm">
+                        <div className="bg-slate-50 border border-slate-200 px-6 py-4 rounded-xl flex flex-col items-end min-w-60 shadow-sm">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                                 มูลค่าเงินจมรวม (Total Value)
                             </span>
