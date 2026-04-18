@@ -1,13 +1,14 @@
 "use client";
 
 import AuthGate from "@/components/AuthGate";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, API_BASE } from "@/lib/api";
+import { getAccessToken } from "@/lib/auth";
 import { useEffect, useState, useCallback } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
     Settings, RefreshCw, Plus, Trash2, Edit3, Check, X,
     Database, Tag, Layers, ShieldCheck, AlertTriangle,
-    ClipboardList, Info, Loader2
+    ClipboardList, Info, Loader2, CheckCircle2, XCircle
 } from "lucide-react";
 
 const MAX_INPUT_LENGTH = 50;
@@ -31,6 +32,10 @@ function MasterDataSection({
     // --- Modal States ---
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [updateTarget, setUpdateTarget] = useState(null);
+    
+    // 🟢 [เพิ่ม] State สำหรับป็อปอัพสำเร็จ
+    const [showUpdateSuccessModal, setShowUpdateSuccessModal] = useState(false);
+    const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
 
     const load = useCallback(async () => {
         try {
@@ -85,12 +90,14 @@ function MasterDataSection({
                 method: "PUT",
                 body: JSON.stringify(payload)
             });
-            toast.success(`อัปเดตข้อมูลสำเร็จ`);
+            // 🟢 เปิดป็อปอัพสำเร็จแทนการใช้ Toast
             setEditingId(null);
             setUpdateTarget(null);
+            setShowUpdateSuccessModal(true);
             await load();
         } catch (err) {
             toast.error(err.message || `ไม่สามารถบันทึกข้อมูลได้`);
+            setUpdateTarget(null);
         } finally { setLoading(false); }
     }
 
@@ -99,8 +106,9 @@ function MasterDataSection({
         setLoading(true);
         try {
             await apiFetch(`${endpoint}/${deleteTarget}`, { method: "DELETE" });
-            toast.success(`ลบข้อมูลสำเร็จ`);
+            // 🟢 เปิดป็อปอัพลบสำเร็จแทนการใช้ Toast
             if (editingId === deleteTarget) setEditingId(null);
+            setShowDeleteSuccessModal(true);
             await load();
         } catch (err) {
             toast.error(`ไม่สามารถลบข้อมูลได้ (ข้อมูลอาจถูกใช้งานอยู่)`);
@@ -111,62 +119,110 @@ function MasterDataSection({
     }
 
     return (
-        <div className="flex flex-col bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg">
+        <div className="flex flex-col bg-white rounded-xl border-2 border-slate-200 shadow-md overflow-hidden transition-all duration-300">
 
             {/* --- Modals --- */}
+            
+            {/* 🪟 ยืนยันการลบ */}
             {deleteTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center animate-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mb-6 mx-auto border border-rose-100 shadow-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl border-2 border-rose-100 text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mb-6 mx-auto border border-rose-200 shadow-sm">
                             <AlertTriangle className="w-8 h-8 text-rose-500" />
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight mb-2">ยืนยันการลบ?</h3>
-                        <p className="text-xs font-bold text-slate-500 mb-8 leading-relaxed">
-                            คุณต้องการลบรายการนี้ใช่หรือไม่? <br/> ข้อมูลที่ถูกลบไม่สามารถกู้คืนได้ และระบบจะปฏิเสธการลบหากมีการผูกข้อมูลไว้แล้ว
+                        <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                            คุณต้องการลบรายการนี้ใช่หรือไม่? <br />
+                            <span className="text-xs font-normal mt-2 block text-slate-400 bg-slate-50 p-2 rounded-md">ข้อมูลที่ถูกลบไม่สามารถกู้คืนได้ และระบบจะปฏิเสธการลบหากมีการผูกข้อมูลไว้แล้ว</span>
                         </p>
                         <div className="flex gap-3">
-                            <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-200 active:scale-95">ยกเลิก</button>
-                            <button onClick={executeDelete} className="flex-1 bg-rose-600 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-rose-700 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"><Trash2 className="w-4 h-4" /> ยืนยันลบ</button>
+                            <button onClick={() => setDeleteTarget(null)} className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:bg-slate-200 transition-all border border-transparent active:scale-95">ยกเลิก</button>
+                            <button onClick={executeDelete} className="flex-1 bg-rose-600 text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:bg-rose-700 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2"><Trash2 className="w-4 h-4" /> ยืนยันลบ</button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* 🪟 ลบสำเร็จ */}
+            {showDeleteSuccessModal && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-5 border border-emerald-200">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">ลบข้อมูลสำเร็จ</h3>
+                        <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                            ข้อมูลถูกลบออกจากระบบ<br />เรียบร้อยแล้ว
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setShowDeleteSuccessModal(false)}
+                            className="w-full py-3 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
+                        >
+                            ปิดหน้าต่าง
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* 🪟 ยืนยันการแก้ไข */}
             {updateTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-100 text-center animate-in zoom-in-95 duration-200">
-                        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-6 mx-auto border border-blue-100 shadow-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl border-2 border-slate-200 text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-[#1F3B8B]/10 rounded-full flex items-center justify-center mb-6 mx-auto border border-[#1F3B8B]/20 shadow-sm">
                             <Edit3 className="w-8 h-8 text-[#1F3B8B]" />
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight mb-2">ยืนยันการแก้ไข?</h3>
-                        <p className="text-xs font-bold text-slate-500 mb-8 leading-relaxed">คุณต้องการบันทึกการเปลี่ยนแปลงของข้อมูลหลักระบบนี้ใช่หรือไม่?</p>
+                        <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">คุณต้องการบันทึกการเปลี่ยนแปลง<br/>ของข้อมูลหลักระบบนี้ใช่หรือไม่?</p>
                         <div className="flex gap-3">
-                            <button onClick={() => setUpdateTarget(null)} className="flex-1 bg-slate-50 text-slate-600 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-all border border-slate-200 active:scale-95">ยกเลิก</button>
-                            <button onClick={executeUpdate} className="flex-1 bg-[#1F3B8B] text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-900 transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"><Check className="w-4 h-4" /> บันทึก</button>
+                            <button onClick={() => setUpdateTarget(null)} className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:bg-slate-200 transition-all border border-transparent active:scale-95">ยกเลิก</button>
+                            <button onClick={executeUpdate} className="flex-1 bg-emerald-600 text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2"><Check className="w-4 h-4" /> ยืนยัน</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 🪟 แก้ไขสำเร็จ */}
+            {showUpdateSuccessModal && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-5 border border-emerald-200">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">อัปเดตข้อมูลสำเร็จ</h3>
+                        <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                            ระบบได้บันทึกการเปลี่ยนแปลง<br />เรียบร้อยแล้ว
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setShowUpdateSuccessModal(false)}
+                            className="w-full py-3 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
+                        >
+                            ปิดหน้าต่าง
+                        </button>
                     </div>
                 </div>
             )}
             {/* --- End Modals --- */}
 
             {/* Header Area */}
-            <div className="p-6  border-b border-slate-200 flex items-center justify-between">
+            <div className="p-6 md:p-8 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-3">
-                    <div className={`p-2.5 bg-white rounded-lg shadow-sm border border-slate-200 text-[#1F3B8B]`}>
+                    <div className="p-3 bg-white rounded-lg shadow-sm border border-slate-200 text-[#1F3B8B]">
                         <Icon className="w-5 h-5" />
                     </div>
-                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">{title}</h2>
+                    <h2 className="text-base font-bold text-slate-900 uppercase tracking-widest">{title}</h2>
                 </div>
                 <button onClick={load} disabled={loading} className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg text-slate-400 hover:text-[#1F3B8B] shadow-sm transition-all disabled:opacity-30">
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
 
             {/* Creation Form */}
-            <form onSubmit={create} autoComplete="off" className="p-6 bg-white border-b border-slate-100 flex flex-wrap lg:flex-nowrap gap-3">
+            <form onSubmit={create} autoComplete="off" className="p-6 md:px-8 bg-white border-b border-slate-100 flex flex-wrap lg:flex-nowrap gap-4">
                 <div className="flex-1 min-w-[200px]">
                     <input
-                        className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-400"
+                        className="w-full border-2 border-slate-200 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-400 text-slate-800"
                         placeholder={placeholder}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -175,9 +231,9 @@ function MasterDataSection({
                     />
                 </div>
                 {hasAbbr && (
-                    <div className="w-28">
+                    <div className="w-32">
                         <input
-                            className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-bold uppercase text-center outline-none focus:border-[#1F3B8B] focus:ring-1 focus:ring-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-400"
+                            className="w-full border-2 border-slate-200 rounded-xl p-3.5 text-sm font-bold uppercase text-center outline-none focus:border-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-400 text-[#1F3B8B]"
                             placeholder="ตัวย่อ"
                             value={abbr}
                             onChange={(e) => setAbbr(e.target.value.toUpperCase())}
@@ -188,26 +244,26 @@ function MasterDataSection({
                 )}
                 <button
                     disabled={loading || !name.trim()}
-                    className="bg-[#1F3B8B] text-white rounded-xl px-6 py-3.5 font-bold text-xs uppercase tracking-widest hover:bg-blue-900 disabled:opacity-30 transition-all flex items-center gap-2 shadow-sm active:scale-95 shrink-0"
+                    className="bg-emerald-600 text-white rounded-xl px-6 py-3.5 font-bold text-sm uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-30 transition-all flex items-center gap-2 shadow-sm active:scale-95 shrink-0"
                 >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} เพิ่มข้อมูล
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} เพิ่มข้อมูล
                 </button>
             </form>
 
             {/* Data Table */}
             <div className="overflow-x-auto min-h-[400px]">
-                <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-200">
+                <table className="min-w-full text-sm border-collapse">
+                    <thead className="bg-slate-50 text-xs font-bold uppercase tracking-widest text-slate-500 border-b border-slate-200">
                         <tr>
                             <th className="px-6 py-4 text-left">ชื่อรายการ</th>
-                            {hasAbbr && <th className="px-6 py-4 text-center w-28">ตัวย่อ</th>}
-                            <th className="px-6 py-4 text-right w-36">จัดการ</th>
+                            {hasAbbr && <th className="px-6 py-4 text-center w-32">ตัวย่อ</th>}
+                            <th className="px-6 py-4 text-right w-40">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
                         {rows.length === 0 && !loading && (
                             <tr>
-                                <td colSpan={hasAbbr ? 3 : 2} className="py-20 text-center text-slate-400 font-medium text-xs italic">
+                                <td colSpan={hasAbbr ? 3 : 2} className="py-20 text-center text-slate-400 font-bold text-sm italic tracking-widest uppercase">
                                     ยังไม่มีข้อมูล
                                 </td>
                             </tr>
@@ -218,7 +274,7 @@ function MasterDataSection({
                                     {editingId === r.id ? (
                                         <input
                                             autoFocus
-                                            className="border border-slate-300 rounded-lg px-3 py-2 w-full text-sm font-bold outline-none focus:border-[#1F3B8B] bg-white shadow-sm text-slate-900"
+                                            className="border-2 border-slate-300 rounded-lg px-3 py-2 w-full text-sm font-bold outline-none focus:border-[#1F3B8B] bg-white shadow-sm text-slate-900"
                                             value={editName}
                                             onChange={(e) => setEditName(e.target.value)}
                                             maxLength={MAX_INPUT_LENGTH}
@@ -232,7 +288,7 @@ function MasterDataSection({
                                     <td className="px-6 py-4 text-center">
                                         {editingId === r.id ? (
                                             <input
-                                                className="border border-slate-300 rounded-lg px-2 py-2 w-full text-center text-xs font-bold uppercase outline-none focus:border-[#1F3B8B] bg-white shadow-sm text-slate-900"
+                                                className="border-2 border-slate-300 rounded-lg px-2 py-2 w-full text-center text-sm font-bold uppercase outline-none focus:border-[#1F3B8B] bg-white shadow-sm text-[#1F3B8B]"
                                                 value={editAbbr}
                                                 onChange={(e) => setEditAbbr(e.target.value.toUpperCase())}
                                                 placeholder="-"
@@ -240,7 +296,7 @@ function MasterDataSection({
                                                 disabled={loading}
                                             />
                                         ) : (
-                                            <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md text-[10px] font-bold border border-slate-200">
+                                            <span className="bg-slate-100 text-slate-600 px-3 py-1.5 rounded-md text-xs font-bold border border-slate-200">
                                                 {r.abbr || "-"}
                                             </span>
                                         )}
@@ -249,10 +305,10 @@ function MasterDataSection({
                                 <td className="px-6 py-4 text-right">
                                     {editingId === r.id ? (
                                         <div className="flex justify-end gap-2">
-                                            <button onClick={() => setUpdateTarget(r.id)} disabled={loading || !editName.trim()} className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-all border border-emerald-200" title="บันทึก">
+                                            <button onClick={() => setUpdateTarget(r.id)} disabled={loading || !editName.trim()} className="p-2.5 bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg transition-all shadow-sm active:scale-95 disabled:opacity-50" title="บันทึก">
                                                 <Check className="w-4 h-4" />
                                             </button>
-                                            <button onClick={() => setEditingId(null)} disabled={loading} className="p-2 bg-slate-50 text-slate-500 hover:bg-slate-100 rounded-lg transition-all border border-slate-200" title="ยกเลิก">
+                                            <button onClick={() => setEditingId(null)} disabled={loading} className="p-2.5 bg-slate-100 text-slate-500 hover:bg-slate-200 rounded-lg transition-all border border-slate-200 active:scale-95 disabled:opacity-50" title="ยกเลิก">
                                                 <X className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -261,7 +317,7 @@ function MasterDataSection({
                                             <button
                                                 onClick={() => { setEditingId(r.id); setEditName(r.name); setEditAbbr(r.abbr || ""); }}
                                                 disabled={loading}
-                                                className="p-2 text-slate-400 bg-slate-50 hover:text-[#1F3B8B] hover:bg-blue-50 rounded-lg transition-all border border-slate-200"
+                                                className="p-2 text-slate-400 bg-slate-50 hover:text-[#1F3B8B] hover:bg-blue-50 rounded-lg transition-all border border-slate-200 hover:border-blue-200 active:scale-95 disabled:opacity-30"
                                                 title="แก้ไข"
                                             >
                                                 <Edit3 className="w-4 h-4" />
@@ -269,7 +325,7 @@ function MasterDataSection({
                                             <button
                                                 onClick={() => setDeleteTarget(r.id)}
                                                 disabled={loading}
-                                                className="p-2 text-slate-400 bg-slate-50 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all border border-slate-200"
+                                                className="p-2 text-slate-400 bg-slate-50 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all border border-slate-200 hover:border-rose-200 active:scale-95 disabled:opacity-30"
                                                 title="ลบ"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -290,22 +346,22 @@ export default function MasterSettingsPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="min-h-screen  py-8 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-[1600px] mx-auto space-y-8 pb-20">
 
                     {/* --- HEADER SECTION --- */}
-                    <div className="flex flex-col md:flex-row items-start md:items-center border-b border-slate-200 pb-8 gap-6">
-                        <div className="flex items-center gap-5">
-                            <div className="w-12 h-12 bg-white text-[#1F3B8B] rounded-xl shadow-sm border border-slate-200 flex items-center justify-center shrink-0">
+                    <div className="flex flex-col md:flex-row items-start md:items-center border-b border-slate-200 pb-8 gap-6 print:hidden">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#1F3B8B]/10 text-[#1F3B8B] rounded-xl shadow-sm border border-[#1F3B8B]/20 flex items-center justify-center shrink-0">
                                 <ClipboardList className="w-6 h-6" />
                             </div>
                             <div>
                                 <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-                                    หมวดหมู่และหน่วยนับ (Master Data)
+                                    หมวดหมู่และหน่วยนับ
                                 </h1>
-                                <p className="text-slate-500 font-medium text-sm mt-1 flex items-center gap-2">
-                                    <Database className="w-4 h-4 text-[#1F3B8B]" />
-                                    จัดการข้อมูลหมวดหมู่สินค้าและหน่วยนับพื้นฐาน
+                                <p className="text-sm text-slate-500 mt-1 font-medium uppercase tracking-widest flex items-center gap-2">
+                                    <Database className="w-4 h-4 text-emerald-500" />
+                                    Master Data Management
                                 </p>
                             </div>
                         </div>

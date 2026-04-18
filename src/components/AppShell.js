@@ -4,9 +4,9 @@ import { useEffect, useRef, useState, useTransition, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { apiFetch, API_BASE } from "@/lib/api";
 import { clearAccessToken } from "@/lib/auth";
-import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera, ShieldAlert,Activity } from "lucide-react";
+import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera, ShieldAlert, Activity, Loader2 } from "lucide-react";
 
-// 💡 1. กำหนดสิทธิ์และโครงสร้างเมนู (อัปเดตสิทธิ์ L1, L2, L3 เรียบร้อยแล้ว)
+// 💡 1. กำหนดสิทธิ์และโครงสร้างเมนู
 const menuGroups = [
     {
         title: "ภาพรวมระบบ",
@@ -23,7 +23,6 @@ const menuGroups = [
         title: "ระบบงานจัดซื้อ",
         items: [
             { href: "/purchase/pr", label: "รายการใบขอซื้อ (PR)", permissions: ["PR_READ", "PR_CREATE"] },
-            // 💡 แสดงเมนูนี้ถ้ามีสิทธิ์อนุมัติด่านใดด่านหนึ่ง (L1, L2 หรือ L3)
             { href: "/purchase/pr/approval", label: "พิจารณาอนุมัติขอซื้อ", permissions: ["PR_APPROVE_L1", "PR_APPROVE_L2", "PR_APPROVE_L3"] },
             { href: "/purchase/create", label: "สร้างใบสั่งซื้อ (PO)", permissions: ["PO_MANAGE"] },
         ],
@@ -109,7 +108,7 @@ export default function AppShell({ children }) {
 
     const [isUploading, setIsUploading] = useState(false);
 
-    // 🟢 เพิ่ม State สำหรับป็อปอัพยืนยันการออกจากระบบ
+    // 🟢 State สำหรับป็อปอัพยืนยันการออกจากระบบ
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -226,17 +225,23 @@ export default function AppShell({ children }) {
             const res = await apiFetch("/auth/avatar", { method: "POST", body: formData });
             if (res && res.avatarUrl) {
                 setUserAvatar(res.avatarUrl);
-                toast.success("อัปโหลดรูปโปรไฟล์สำเร็จ");
+                alert("อัปโหลดรูปโปรไฟล์สำเร็จ");
             }
         } catch (error) {
-            toast.error("อัปโหลดรูปภาพล้มเหลว: " + error.message);
+            console.error("Upload failed", error);
+            alert("อัปโหลดรูปภาพล้มเหลว: " + error.message);
         } finally {
             setIsUploading(false);
         }
     };
 
-    async function logout() {
-        if (!confirm("ยืนยันการออกจากระบบ?")) return;
+    // 🟢 เปลี่ยนจากฟังก์ชัน confirm เดิม มาเป็นการเปิด Pop-up แทน
+    const handleLogoutClick = () => {
+        setShowLogoutModal(true);
+    };
+
+    async function executeLogout() {
+        setIsLoggingOut(true);
         try {
             await apiFetch("/auth/logout", { method: "POST" });
         } catch (e) {
@@ -300,7 +305,7 @@ export default function AppShell({ children }) {
 
             {/* 🟢 Modal ยืนยันการออกจากระบบ (Logout Popup) */}
             {showLogoutModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
                     <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl shadow-slate-900/20 transform transition-all animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex flex-col items-center text-center space-y-4">
                             <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center border border-rose-100">
@@ -413,11 +418,12 @@ export default function AppShell({ children }) {
                     </div>
 
                     <div className="px-5 pb-6 pt-4 bottom-0 bg-white/80 backdrop-blur-xl border-t border-slate-100/60">
+                        {/* 🟢 เปลี่ยนฟังก์ชัน onClick จาก logout() เป็น handleLogoutClick */}
                         <button
-                            onClick={logout}
+                            onClick={handleLogoutClick}
                             className="group relative flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-100 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-500 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600 hover:shadow-sm active:scale-95"
                         >
-                            <LogOut className="w-4 h-4" />
+                            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
                             <span>ออกจากระบบ</span>
                         </button>
                     </div>

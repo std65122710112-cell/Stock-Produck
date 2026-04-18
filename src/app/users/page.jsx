@@ -2,7 +2,7 @@
 
 import AuthGate from "@/components/AuthGate";
 import { apiFetch } from "@/lib/api";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
     Users, Building2, Plus, UserPlus, ShieldCheck,
@@ -93,6 +93,11 @@ export default function UserAndDeptManagementPage() {
     const [confirmDeleteDept, setConfirmDeleteDept] = useState(null);
     const [confirmSavePerms, setConfirmSavePerms] = useState(false);
 
+    // 🟢 State สำหรับ Pop-up สำเร็จ
+    const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
+    const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
+    const [showPermsSuccessModal, setShowPermsSuccessModal] = useState(false);
+
     const toggleGroup = (groupName) => {
         setExpandedGroups(prev => prev.includes(groupName) ? prev.filter(g => g !== groupName) : [...prev, groupName]);
     };
@@ -134,7 +139,7 @@ export default function UserAndDeptManagementPage() {
             const payload = { username, firstName, lastName, password, departmentId };
             const newUser = await apiFetch("/users", { method: "POST", body: JSON.stringify(payload) });
             if (newUser?.id) await apiFetch(`/users/${newUser.id}/roles`, { method: "POST", body: JSON.stringify({ roles: [role] }) });
-            toast.success("เพิ่มบัญชีผู้ใช้สำเร็จ");
+            setShowSaveSuccessModal(true);
             setShowAddForm(false);
             setUsername(""); setFirstName(""); setLastName(""); setPassword(""); setDepartmentId("");
             loadUsers();
@@ -168,7 +173,7 @@ export default function UserAndDeptManagementPage() {
             await apiFetch(`/users/${id}`, { method: "PATCH", body: JSON.stringify(payload) });
             if (editUserForm.role) await apiFetch(`/users/${id}/roles`, { method: "POST", body: JSON.stringify({ roles: [editUserForm.role] }) });
 
-            toast.success("บันทึกการแก้ไขข้อมูลสำเร็จ");
+            setShowSaveSuccessModal(true);
             setEditingUserId(null);
             loadUsers();
         } catch (err) { toast.error(err.message || "ระบบปฏิเสธคำขอ โปรดตรวจสอบข้อมูล"); } finally { setLoading(false); }
@@ -178,7 +183,7 @@ export default function UserAndDeptManagementPage() {
         if (!confirmDeleteUser) return;
         try {
             await apiFetch(`/users/${confirmDeleteUser.id}`, { method: "DELETE" });
-            toast.success("ลบบัญชีผู้ใช้งานสำเร็จ");
+            setShowDeleteSuccessModal(true);
             loadUsers();
         } catch (err) { toast.error("ลบไม่ได้ ข้อมูลนี้ถูกใช้งานอยู่ในระบบ"); } finally { setConfirmDeleteUser(null); }
     };
@@ -186,14 +191,19 @@ export default function UserAndDeptManagementPage() {
     const handleCreateDept = async (e) => {
         e.preventDefault();
         if (!newDeptName.trim()) return;
-        try { await apiFetch("/master/departments", { method: "POST", body: JSON.stringify({ name: newDeptName }) }); setNewDeptName(""); loadDepts(); toast.success("เพิ่มแผนกสำเร็จ"); } catch (err) { }
+        try { 
+            await apiFetch("/master/departments", { method: "POST", body: JSON.stringify({ name: newDeptName }) }); 
+            setNewDeptName(""); 
+            loadDepts(); 
+            setShowSaveSuccessModal(true); 
+        } catch (err) { }
     };
 
     const executeDeleteDept = async () => {
         if (!confirmDeleteDept) return;
         try {
             await apiFetch(`/master/departments/${confirmDeleteDept}`, { method: "DELETE" });
-            toast.success("ลบแผนกสำเร็จ");
+            setShowDeleteSuccessModal(true);
             loadDepts();
         } catch (err) { toast.error("ลบไม่ได้ แผนกนี้ยังมีพนักงานสังกัดอยู่"); } finally { setConfirmDeleteDept(null); }
     };
@@ -203,13 +213,62 @@ export default function UserAndDeptManagementPage() {
         setConfirmSavePerms(false);
         try {
             await apiFetch(`/users/roles/${selectedRoleId}/permissions`, { method: "POST", body: JSON.stringify({ permissions: rolePerms }) });
-            toast.success("อัปเดตสิทธิ์สำเร็จ (มีผลเมื่อพนักงานเข้าสู่ระบบใหม่)");
+            setShowPermsSuccessModal(true);
         } catch (err) { toast.error(err.message); } finally { setLoading(false); }
     };
 
     return (
         <AuthGate>
             <Toaster position="top-right" />
+
+            {/* --- SUCCESS MODALS --- */}
+            {/* 🪟 บันทึก เสร็จสิ้น */}
+            {showSaveSuccessModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-5 border border-emerald-200">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">บันทึกเสร็จสิ้น</h3>
+                        <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                            ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว
+                        </p>
+                        <button type="button" onClick={() => setShowSaveSuccessModal(false)} className="w-full py-3 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95">ปิดหน้าต่าง</button>
+                    </div>
+                </div>
+            )}
+
+            {/* 🪟 ลบเสร็จสิ้น */}
+            {showDeleteSuccessModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-5 border border-emerald-200">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">ลบเสร็จสิ้น</h3>
+                        <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                            ข้อมูลถูกลบออกจากระบบเรียบร้อยแล้ว
+                        </p>
+                        <button type="button" onClick={() => setShowDeleteSuccessModal(false)} className="w-full py-3 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95">ปิดหน้าต่าง</button>
+                    </div>
+                </div>
+            )}
+
+            {/* 🪟 เปลี่ยนสิทธิ์เสร็จสิ้น */}
+            {showPermsSuccessModal && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-5 border border-emerald-200">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">เปลี่ยนสิทธิ์เสร็จสิ้น</h3>
+                        <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                            อัปเดตสิทธิ์สำเร็จ<br/>(มีผลเมื่อพนักงานเข้าสู่ระบบใหม่)
+                        </p>
+                        <button type="button" onClick={() => setShowPermsSuccessModal(false)} className="w-full py-3 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95">ปิดหน้าต่าง</button>
+                    </div>
+                </div>
+            )}
 
             {/* --- MODALS --- */}
             {confirmDeleteUser && (

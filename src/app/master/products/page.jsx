@@ -8,7 +8,7 @@ import toast, { Toaster } from "react-hot-toast";
 import {
     Package, Database, RefreshCw, Plus, Trash2, Edit3,
     Check, X, Download, Eye, Layers, MapPin, Hash, ShieldCheck,
-    Box, AlertTriangle, Loader2
+    Box, AlertTriangle, Loader2, CheckCircle2
 } from "lucide-react";
 
 const MAX_NAME_LEN = 150;
@@ -36,6 +36,10 @@ export default function ProductsPage() {
     // --- Modal States ---
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [updateTarget, setUpdateTarget] = useState(null);
+
+    // 🟢 [แปะเพิ่ม] State สำหรับป็อปอัพสำเร็จ
+    const [showUpdateSuccessModal, setShowUpdateSuccessModal] = useState(false);
+    const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
 
     const load = useCallback(async () => {
         setErrMsg("");
@@ -148,6 +152,7 @@ export default function ProductsPage() {
         setUpdateTarget(id);
     }
 
+    // 🟢 วางทับฟังก์ชัน executeUpdate เดิม
     async function executeUpdate() {
         if (!updateTarget) return;
         setIsSubmitting(true);
@@ -163,7 +168,7 @@ export default function ProductsPage() {
                     locationId: editForm.locationId || undefined,
                 })
             });
-            toast.success("อัปเดตข้อมูลสำเร็จ");
+            setShowUpdateSuccessModal(true); // 🟢 สั่งเปิด Pop-up แก้ไขสำเร็จ
             setEditingId(null);
             await load();
         } catch (err) {
@@ -174,13 +179,14 @@ export default function ProductsPage() {
         }
     }
 
+    // 🟢 วางทับฟังก์ชัน executeDelete เดิม
     async function executeDelete() {
         if (!deleteTarget) return;
         setIsSubmitting(true);
         setBusyId(deleteTarget.id);
         try {
             await apiFetch(`/master/products/${deleteTarget.id}`, { method: "DELETE" });
-            toast.success(`ลบข้อมูลสำเร็จ`);
+            setShowDeleteSuccessModal(true); // 🟢 สั่งเปิด Pop-up ลบสำเร็จ
             await load();
         } catch (err) {
             toast.error("ไม่สามารถลบได้ (อาจมีข้อมูลอ้างอิงอยู่ในระบบ)");
@@ -247,11 +253,65 @@ export default function ProductsPage() {
                         </p>
                         <div className="flex w-full gap-3">
                             <button onClick={() => setUpdateTarget(null)} disabled={isSubmitting} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all">ยกเลิก</button>
-                            <button onClick={executeUpdate} disabled={isSubmitting} className="flex-1 py-3 bg-[#1F3B8B] text-white rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-blue-900 shadow-sm transition-all flex items-center justify-center gap-2"><Check className="w-4 h-4" /> ยืนยัน</button>
+                            <button
+                                onClick={executeUpdate}
+                                disabled={isSubmitting}
+                                className="flex-1 py-3 bg-emerald-600 text-white rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-emerald-700 shadow-sm transition-all flex items-center justify-center gap-2"
+                            >
+                                <Check className="w-4 h-4" /> ยืนยัน
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* 🟢 วางจุดที่ 4 ทั้ง 2 กล่องลงตรงนี้เลยครับ 🟢 */}
+
+            {/* 🪟 MODAL: แก้ไขข้อมูลสำเร็จ */}
+            {showUpdateSuccessModal && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-5 border border-emerald-200">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">แก้ไขข้อมูลสำเร็จ</h3>
+                        <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                            ระบบได้บันทึกการเปลี่ยนแปลง<br />เรียบร้อยแล้ว
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setShowUpdateSuccessModal(false)}
+                            className="w-full py-3 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all"
+                        >
+                            ปิดหน้าต่าง
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* 🪟 MODAL: ลบข้อมูลสำเร็จ */}
+            {showDeleteSuccessModal && (
+                <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-5 border border-emerald-200">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2 tracking-tight">ลบข้อมูลสำเร็จ</h3>
+                        <p className="text-sm font-semibold text-slate-500 mb-8 leading-relaxed">
+                            ข้อมูลถูกลบออกจากระบบ<br />เรียบร้อยแล้ว
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => setShowDeleteSuccessModal(false)}
+                            className="w-full py-3 bg-slate-100 text-slate-700 rounded-lg font-bold text-sm uppercase tracking-wider hover:bg-slate-200 transition-all"
+                        >
+                            ปิดหน้าต่าง
+                        </button>
+                    </div>
+                </div>
+            )}
+
+
             {/* --- End Modals --- */}
 
             <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -430,7 +490,9 @@ export default function ProductsPage() {
                                     const isEditing = editingId === p.id;
                                     return (
                                         <tr key={p.id} className={`${isEditing ? "bg-[#1F3B8B]/5" : "hover:bg-slate-50"} group transition-all`}>
-                                            <td className="py-4 px-6 font-mono font-bold text-[#1F3B8B] text-xs tracking-tight uppercase tabular-nums">{p.sku}</td>
+                                            <td className="py-4 px-6 font-black text-[#1F3B8B] text-xs tracking-tight uppercase tabular-nums">
+                                                {p.sku}
+                                            </td>
                                             <td className="py-4 px-6">
                                                 {isEditing ? (
                                                     <input className="border border-[#1F3B8B] rounded-lg px-3 py-2 w-full text-xs font-bold outline-none bg-white shadow-sm" value={editForm.name} onChange={(e) => handleEditChange('name', e.target.value)} maxLength={MAX_NAME_LEN} disabled={isSubmitting} />
@@ -498,7 +560,7 @@ export default function ProductsPage() {
                                                         <button
                                                             onClick={() => confirmSave(p.id)}
                                                             disabled={isSubmitting}
-                                                            className="p-2 rounded-lg bg-[#1F3B8B] text-white shadow-sm hover:bg-blue-900 transition-all active:scale-95 disabled:opacity-50"
+                                                            className="p-2 rounded-lg bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-50"
                                                             title="บันทึก"
                                                         >
                                                             <Check className="w-4 h-4" />
