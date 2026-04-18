@@ -4,9 +4,9 @@ import { useEffect, useRef, useState, useTransition, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { apiFetch, API_BASE } from "@/lib/api";
 import { clearAccessToken } from "@/lib/auth";
-import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera, ShieldAlert } from "lucide-react";
+import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera, ShieldAlert, Activity } from "lucide-react";
 
-// 💡 กำหนดสิทธิ์และโครงสร้างเมนู
+// 💡 1. กำหนดสิทธิ์และโครงสร้างเมนู (อัปเดตสิทธิ์ L1, L2, L3 เรียบร้อยแล้ว)
 const menuGroups = [
     {
         title: "ภาพรวมระบบ",
@@ -16,23 +16,24 @@ const menuGroups = [
         title: "ระบบใบเบิกภายใน",
         items: [
             { href: "/inventory/requisition", label: "รายการใบขอเบิกสินค้า", permissions: ["REQUISITION_READ", "REQUISITION_CREATE"] },
-            { href: "/inventory/requisition/approval", label: "อนุมัติใบเบิก", permissions: ["REQUISITION_APPROVE"] },
+            { href: "/inventory/requisition/approval", label: "อนุมัติใบเบิกพัสดุ", permissions: ["REQUISITION_APPROVE"] },
         ],
     },
     {
         title: "ระบบงานจัดซื้อ",
         items: [
-            { href: "/purchase/pr", label: "รายการใบขอซื้อ (PR)", permissions: ["PR_READ", "PR_MANAGE"] },
-            { href: "/purchase/pr/approval", label: "อนุมัติใบขอซื้อ", permissions: ["PR_APPROVE"] },
+            { href: "/purchase/pr", label: "รายการใบขอซื้อ (PR)", permissions: ["PR_READ", "PR_CREATE"] },
+            // 💡 แสดงเมนูนี้ถ้ามีสิทธิ์อนุมัติด่านใดด่านหนึ่ง (L1, L2 หรือ L3)
+            { href: "/purchase/pr/approval", label: "พิจารณาอนุมัติขอซื้อ", permissions: ["PR_APPROVE_L1", "PR_APPROVE_L2", "PR_APPROVE_L3"] },
             { href: "/purchase/create", label: "สร้างใบสั่งซื้อ (PO)", permissions: ["PO_MANAGE"] },
         ],
     },
     {
         title: "การจัดการคลังสินค้า",
         items: [
-            { href: "/inbound", label: "รับสินค้าเข้า", permissions: ["INBOUND_CREATE"] },
-            { href: "/outbound", label: "เบิกจ่ายสินค้า", permissions: ["OUTBOUND_CREATE"] },
-            { href: "/inventory/transfer", label: "ย้ายสินค้าระหว่างคลัง", permissions: ["TRANSFER_MANAGE"] },
+            { href: "/inbound", label: "รับสินค้าเข้าคลัง (GR)", permissions: ["INBOUND_CREATE"] },
+            { href: "/outbound", label: "เบิกจ่ายสินค้า (DO)", permissions: ["OUTBOUND_CREATE"] },
+            { href: "/inventory/transfer", label: "โอนย้ายระหว่างคลัง", permissions: ["TRANSFER_MANAGE"] },
             { href: "/inventory/adjust", label: "ปรับปรุงยอดสต๊อก", permissions: ["ADJUSTMENT_MANAGE"] },
         ],
     },
@@ -40,15 +41,15 @@ const menuGroups = [
         title: "สต๊อกและรายงาน",
         items: [
             { href: "/inventory/balances", label: "ยอดสินค้าคงเหลือ", permissions: ["INVENTORY_READ"] },
-            { href: "/reports/expiry", label: "ตรวจสอบวันหมดอายุสินค้า", permissions: ["REPORT_EXPORT"] },
-            { href: "/inventory/low-stock", label: "สินค้าใกล้หมด", permissions: ["INVENTORY_READ"] },
-            { href: "/inventory/agedstock", label: "สินค้าค้างสต๊อก", permissions: ["INVENTORY_READ"] },
+            { href: "/reports/expiry", label: "ตรวจสอบวันหมดอายุ", permissions: ["REPORT_EXPORT"] },
+            { href: "/inventory/low-stock", label: "สินค้าใกล้หมด (Min)", permissions: ["INVENTORY_READ"] },
+            { href: "/inventory/agedstock", label: "สินค้าค้างสต๊อก (Aged)", permissions: ["INVENTORY_READ"] },
             { href: "/history", label: "ประวัติความเคลื่อนไหว", permissions: ["MOVEMENT_READ"] },
-            { href: "/reports", label: "รายงานสรุปผล", permissions: ["REPORT_EXPORT"] },
+            { href: "/reports", label: "รายงานภาพรวม", permissions: ["REPORT_EXPORT"] },
         ],
     },
     {
-        title: "ข้อมูลหลัก",
+        title: "ฐานข้อมูลหลัก",
         items: [
             { href: "/master/products", label: "ฐานข้อมูลสินค้า", permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"] },
             { href: "/master/suppliers", label: "ฐานข้อมูลคู่ค้า", permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"] },
@@ -59,8 +60,8 @@ const menuGroups = [
     {
         title: "ความปลอดภัยและระบบ",
         items: [
-            { href: "/users", label: "จัดการสิทธิ์ผู้ใช้งาน", permissions: ["USER_MANAGE"] },
-            { href: "/company", label: "จัดการข้อมูลบริษัท", permissions: ["SYSTEM_SETTINGS_MANAGE"] },
+            { href: "/users", label: "จัดการพนักงานและสิทธิ์", permissions: ["USER_MANAGE"] },
+            { href: "/company", label: "ตั้งค่าข้อมูลบริษัท", permissions: ["SYSTEM_SETTINGS_MANAGE"] },
             { href: "/audit", label: "ประวัติการใช้งาน (Audit)", permissions: ["AUDIT_LOG_VIEW"] },
         ],
     },
@@ -74,8 +75,8 @@ function MenuButton({ href, label, isActive, onNavigate, isPending }) {
             className={`group relative flex w-full items-center justify-between overflow-hidden rounded-2xl px-4 py-3 text-left text-sm font-medium
                 transition-all duration-300 ease-out active:scale-[0.98]
                 ${isActive
-                    ? "bg-gradient-to-r from-[#1e3b8a] to-[#2563eb] text-white shadow-md shadow-blue-900/20"
-                    : "text-slate-600 hover:bg-blue-50/80 hover:text-[#1e3b8a]"
+                    ? "bg-gradient-to-r from-[#1F3B8B] to-[#2563eb] text-white shadow-md shadow-blue-900/20"
+                    : "text-slate-600 hover:bg-blue-50/80 hover:text-[#1F3B8B]"
                 }
                 ${isPending && !isActive ? "opacity-50" : "opacity-100"}
             `}
@@ -108,7 +109,6 @@ export default function AppShell({ children }) {
 
     const [isUploading, setIsUploading] = useState(false);
 
-    // สร้าง List เมนูทั้งหมดแบบราบ (Flat) เพื่อใช้เช็คความซ้ำซ้อนของ Path
     const allMenuItems = useMemo(() => menuGroups.flatMap(g => g.items), []);
 
     useEffect(() => {
@@ -168,7 +168,7 @@ export default function AppShell({ children }) {
                 if (!hasAccess) {
                     setAccessModal({
                         isOpen: true,
-                        message: "บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้านี้ ระบบจะพาคุณกลับไปยังหน้าหลัก",
+                        message: "บัญชีของคุณไม่มีสิทธิ์เข้าถึงหน้านี้ ระบบจะพาคุณกลับไปยังหน้าแดชบอร์ด",
                         shouldRedirect: true
                     });
                     return;
@@ -179,44 +179,27 @@ export default function AppShell({ children }) {
         setIsAuthorized(true);
     };
 
-    useEffect(() => {
-        const savedScrollPos = sessionStorage.getItem("sidebar-scroll");
-        if (sidebarRef.current && savedScrollPos) {
-            sidebarRef.current.scrollTop = parseInt(savedScrollPos, 10);
-        }
-    }, [path]);
-
-    useEffect(() => {
-        setPendingHref(null);
-    }, [path]);
-
-    const handleScroll = () => {
-        if (sidebarRef.current) {
-            sessionStorage.setItem("sidebar-scroll", String(sidebarRef.current.scrollTop));
-        }
-    };
-
     const handleNavigate = (href) => {
         if (href === path) return;
         
         if (userPerms) {
-           let targetItem = null;
-           for (const group of menuGroups) {
-               targetItem = group.items.find(item => item.href === href);
-               if(targetItem) break;
-           }
-           
-           if(targetItem && targetItem.permissions.length > 0) {
-               const hasAccess = targetItem.permissions.some(p => userPerms.includes(p));
-               if(!hasAccess) {
-                   setAccessModal({
-                       isOpen: true,
-                       message: "คุณไม่มีสิทธิ์เข้าถึงเมนูนี้ กรุณาติดต่อผู้ดูแลระบบ",
-                       shouldRedirect: false
-                   });
-                   return; 
-               }
-           }
+            let targetItem = null;
+            for (const group of menuGroups) {
+                targetItem = group.items.find(item => item.href === href);
+                if(targetItem) break;
+            }
+            
+            if(targetItem && targetItem.permissions.length > 0) {
+                const hasAccess = targetItem.permissions.some(p => userPerms.includes(p));
+                if(!hasAccess) {
+                    setAccessModal({
+                        isOpen: true,
+                        message: "คุณไม่มีสิทธิ์เข้าถึงเมนูนี้ กรุณาติดต่อผู้ดูแลระบบ",
+                        shouldRedirect: false
+                    });
+                    return; 
+                }
+            }
         }
 
         setPendingHref(href);
@@ -228,29 +211,21 @@ export default function AppShell({ children }) {
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         if (file.size > 2 * 1024 * 1024) {
             alert("ไฟล์รูปภาพต้องมีขนาดไม่เกิน 2MB");
             return;
         }
-
         const formData = new FormData();
         formData.append("avatar", file);
-
         try {
             setIsUploading(true);
-            const res = await apiFetch("/auth/avatar", {
-                method: "POST",
-                body: formData
-            });
-
+            const res = await apiFetch("/auth/avatar", { method: "POST", body: formData });
             if (res && res.avatarUrl) {
                 setUserAvatar(res.avatarUrl);
-                alert("อัปโหลดรูปโปรไฟล์สำเร็จ");
+                toast.success("อัปโหลดรูปโปรไฟล์สำเร็จ");
             }
         } catch (error) {
-            console.error("Upload failed", error);
-            alert("อัปโหลดรูปภาพล้มเหลว: " + error.message);
+            toast.error("อัปโหลดรูปภาพล้มเหลว: " + error.message);
         } finally {
             setIsUploading(false);
         }
@@ -258,21 +233,10 @@ export default function AppShell({ children }) {
 
     async function logout() {
         if (!confirm("ยืนยันการออกจากระบบ?")) return;
-        try {
-            await apiFetch("/auth/logout", { method: "POST" });
-        } catch (e) {
-            console.error("Logout error", e);
-        }
+        try { await apiFetch("/auth/logout", { method: "POST" }); } catch (e) { }
         clearAccessToken();
         window.location.href = "/login";
     }
-
-    const getAvatarSrc = () => {
-        if (!userAvatar) return null;
-        if (userAvatar.startsWith('http')) return userAvatar;
-        const baseUrl = API_BASE.replace('/api', '');
-        return `${baseUrl}${userAvatar}`;
-    };
 
     const filteredMenuGroups = useMemo(() => {
         if (!userPerms) return [];
@@ -296,141 +260,106 @@ export default function AppShell({ children }) {
 
     if (path === "/login") return <>{children}</>;
 
-    const avatarSrc = getAvatarSrc();
+    const avatarSrc = userAvatar ? (userAvatar.startsWith('http') ? userAvatar : `${API_BASE.replace('/api', '')}${userAvatar}`) : null;
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900 relative">
+        <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans selection:bg-blue-100 selection:text-[#1F3B8B] relative">
             
             {/* Modal แจ้งเตือนสิทธิ์ */}
             {accessModal.isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl shadow-rose-900/20 transform transition-all animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex flex-col items-center text-center space-y-4">
-                            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center">
-                                <ShieldAlert className="w-8 h-8 text-rose-600" />
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                    <div className="bg-white rounded-[2.5rem] p-8 md:p-10 max-w-sm w-full shadow-2xl transform transition-all animate-in fade-in zoom-in-95 duration-300">
+                        <div className="flex flex-col items-center text-center space-y-6">
+                            <div className="w-20 h-20 bg-rose-50 border-4 border-rose-100 rounded-3xl flex items-center justify-center shadow-sm">
+                                <ShieldAlert className="w-10 h-10 text-rose-500" />
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-xl font-black text-slate-800 tracking-tight">การเข้าถึงถูกปฏิเสธ</h3>
-                                <p className="text-sm text-slate-500 leading-relaxed">
+                                <h3 className="text-2xl font-black text-slate-800 tracking-tighter">การเข้าถึงถูกจำกัด</h3>
+                                <p className="text-sm font-bold text-slate-400 leading-relaxed">
                                     {accessModal.message}
                                 </p>
                             </div>
-                            <div className="w-full pt-4">
-                                <button
-                                    onClick={handleCloseModal}
-                                    className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-sm font-bold rounded-2xl transition-all shadow-md shadow-slate-900/20"
-                                >
-                                    รับทราบ
-                                </button>
-                            </div>
+                            <button
+                                onClick={handleCloseModal}
+                                className="w-full py-4 bg-[#1F3B8B] hover:bg-blue-900 active:scale-[0.98] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg"
+                            >
+                                เข้าใจแล้ว
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
             <div className="flex min-h-screen">
+                {/* SIDEBAR */}
                 <aside
                     ref={sidebarRef}
-                    onScroll={handleScroll}
-                    className="sticky top-0 h-screen w-[300px] overflow-y-auto border-r border-slate-200/60 bg-white/80 backdrop-blur-xl print:hidden flex-shrink-0 custom-scrollbar flex flex-col"
+                    className="sticky top-0 h-screen w-[320px] overflow-y-auto border-r border-slate-200/60 bg-white/90 backdrop-blur-2xl print:hidden flex-shrink-0 custom-scrollbar flex flex-col"
                 >
-                    <div className="flex-1 flex flex-col px-5 py-6">
-
-                        {/* BRAND LOGO */}
-                        <div className="mb-8 space-y-5">
-                            <div className="flex items-center gap-3 px-1">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-[0.85rem] bg-gradient-to-br from-[#1e3b8a] to-[#2563eb] text-white shadow-md font-black text-sm tracking-wider">
+                    <div className="flex-1 flex flex-col px-6 py-8">
+                        {/* BRAND */}
+                        <div className="mb-10 space-y-6">
+                            <div className="flex items-center gap-4 px-1">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1F3B8B] to-[#2563eb] text-white shadow-xl font-black text-sm tracking-wider">
                                     TJC
                                 </div>
-                                <div className="min-w-0">
-                                    <h1 className="text-base font-black text-slate-800 tracking-tight uppercase">
-                                        Stock System
+                                <div>
+                                    <h1 className="text-lg font-black text-slate-900 tracking-tighter uppercase leading-none">
+                                        Stock Manager
                                     </h1>
-                                    <div className="flex items-center gap-1">
-                                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                            Enterprise Portal
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                                            Enterprise v2.0
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* USER PROFILE CARD */}
-                            <div className="flex items-center gap-3 rounded-2xl bg-white p-3 border border-blue-100 shadow-sm shadow-blue-900/5">
+                            {/* USER PROFILE */}
+                            <div className="flex items-center gap-4 rounded-[1.5rem] bg-slate-50 border border-slate-200/60 p-4 shadow-sm">
                                 <div
                                     onClick={() => !isUploading && fileInputRef.current.click()}
-                                    className={`relative group flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[#1e3b8a] overflow-hidden border border-blue-100/50 cursor-pointer transition-all hover:ring-2 hover:ring-blue-400/50 ${isUploading ? "animate-pulse opacity-50" : ""}`}
+                                    className={`relative group flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#1F3B8B] overflow-hidden border-2 border-white shadow-md cursor-pointer transition-all hover:scale-105 ${isUploading ? "animate-pulse opacity-50" : ""}`}
                                 >
-                                    {avatarSrc ? (
-                                        <img
-                                            src={avatarSrc}
-                                            alt="Profile"
-                                            className="h-full w-full object-cover"
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                                e.target.parentElement.classList.add('flex-col');
-                                            }}
-                                        />
-                                    ) : (
-                                        <UserCircle className="w-5 h-5" />
-                                    )}
+                                    {avatarSrc ? <img src={avatarSrc} alt="P" className="h-full w-full object-cover" /> : <UserCircle size={24} />}
                                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Camera className="w-4 h-4 text-white" />
                                     </div>
                                 </div>
                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                                 <div className="min-w-0 flex-1">
-                                    <div className="flex flex-col">
-                                        <p className="text-sm font-bold text-[#1e3b8a] truncate tracking-wide">
-                                            {userFullName === null ? (
-                                                <span className="animate-pulse text-slate-400">กำลังโหลด...</span>
-                                            ) : (
-                                                userFullName
-                                            )}
-                                        </p>
-                                        {userRole && (
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5 truncate">
-                                                {userRole}
-                                            </p>
-                                        )}
-                                    </div>
+                                    <p className="text-sm font-black text-slate-900 truncate">
+                                        {userFullName || "กำลังโหลด..."}
+                                    </p>
+                                    <p className="text-[10px] font-black text-[#1F3B8B] uppercase tracking-widest mt-0.5 truncate bg-blue-100/50 w-fit px-2 py-0.5 rounded-md">
+                                        {userRole || "-"}
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* NAVIGATION SECTION */}
-                        <nav className="flex-1 space-y-8">
+                        {/* NAV MENU */}
+                        <nav className="flex-1 space-y-10">
                             {userPerms === null ? (
-                                <div className="animate-pulse space-y-4 opacity-50 px-2">
-                                    <div className="h-4 bg-slate-200 rounded w-1/3"></div>
-                                    <div className="h-10 bg-slate-200 rounded-xl"></div>
-                                    <div className="h-10 bg-slate-200 rounded-xl"></div>
+                                <div className="animate-pulse space-y-6 opacity-40 px-2">
+                                    {[1,2,3].map(i => <div key={i} className="h-20 bg-slate-100 rounded-2xl" />)}
                                 </div>
                             ) : (
                                 filteredMenuGroups.map((group) => (
-                                    <section key={group.title} className="space-y-3">
-                                        <div className="px-2 flex items-center gap-2">
-                                            <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">{group.title}</p>
-                                            <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
+                                    <section key={group.title} className="space-y-4">
+                                        <div className="px-2 flex items-center gap-3">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{group.title}</p>
+                                            <div className="h-[1px] flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             {group.items.map((n) => {
-                                                // 💡 แก้ไข Logic: ค้นหาว่ามีเมนูอื่นในระบบที่ "ตรงกว่า" (href ยาวกว่า) หรือไม่
                                                 const isBetterMatchInMenu = allMenuItems.some(other => 
-                                                    other.href !== n.href && 
-                                                    path.startsWith(other.href) && 
-                                                    other.href.length > n.href.length
+                                                    other.href !== n.href && path.startsWith(other.href) && other.href.length > n.href.length
                                                 );
-
-                                                const isActive = 
-                                                    path === n.href || 
-                                                    (n.href !== "/dashboard" && 
-                                                     path.startsWith(n.href + "/") && 
-                                                     !isBetterMatchInMenu);
-                                                     
-                                                const itemPending = isPending && pendingHref === n.href;
+                                                const isActive = path === n.href || (n.href !== "/dashboard" && path.startsWith(n.href + "/") && !isBetterMatchInMenu);
                                                 
-                                                return <MenuButton key={n.href} href={n.href} label={n.label} isActive={isActive} isPending={itemPending} onNavigate={handleNavigate} />;
+                                                return <MenuButton key={n.href} href={n.href} label={n.label} isActive={isActive} isPending={isPending && pendingHref === n.href} onNavigate={handleNavigate} />;
                                             })}
                                         </div>
                                     </section>
@@ -439,22 +368,25 @@ export default function AppShell({ children }) {
                         </nav>
                     </div>
 
-                    <div className="px-5 pb-6 pt-4 bottom-0 bg-white/80 backdrop-blur-xl border-t border-slate-100/60">
+                    {/* LOGOUT */}
+                    <div className="px-6 pb-8 pt-4 bg-white/50 border-t border-slate-100">
                         <button
                             onClick={logout}
-                            className="group relative flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-100 bg-slate-50/50 px-4 py-3 text-sm font-bold text-slate-500 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600 hover:shadow-sm active:scale-95"
+                            className="group flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-slate-100 bg-white px-4 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600 active:scale-95 shadow-sm"
                         >
-                            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                            <LogOut className="w-4 h-4" />
                             <span>ออกจากระบบ</span>
                         </button>
                     </div>
                 </aside>
 
-                <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
-                    <div className={`w-full min-h-[calc(100vh-4rem)] rounded-4xl border border-slate-200/60 bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-all duration-500 md:p-10 ${isPending ? "opacity-50 blur-[2px] grayscale-[20%]" : "opacity-100"}`}>
+                {/* CONTENT AREA */}
+                <main className="flex-1 p-4 md:p-8 lg:p-10 overflow-x-hidden bg-slate-50/50">
+                    <div className={`w-full min-h-[calc(100vh-5rem)] rounded-[3rem] border border-slate-200/60 bg-white p-6 shadow-xl shadow-slate-200/50 transition-all duration-500 md:p-12 ${isPending ? "opacity-40 blur-[1px]" : "opacity-100"}`}>
                         {isAuthorized ? children : (
-                            <div className="flex h-full items-center justify-center">
-                                <span className="animate-pulse text-slate-400 font-bold">ตรวจสอบสิทธิ์ความปลอดภัย...</span>
+                            <div className="flex h-full flex-col items-center justify-center space-y-4">
+                                <Activity className="w-10 h-10 text-blue-200 animate-bounce" />
+                                <span className="text-slate-400 font-black text-xs uppercase tracking-[0.3em]">Security Checking...</span>
                             </div>
                         )}
                     </div>
@@ -464,7 +396,8 @@ export default function AppShell({ children }) {
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
             `}</style>
         </div>
     );

@@ -458,7 +458,8 @@ export default function ApprovePRPage() {
                                 : "bg-amber-50 text-amber-600 border-amber-200"
                             }`}
                           >
-                            {pr.status === "PENDING"
+                         
+                            {pr.status?.startsWith("PENDING")
                               ? "รออนุมัติ"
                               : pr.status === "APPROVED"
                               ? "อนุมัติแล้ว"

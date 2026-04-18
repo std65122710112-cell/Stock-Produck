@@ -162,7 +162,7 @@ export default function FacilityMatrixDashboard() {
     if (isLoading) return <SystemLoader />;
     return (
         <AuthGate>
-            <div className="min-h-screen bg-[#f8fafc] p-6 lg:p-10 font-sans text-slate-900 selection:bg-blue-100">
+            <div className="min-h-screen  p-6 lg:p-10 font-sans text-slate-900 selection:bg-blue-100">
 
                 {/* --- HEADER --- */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end border-b border-slate-200 pb-8 mb-10 gap-6">

@@ -41,18 +41,32 @@ export default function PRListPage() {
         loadPRs();
     }, []);
 
+    // 💡 ปรับปรุงฟังก์ชันนี้ให้รองรับ PENDING_L1, L2, L3 พร้อมแบ่งสีให้สวยงาม
     const getStatusBadge = (status) => {
-        const baseClass = "px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm flex items-center gap-1.5 w-fit mx-auto";
-        if (status === 'PENDING') return <span className={`${baseClass} bg-amber-50 text-amber-600 border-amber-100`}><Clock className="w-3.5 h-3.5" /> รออนุมัติ</span>;
-        if (status === 'APPROVED') return <span className={`${baseClass} bg-emerald-50 text-emerald-600 border-emerald-100`}><CheckCircle2 className="w-3.5 h-3.5" /> อนุมัติแล้ว</span>;
-        if (status === 'REJECTED') return <span className={`${baseClass} bg-rose-50 text-rose-600 border-rose-100`}><XCircle className="w-3.5 h-3.5" /> ปฏิเสธ</span>;
-        return <span className={`${baseClass} bg-slate-50 text-slate-600 border-slate-200`}>{status}</span>;
+        const baseClass = "px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm flex items-center gap-1.5 w-fit mx-auto whitespace-nowrap";
+        
+        switch (status) {
+            case "PENDING_L1":
+                return <span className={`${baseClass} bg-amber-50 text-amber-600 border-amber-200`}><Clock className="w-3.5 h-3.5" /> รออนุมัติ (ผู้จัดการ)</span>;
+            case "PENDING_L2":
+                return <span className={`${baseClass} bg-purple-50 text-purple-600 border-purple-200`}><Clock className="w-3.5 h-3.5" /> รออนุมัติ (ผู้อำนวยการ)</span>;
+            case "PENDING_L3":
+                return <span className={`${baseClass} bg-fuchsia-50 text-fuchsia-600 border-fuchsia-200`}><Clock className="w-3.5 h-3.5" /> รออนุมัติ (CEO)</span>;
+            case "APPROVED":
+                return <span className={`${baseClass} bg-emerald-50 text-emerald-600 border-emerald-200`}><CheckCircle2 className="w-3.5 h-3.5" /> อนุมัติแล้ว</span>;
+            case "REJECTED":
+                return <span className={`${baseClass} bg-rose-50 text-rose-600 border-rose-200`}><XCircle className="w-3.5 h-3.5" /> ปฏิเสธ</span>;
+            default:
+                if (status?.startsWith("PENDING")) {
+                    return <span className={`${baseClass} bg-amber-50 text-amber-600 border-amber-200`}><Clock className="w-3.5 h-3.5" /> รอพิจารณา</span>;
+                }
+                return <span className={`${baseClass} bg-slate-50 text-slate-500 border-slate-200`}>{status || "ไม่ทราบสถานะ"}</span>;
+        }
     };
 
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            {/* ปรับขยายความกว้างตรงนี้: อิงตามโครงสร้าง Container ธีมหลัก */}
             <div className="w-[98%] max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
                 {/* HEADER SECTION */}
@@ -82,7 +96,7 @@ export default function PRListPage() {
                     </div>
                 </div>
 
-                {/* SUMMARY STATS (ปรับให้เป็น Grid Card แบบธีมหลัก) */}
+                {/* SUMMARY STATS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="bg-white border border-slate-200 border-l-4 border-l-slate-400 p-5 rounded-xl flex items-center gap-4 shadow-sm transition-all hover:shadow-md">
                         <div className="p-2.5 bg-white rounded-lg shadow-sm border border-slate-100">
