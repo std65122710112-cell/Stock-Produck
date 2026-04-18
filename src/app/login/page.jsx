@@ -9,20 +9,20 @@ import {
     ShieldCheck,
     Lock,
     User,
-    KeyRound,
     ShieldAlert,
     Eye,
     EyeOff,
     Package,
-    ScanLine,
     ArrowRight,
-    CircleCheckBig
+    CircleCheckBig,
+    CheckCircle2
 } from "lucide-react";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -31,6 +31,22 @@ export default function LoginPage() {
 
     useEffect(() => {
         setMounted(true);
+        // 💡 ดึงค่า Username และ Password ที่เคยจดจำไว้
+        const savedUsername = localStorage.getItem("tjc_remember_user");
+        const savedPassword = localStorage.getItem("tjc_remember_pass");
+        
+        if (savedUsername) {
+            setUsername(savedUsername);
+            setRememberMe(true);
+            if (savedPassword) {
+                try {
+                    // ถอดรหัสที่ถูกเข้ารหัสไว้กลับมาเป็นข้อความปกติ
+                    setPassword(atob(savedPassword));
+                } catch (e) {
+                    console.error("Failed to decode password");
+                }
+            }
+        }
     }, []);
 
     const handleMouseMove = (e) => {
@@ -86,8 +102,16 @@ export default function LoginPage() {
             // บันทึก Token ลงระบบ
             setAccessToken(res.accessToken);
 
-            // 💡 [SECURITY & UX] วิเคราะห์ JWT เพื่อหาว่าควรพา User ไปหน้าไหน
-            let targetRoute = "/dashboard"; // หน้า Default
+            // 💡 ถ้าผู้ใช้กดจดจำรหัสผ่าน ให้บันทึกทั้ง Username และ Password (เข้ารหัส Base64 ป้องกันการมองเห็นตรงๆ)
+            if (rememberMe) {
+                localStorage.setItem("tjc_remember_user", username.trim());
+                localStorage.setItem("tjc_remember_pass", btoa(password));
+            } else {
+                localStorage.removeItem("tjc_remember_user");
+                localStorage.removeItem("tjc_remember_pass");
+            }
+
+            let targetRoute = "/dashboard"; 
             
             try {
                 if (res.accessToken) {
@@ -99,7 +123,6 @@ export default function LoginPage() {
                     const payload = JSON.parse(jsonPayload);
                     const userPerms = payload.perms || [];
 
-                    // ถ้าไม่มีสิทธิ์ดูหน้า Dashboard ให้ไล่หาหน้าที่ตรงกับสิทธิ์การทำงาน
                     if (!userPerms.includes("DASHBOARD_VIEW") && userPerms.length > 0) {
                         if (userPerms.includes("REQUISITION_READ") || userPerms.includes("REQUISITION_CREATE")) targetRoute = "/inventory/requisition";
                         else if (userPerms.includes("PR_READ") || userPerms.includes("PR_CREATE")) targetRoute = "/purchase/pr";
@@ -112,7 +135,6 @@ export default function LoginPage() {
                 }
             } catch (decodeError) {
                 console.error("Token decoding failed", decodeError);
-                // ถ้าแกะ Token ไม่ได้ ให้ลองไปหน้าเบสิคก่อน
                 targetRoute = "/inventory/requisition";
             }
 
@@ -138,11 +160,9 @@ export default function LoginPage() {
                 }
             );
 
-            // 💡 สั่งเปลี่ยนหน้าไปยัง Route ที่วิเคราะห์แล้วว่าเข้าได้แน่นอน
             router.replace(targetRoute);
 
         } catch (err) {
-            // ดึงข้อความแจ้งเตือนที่แท้จริงจาก Backend มาแสดงผล
             const errorMessage = (err.message === "Unauthorized") 
                 ? "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" 
                 : (err.message || "ไม่สามารถเชื่อมต่อกับระบบได้ในขณะนี้");
@@ -184,6 +204,13 @@ export default function LoginPage() {
                     background-size: 400% 400%;
                     animation: gradientShift 10s ease infinite;
                 }
+                
+                /* 💡 ซ่อนไอคอนดวงตาของ Browser ป้องกันการซ้อนทับ */
+                input[type="password"]::-ms-reveal,
+                input[type="password"]::-ms-clear {
+                    display: none;
+                }
+
                 @keyframes gradientShift {
                     0% { background-position: 0% 50%; }
                     50% { background-position: 100% 50%; }
@@ -237,7 +264,6 @@ export default function LoginPage() {
                         style={{ transitionDelay: '200ms' }}
                     >
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-2 sm:mb-3">
-
                             <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
                                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1D4ED8] via-[#1E40AF] to-[#1D4ED8]">
                                     เข้าสู่ระบบ
@@ -264,7 +290,6 @@ export default function LoginPage() {
                             <div className="relative group">
                                 <input
                                     type="text"
-                                    // 💡 ป้องกันการใส่ข้อมูลยาวเกินไปจนแอปค้าง
                                     maxLength={50} 
                                     className="w-full border border-gray-200 bg-gray-50/50 rounded-xl p-3 sm:p-3.5 text-xs sm:text-sm font-medium text-gray-900 outline-none focus:bg-white focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 disabled:opacity-50 transition-all pl-10 sm:pl-11 duration-300"
                                     placeholder="กรอกชื่อผู้ใช้งาน..."
@@ -284,7 +309,6 @@ export default function LoginPage() {
                             <div className="relative group">
                                 <input
                                     type={showPassword ? "text" : "password"}
-                                    // 💡 ป้องกันการใส่ข้อมูลยาวเกินไป
                                     maxLength={100} 
                                     className="w-full border border-gray-200 bg-gray-50/50 rounded-xl p-3 sm:p-3.5 text-xs sm:text-sm font-medium text-gray-900 outline-none focus:bg-white focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 disabled:opacity-50 transition-all pl-10 sm:pl-11 pr-10 sm:pr-11 duration-300"
                                     placeholder="••••••••••••"
@@ -303,6 +327,24 @@ export default function LoginPage() {
                                     {showPassword ? <EyeOff className="w-4 h-4 sm:w-4.5 sm:h-4.5" /> : <Eye className="w-4 h-4 sm:w-4.5 sm:h-4.5" />}
                                 </button>
                             </div>
+                        </div>
+
+                        <div className={`flex items-center justify-between fade-up ${mounted ? 'active' : ''}`} style={{ transitionDelay: '650ms' }}>
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <div className="relative flex items-center justify-center">
+                                    <input 
+                                        type="checkbox" 
+                                        className="peer sr-only" 
+                                        checked={rememberMe}
+                                        onChange={(e) => setRememberMe(e.target.checked)}
+                                    />
+                                    <div className="w-4 h-4 border-2 border-slate-300 rounded transition-all peer-checked:bg-[#1E3A8A] peer-checked:border-[#1E3A8A] group-hover:border-[#1E3A8A]"></div>
+                                    <CheckCircle2 className="w-3 h-3 text-white absolute opacity-0 peer-checked:opacity-100 transition-opacity" />
+                                </div>
+                                <span className="text-xs sm:text-sm font-medium text-slate-600 group-hover:text-[#1E3A8A] transition-colors select-none">
+                                    จดจำชื่อผู้ใช้งานและรหัสผ่าน
+                                </span>
+                            </label>
                         </div>
 
                         <div className={`fade-up ${mounted ? 'active' : ''}`} style={{ transitionDelay: '700ms' }}>
