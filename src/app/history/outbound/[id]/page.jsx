@@ -195,13 +195,6 @@ export default function DeliveryOrderDetailPage({ params }) {
                </div>
             </div>
           </div>
-
-          {/* ข้อมูลระบบด้านล่างสุด */}
-          <div className="text-center pt-4 pb-12 opacity-30">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.6em]">
-              Inventory Management Registry • TJC Group Enterprise Portal
-            </p>
-          </div>
         </div>
       </div>
     </AuthGate>

@@ -51,7 +51,7 @@ export default function CompanySettingsPage() {
     };
 
     const executeSave = async () => {
-        setShowConfirmModal(false); // ปิดป็อปอัพยืนยันก่อน
+        setShowConfirmModal(false);
         setIsSaving(true);
         try {
             await apiFetch("/api/settings/company", {
@@ -59,10 +59,7 @@ export default function CompanySettingsPage() {
                 body: JSON.stringify(formData)
             });
             
-            // 💡 เพิ่มบรรทัดนี้เพื่อเปิดป็อปอัพสำเร็จ
             setShowSuccessModal(true); 
-            
-            // (เลือกเอา) ถ้ามีป็อปอัพแล้ว จะเอา toast ออกหรือเก็บไว้ก็ได้ครับ
             toast.success("บันทึกข้อมูลบริษัทเรียบร้อยแล้ว"); 
             
         } catch (error) {
@@ -78,7 +75,6 @@ export default function CompanySettingsPage() {
         <AuthGate>
             <Toaster position="top-right" />
 
-            {/* --- CONFIRMATION MODAL --- */}
             {showConfirmModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
                     <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
@@ -107,8 +103,6 @@ export default function CompanySettingsPage() {
                 </div>
             )}
 
-
-            {/* 💡 ส่วนที่ 3: เพิ่มตรงนี้ครับ (SUCCESS MODAL) */}
             {showSuccessModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 p-4">
                     <div className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
@@ -130,12 +124,10 @@ export default function CompanySettingsPage() {
                 </div>
             )}
 
-            {/* พื้นหลังเทาอ่อนเพื่อให้ Content ขาวเด่นขึ้น */}
             <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
 
                 <div className="max-w-[1400px] mx-auto space-y-8">
 
-                    {/* --- HEADER SECTION --- */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200 pb-8">
                         <div className="flex items-center gap-5">
                             <div className="w-12 h-12 bg-white text-[#1F3B8B] rounded-xl shadow-sm border border-slate-200 flex items-center justify-center shrink-0">
@@ -151,13 +143,10 @@ export default function CompanySettingsPage() {
                                 </p>
                             </div>
                         </div>
-
-
                     </div>
 
                     <form onSubmit={handlePreSubmit} className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
 
-                        {/* --- LEFT COL: LOGO UPLOAD --- */}
                         <div className="xl:col-span-4 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm sticky top-8">
                             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2.5 mb-6 border-b border-slate-100 pb-4">
                                 <ImageIcon className="w-5 h-5 text-[#1F3B8B]" /> โลโก้บริษัท (Company Logo)
@@ -189,10 +178,8 @@ export default function CompanySettingsPage() {
                             </div>
                         </div>
 
-                        {/* --- RIGHT COL: FORM DATA --- */}
                         <div className="xl:col-span-8 space-y-8">
 
-                            {/* 1. Basic Info */}
                             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
                                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2.5 border-b border-slate-100 pb-4">
                                     <Building2 className="w-5 h-5 text-[#1F3B8B]" /> ข้อมูลพื้นฐานองค์กร (General Information)
@@ -227,7 +214,6 @@ export default function CompanySettingsPage() {
                                 </div>
                             </div>
 
-                            {/* 2. Address Info */}
                             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
                                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2.5 border-b border-slate-100 pb-4">
                                     <Navigation className="w-5 h-5 text-[#1F3B8B]" /> ที่อยู่และที่ตั้ง (Address Details)
@@ -255,7 +241,6 @@ export default function CompanySettingsPage() {
                                 </div>
                             </div>
 
-                            {/* 3. Contact Info */}
                             <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
                                 <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2.5 border-b border-slate-100 pb-4">
                                     <Phone className="w-5 h-5 text-[#1F3B8B]" /> ข้อมูลติดต่อ (Contact Information)
@@ -266,7 +251,6 @@ export default function CompanySettingsPage() {
                                 </div>
                             </div>
 
-                            {/* --- ACTION BUTTON --- */}
                             <div className="flex justify-end pt-4">
                                 <button
                                     disabled={isSaving}
@@ -286,7 +270,6 @@ export default function CompanySettingsPage() {
     );
 }
 
-// --- SUB-COMPONENT ---
 function FormInput({ label, value, onChange, placeholder, type = "text", icon, isTabular = false, required = false }) {
     return (
         <div className="space-y-2 relative">

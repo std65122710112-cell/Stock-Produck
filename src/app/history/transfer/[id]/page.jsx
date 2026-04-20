@@ -211,12 +211,6 @@ export default function TransferDetailPage({ params }) {
                </div>
             </div>
           </div>
-
-          <div className="text-center pt-6 pb-12 opacity-30">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.6em]">
-              Internal Asset Transfer Ledger • TJC Group Enterprise Portal
-            </p>
-          </div>
         </div>
       </div>
     </AuthGate>

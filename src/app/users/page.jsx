@@ -13,7 +13,6 @@ import {
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,30}$/;
 
-// 💡 ชื่อตำแหน่งภาษาไทยสำหรับแสดงผล
 const ROLE_DISPLAY_NAMES = {
     "Admin": "ผู้ดูแลระบบ (Admin)",
     "CEO": "ประธานเจ้าหน้าที่บริหาร (CEO)",
@@ -26,7 +25,6 @@ const ROLE_DISPLAY_NAMES = {
 
 const AVAILABLE_ROLES = Object.values(ROLE_DISPLAY_NAMES);
 
-// 💡 จัดกลุ่มสิทธิ์แยกตามหน้าที่ของแต่ละตำแหน่ง (ภาษาไทย)
 const ROLE_BASED_PERMISSIONS = {
     "กลุ่มสิทธิ์สำหรับผู้บริหาร / ผู้อนุมัติ": {
         "DASHBOARD_VIEW": { label: "ดูหน้าภาพรวมระบบ", desc: "เข้าถึง Dashboard และสถิติสำคัญ" },
@@ -68,7 +66,6 @@ export default function UserAndDeptManagementPage() {
     const [loading, setLoading] = useState(false);
     const [showAddForm, setShowAddForm] = useState(false);
     
-    // State สำหรับ UI การพับ/เปิด กลุ่มสิทธิ์
     const [expandedGroups, setExpandedGroups] = useState(Object.keys(ROLE_BASED_PERMISSIONS));
 
     const [userRows, setUserRows] = useState([]);
@@ -93,7 +90,6 @@ export default function UserAndDeptManagementPage() {
     const [confirmDeleteDept, setConfirmDeleteDept] = useState(null);
     const [confirmSavePerms, setConfirmSavePerms] = useState(false);
 
-    // 🟢 State สำหรับ Pop-up สำเร็จ
     const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
     const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
     const [showPermsSuccessModal, setShowPermsSuccessModal] = useState(false);
@@ -221,8 +217,6 @@ export default function UserAndDeptManagementPage() {
         <AuthGate>
             <Toaster position="top-right" />
 
-            {/* --- SUCCESS MODALS --- */}
-            {/* 🪟 บันทึก เสร็จสิ้น */}
             {showSaveSuccessModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
@@ -238,7 +232,6 @@ export default function UserAndDeptManagementPage() {
                 </div>
             )}
 
-            {/* 🪟 ลบเสร็จสิ้น */}
             {showDeleteSuccessModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
@@ -254,7 +247,6 @@ export default function UserAndDeptManagementPage() {
                 </div>
             )}
 
-            {/* 🪟 เปลี่ยนสิทธิ์เสร็จสิ้น */}
             {showPermsSuccessModal && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
@@ -270,7 +262,6 @@ export default function UserAndDeptManagementPage() {
                 </div>
             )}
 
-            {/* --- MODALS --- */}
             {confirmDeleteUser && (
                 <ConfirmModal 
                     title="ยืนยันการลบผู้ใช้งาน?" 
@@ -299,10 +290,8 @@ export default function UserAndDeptManagementPage() {
                 />
             )}
 
-            {/* --- MAIN PAGE --- */}
             <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 min-h-screen">
                 
-                {/* HEADER SECTION */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-slate-200 pb-8">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-slate-200/50 flex items-center justify-center border border-slate-300 shadow-sm shrink-0">
@@ -320,7 +309,6 @@ export default function UserAndDeptManagementPage() {
                     </div>
                 </div>
 
-                {/* TAB NAVIGATION */}
                 <div className="flex gap-2 border-b border-slate-200 overflow-x-auto custom-scrollbar pb-1">
                     <TabBtn active={activeTab === 'users'} onClick={() => setActiveTab("users")} icon={<Users size={16} />} label="จัดการบัญชี" />
                     <TabBtn active={activeTab === 'security'} onClick={() => setActiveTab("security")} icon={<Lock size={16} />} label="ตั้งค่าสิทธิ์ตามตำแหน่ง" />
@@ -461,13 +449,9 @@ export default function UserAndDeptManagementPage() {
                         </div>
                     )}
 
-                    {/* =========================================
-                        TAB 2: SECURITY MATRIX (ปรับแต่งใหม่)
-                    ========================================= */}
                     {activeTab === "security" && (
                         <div className="flex flex-col gap-8 animate-in fade-in duration-300">
                             
-                            {/* Role Selector */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2">
                                 {systemRoles.map(r => {
                                     const isSelected = selectedRoleId === r.id;
@@ -601,8 +585,6 @@ export default function UserAndDeptManagementPage() {
         </AuthGate>
     );
 }
-
-// --- SUB-COMPONENTS ---
 
 function TabBtn({ active, onClick, icon, label }) {
     return (

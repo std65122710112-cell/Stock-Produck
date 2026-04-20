@@ -217,12 +217,6 @@ export default function CountTaskDetailPage() {
                             </div>
                         </div>
                     </div>
-
-                    <div className="text-center pt-6 pb-12 opacity-30">
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.6em]">
-                            Cycle Count Registry • Digital Inventory Audit • TJC Group
-                        </p>
-                    </div>
                 </div>
             </div>
         </AuthGate>

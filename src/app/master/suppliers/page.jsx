@@ -17,12 +17,10 @@ export default function SupplierManagementPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
 
-    // --- Modal States ---
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isConfirmEditPopupOpen, setIsConfirmEditPopupOpen] = useState(false);
 
-    // 🟢 [เพิ่ม] State สำหรับป็อปอัพแก้ไขสำเร็จ
     const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
 
     const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -104,7 +102,6 @@ export default function SupplierManagementPage() {
                 body: JSON.stringify(payload)
             });
 
-            // 🟢 เปลี่ยนจาก Toast เป็นการเรียก Pop-up
             setIsEditModalOpen(false);
             setShowEditSuccessModal(true);
             loadSuppliers();
@@ -120,7 +117,6 @@ export default function SupplierManagementPage() {
             <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 min-h-screen">
                 <Toaster position="top-right" />
 
-                {/* 🛡️ Notification Popup (ปรับขอบให้เป็น xl) */}
                 {popup.show && (
                     <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
                         <div className="bg-white w-full max-w-sm rounded-xl border-2 border-slate-200 shadow-2xl p-8 text-center animate-in zoom-in-95 duration-200">
@@ -136,7 +132,6 @@ export default function SupplierManagementPage() {
                     </div>
                 )}
 
-                {/* 🔍 Detail Modal */}
                 {isDetailModalOpen && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-all print:hidden animate-in fade-in duration-300">
                         <div className="bg-white w-full max-w-2xl rounded-xl border-2 border-slate-300 shadow-md overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
@@ -219,7 +214,6 @@ export default function SupplierManagementPage() {
                     </div>
                 )}
 
-                {/* 🛠️ Edit Modal */}
                 {isEditModalOpen && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-all animate-in fade-in duration-300">
                         <div className="bg-white w-full max-w-2xl rounded-xl border-2 border-slate-300 shadow-md overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
@@ -281,7 +275,6 @@ export default function SupplierManagementPage() {
                     </div>
                 )}
 
-                {/* 🔒 Confirm Edit Popup (ปรับปุ่มเป็นสีเขียว Emerald) */}
                 {isConfirmEditPopupOpen && (
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-300">
                         <div className="bg-white rounded-xl border-2 border-slate-200 shadow-2xl p-8 max-w-sm w-full text-center animate-in zoom-in-95 duration-200">
@@ -300,7 +293,6 @@ export default function SupplierManagementPage() {
                     </div>
                 )}
 
-                {/* 🪟 MODAL: SUCCESS EDIT (แก้ไขเสร็จสิ้น) */}
                 {showEditSuccessModal && (
                     <div className="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                         <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
@@ -322,9 +314,6 @@ export default function SupplierManagementPage() {
                     </div>
                 )}
 
-                {/* --- MAIN PAGE CONTENT --- */}
-
-                {/* HEADER SECTION */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
@@ -349,7 +338,6 @@ export default function SupplierManagementPage() {
                     </div>
                 </div>
 
-                {/* SEARCH AND SUMMARY BAR */}
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-4">
                     <div className="flex-1 relative w-full group">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1F3B8B] transition-colors" size={18} />
@@ -369,7 +357,6 @@ export default function SupplierManagementPage() {
                     </div>
                 </div>
 
-                {/* DATA TABLE */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-500">
                     <div className="overflow-x-auto min-h-[500px]">
                         <table className="min-w-full text-left border-collapse">

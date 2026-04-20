@@ -178,13 +178,6 @@ export default function GoodsReceiptDetailPage({ params }) {
               </div>
             </div>
           </div>
-
-          {/* บันทึกท้ายใบเสร็จ */}
-          <div className="text-center pt-6 pb-12 opacity-40">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.6em]">
-               Stock Management System • Official Digital Registry • TJC Group Corporate
-            </p>
-          </div>
         </div>
       </div>
     </AuthGate>

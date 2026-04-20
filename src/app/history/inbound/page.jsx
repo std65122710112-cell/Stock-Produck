@@ -127,7 +127,7 @@ export default function GoodsReceiptHistoryPage() {
                                                 href={`/history/inbound/${r.id}`}
                                                 className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-[#1F3B8B] px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-slate-50 hover:border-[#1F3B8B] transition-all shadow-sm"
                                             >
-                                                Details <ChevronRight className="w-3.5 h-3.5" />
+                                                ดูรายละเอียด <ChevronRight className="w-3.5 h-3.5" />
                                             </Link>
                                         </td>
                                     </tr>

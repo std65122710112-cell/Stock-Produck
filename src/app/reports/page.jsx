@@ -7,9 +7,10 @@ import { getAccessToken } from "@/lib/auth";
 import toast, { Toaster } from "react-hot-toast";
 import {
     FileSpreadsheet, Download, Database, 
-    FileText, Activity, Boxes, FileChartLine, 
+    FileText, Boxes, BarChart3, 
     TrendingUp, X, MapPin, CalendarRange, 
-    ChevronRight, LayoutDashboard
+    ChevronRight, LayoutDashboard, PackageSearch, ArrowLeftRight, ClipboardList,
+    Activity // 🟢 เพิ่มตัวนี้เข้าไปครับ (จุดที่ทำให้เกิด Error)
 } from "lucide-react";
 
 export default function ReportsPage() {
@@ -83,13 +84,13 @@ export default function ReportsPage() {
     return (
         <AuthGate>
             <Toaster position="top-right" />
-            <div className="w-full max-w-400 mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+            <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
 
                 {/* --- HEADER SECTION --- */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-8 gap-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm shrink-0">
-                            <FileChartLine className="w-6 h-6 text-[#1F3B8B]" />
+                            <BarChart3 className="w-6 h-6 text-[#1F3B8B]" />
                         </div>
                         <div>
                             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
@@ -111,9 +112,8 @@ export default function ReportsPage() {
                 {/* --- REPORTS SELECTION GRID --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
-                    {/* รายงานที่ 1: สต๊อกคงเหลือ */}
                     <ReportCard 
-                        icon={<Boxes className="w-8 h-8 text-indigo-600" />}
+                        icon={<PackageSearch className="w-8 h-8 text-indigo-600" />}
                         bgIcon="bg-indigo-50 border-indigo-100"
                         title="รายงานพัสดุคงเหลือปัจจุบัน"
                         desc="สรุปยอดพัสดุคงคลังแบบละเอียดรายตำแหน่ง (Bin Location) พร้อมมูลค่าต้นทุนและจุดสั่งซื้อขั้นต่ำ"
@@ -121,9 +121,8 @@ export default function ReportsPage() {
                         btnColor="text-indigo-600 border-indigo-100 hover:bg-[#1F3B8B] hover:text-white"
                     />
 
-                    {/* รายงานที่ 2: ความเคลื่อนไหว */}
                     <ReportCard 
-                        icon={<Activity className="w-8 h-8 text-emerald-600" />}
+                        icon={<ArrowLeftRight className="w-8 h-8 text-emerald-600" />}
                         bgIcon="bg-emerald-50 border-emerald-100"
                         title="รายงานบัญชีความเคลื่อนไหว"
                         desc="ตรวจสอบประวัติการทำรายการย้อนหลังทั้งหมด ทั้งการรับเข้า จ่ายออก และการโอนย้ายพัสดุระหว่างคลัง"
@@ -131,27 +130,16 @@ export default function ReportsPage() {
                         btnColor="text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white"
                     />
                 </div>
-
-                {/* ส่วนคำแนะนำเพิ่มเติม */}
-                <div className="bg-slate-900 rounded-2xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
-                    <div className="space-y-1">
-                        <p className="text-lg font-bold">ต้องการรายงานรูปแบบเฉพาะทางเพิ่มเติม?</p>
-                        <p className="text-slate-400 text-sm">คุณสามารถส่งคำขอข้อมูลดิบ (Raw Data) เพื่อนำไปวิเคราะห์ต่อในระบบ BI ภายนอกได้ผ่านแผนก IT</p>
-                    </div>
-                    <div className="px-6 py-2 bg-white/10 rounded-lg border border-white/20 text-xs font-black uppercase tracking-widest">
-                        Support Center
-                    </div>
-                </div>
             </div>
 
             {/* --- MODALS --- */}
             
-            {/* Modal: สต๊อกคงเหลือ */}
             <ReportModal 
                 isOpen={isBalanceModalOpen} 
                 onClose={() => setIsBalanceModalOpen(false)}
                 title="ตั้งค่ารายงานคงเหลือ"
                 themeColor="indigo"
+                icon={<Boxes size={18} />}
             >
                 <div className="space-y-6">
                     <ModalSelect 
@@ -176,12 +164,12 @@ export default function ReportsPage() {
                 </div>
             </ReportModal>
 
-            {/* Modal: ความเคลื่อนไหว */}
             <ReportModal 
                 isOpen={isMovementModalOpen} 
                 onClose={() => setIsMovementModalOpen(false)}
                 title="ตั้งค่ารายงานความเคลื่อนไหว"
                 themeColor="emerald"
+                icon={<Activity size={18} />}
             >
                 <div className="space-y-5">
                     <ModalSelect 
@@ -212,7 +200,9 @@ export default function ReportsPage() {
                             <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-emerald-500" value={moveDateEnd} onChange={e => setMoveDateEnd(e.target.value)} />
                         </div>
                     </div>
-                    <button onClick={handleExportMovement} className="w-full bg-emerald-600 text-white rounded-xl py-4 font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-700 transition-all mt-4">สร้างไฟล์รายงาน EXCEL</button>
+                    <button onClick={handleExportMovement} className="w-full bg-emerald-600 text-white rounded-xl py-4 font-black text-xs uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-700 transition-all mt-4 flex items-center justify-center gap-2">
+                        <FileSpreadsheet size={16} /> สร้างไฟล์รายงาน EXCEL
+                    </button>
                 </div>
             </ReportModal>
         </AuthGate>
@@ -243,7 +233,7 @@ function ReportCard({ icon, bgIcon, title, desc, onClick, btnColor }) {
     );
 }
 
-function ReportModal({ isOpen, onClose, title, themeColor, children }) {
+function ReportModal({ isOpen, onClose, title, themeColor, icon, children }) {
     if (!isOpen) return null;
     const colors = {
         indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
@@ -251,10 +241,10 @@ function ReportModal({ isOpen, onClose, title, themeColor, children }) {
     };
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-4xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95">
                 <div className={`p-6 flex justify-between items-center border-b ${colors[themeColor]}`}>
                     <h2 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
-                        <CalendarRange size={18} /> {title}
+                        {icon} {title}
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors"><X size={20}/></button>
                 </div>
@@ -289,14 +279,5 @@ function ExportBtn({ label, color, onClick, icon }) {
         >
             {icon} {label}
         </button>
-    );
-}
-
-function SystemLoader() {
-    return (
-        <div className="h-screen flex flex-col justify-center items-center bg-slate-50 gap-6">
-            <div className="w-12 h-12 border-4 border-slate-200 border-t-[#1F3B8B] rounded-full animate-spin"></div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] animate-pulse">Initializing Reporting Engines...</p>
-        </div>
     );
 }

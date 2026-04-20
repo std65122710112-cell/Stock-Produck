@@ -19,9 +19,7 @@ export default function UnifiedInfrastructurePage() {
     const [selWhId, setSelWhId] = useState(null);
     const [selZoneId, setSelZoneId] = useState(null);
 
-    // --- Modal State ---
     const [confirmDelete, setConfirmDelete] = useState(null);
-    // 🟢 [เพิ่ม] State สำหรับป็อปอัพลบสำเร็จ
     const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
 
     const loadData = useCallback(async () => {
@@ -68,7 +66,6 @@ export default function UnifiedInfrastructurePage() {
         const { path, id, typeLabel } = confirmDelete;
         try {
             await apiFetch(`${path}/${id}`, { method: "DELETE" });
-            // 🟢 เปลี่ยนจาก Toast เป็นป็อปอัพลบสำเร็จ
             if (id === selWhId) setSelWhId(null);
             if (id === selZoneId) setSelZoneId(null);
             await loadData();
@@ -87,7 +84,6 @@ export default function UnifiedInfrastructurePage() {
         <AuthGate>
             <Toaster position="top-right" />
 
-            {/* --- Custom Confirm Delete Modal --- */}
             {confirmDelete && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-300 p-4">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl border-2 border-rose-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
@@ -100,7 +96,7 @@ export default function UnifiedInfrastructurePage() {
                             <span className="text-xs font-normal mt-2 block text-slate-400 bg-slate-50 p-2 rounded-md">หากข้อมูลนี้มีการผูกรายการอยู่ ระบบจะปฏิเสธการลบ</span>
                         </p>
 
-                        <div className="flex w-full gap-3">
+                        <div className="flex flex-col sm:flex-row w-full gap-3">
                             <button onClick={() => setConfirmDelete(null)} className="flex-1 bg-slate-100 text-slate-600 py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:bg-slate-200 transition-all border border-transparent active:scale-95">ยกเลิก</button>
                             <button onClick={executeDelete} className="flex-1 bg-rose-600 text-white py-3 rounded-lg font-bold text-sm uppercase tracking-widest hover:bg-rose-700 transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2"><Trash2 className="w-4 h-4" /> ยืนยันลบ</button>
                         </div>
@@ -108,7 +104,6 @@ export default function UnifiedInfrastructurePage() {
                 </div>
             )}
 
-            {/* 🪟 ลบสำเร็จ */}
             {showDeleteSuccessModal && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
@@ -133,7 +128,6 @@ export default function UnifiedInfrastructurePage() {
             <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-[1600px] mx-auto space-y-8 pb-20">
 
-                    {/* --- HEADER --- */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-8 gap-6">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-white text-[#1F3B8B] rounded-xl shadow-sm border border-slate-200 flex items-center justify-center shrink-0">
@@ -153,18 +147,16 @@ export default function UnifiedInfrastructurePage() {
                         <button
                             onClick={loadData}
                             disabled={loading}
-                            className="flex items-center gap-2 bg-white border border-slate-200 hover:border-[#1F3B8B]/40 hover:bg-blue-50 text-slate-600 hover:text-[#1F3B8B] px-5 py-2.5 rounded-lg font-bold text-sm uppercase tracking-widest transition-all shadow-sm active:scale-95 shrink-0"
+                            className="flex items-center justify-center w-full md:w-auto gap-2 bg-white border border-slate-200 hover:border-[#1F3B8B]/40 hover:bg-blue-50 text-slate-600 hover:text-[#1F3B8B] px-5 py-2.5 rounded-lg font-bold text-sm uppercase tracking-widest transition-all shadow-sm active:scale-95 shrink-0"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin text-[#1F3B8B]" /> : <RefreshCw className="w-4 h-4 text-[#1F3B8B]" />}
                             ซิงค์ข้อมูล
                         </button>
                     </div>
 
-                    {/* --- 3 COLUMNS LAYOUT --- */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[750px]">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:h-[750px]">
 
-                        {/* 1. WAREHOUSES */}
-                        <div className="flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all">
+                        <div className="flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all h-[500px] lg:h-full">
                             <header className="p-6 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
                                 <div className="p-2.5 bg-blue-100 rounded-lg"><Building2 className="w-5 h-5 text-blue-700" /></div>
                                 <h3 className="text-sm font-bold uppercase tracking-widest text-slate-900">1. คลังสินค้า (Warehouse)</h3>
@@ -192,8 +184,7 @@ export default function UnifiedInfrastructurePage() {
                             </div>
                         </div>
 
-                        {/* 2. ZONES */}
-                        <div className={`flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300 ${!selWhId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+                        <div className={`flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300 h-[500px] lg:h-full ${!selWhId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
                             <header className="p-6 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
                                 <div className="p-2.5 bg-amber-100 rounded-lg"><Layers className="w-5 h-5 text-amber-600" /></div>
                                 <h3 className="text-sm font-bold uppercase tracking-widest text-slate-900">2. โซนจัดเก็บ (Zone)</h3>
@@ -222,8 +213,7 @@ export default function UnifiedInfrastructurePage() {
                             </div>
                         </div>
 
-                        {/* 3. LOCATIONS */}
-                        <div className={`flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300 ${!selZoneId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+                        <div className={`flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all duration-300 h-[500px] lg:h-full ${!selZoneId ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
                             <header className="p-6 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
                                 <div className="p-2.5 bg-emerald-100 rounded-lg"><MapPin className="w-5 h-5 text-emerald-600" /></div>
                                 <h3 className="text-sm font-bold uppercase tracking-widest text-slate-900">3. ตำแหน่ง (Location)</h3>
@@ -248,7 +238,7 @@ export default function UnifiedInfrastructurePage() {
                                                 <span className="text-xs text-slate-500 font-bold uppercase tracking-wide mt-0.5">{loc.name}</span>
                                             </div>
                                         </div>
-                                        <button onClick={() => requestDelete("/master/locations", loc.id, "ตำแหน่ง")} className="p-2.5 bg-slate-50 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-0 group-hover:opacity-100 active:scale-95 border border-transparent hover:border-rose-200">
+                                        <button onClick={() => requestDelete("/master/locations", loc.id, "ตำแหน่ง")} className="p-2.5 bg-slate-50 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all opacity-100 md:opacity-0 group-hover:opacity-100 active:scale-95 border border-transparent hover:border-rose-200">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -263,8 +253,6 @@ export default function UnifiedInfrastructurePage() {
         </AuthGate>
     );
 }
-
-// --- Local Components ---
 
 function DoubleAddInput({ codePlaceholder, namePlaceholder, onAdd, loading }) {
     const [c, setC] = useState("");
@@ -282,19 +270,18 @@ function DoubleAddInput({ codePlaceholder, namePlaceholder, onAdd, loading }) {
 
     return (
         <form onSubmit={submit} autoComplete="off" className="space-y-3">
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
                 <input
-                    className="w-1/3 bg-slate-50 border border-slate-200 rounded-lg py-3 px-4 text-xs font-bold focus:bg-white focus:border-[#1F3B8B] outline-none transition-all uppercase placeholder:text-slate-400 placeholder:font-medium shadow-sm"
+                    className="w-full sm:w-1/3 bg-slate-50 border border-slate-200 rounded-lg py-3 px-4 text-xs font-bold focus:bg-white focus:border-[#1F3B8B] outline-none transition-all uppercase placeholder:text-slate-400 placeholder:font-medium shadow-sm"
                     placeholder={codePlaceholder}
                     value={c} onChange={e => setC(e.target.value)}
                 />
                 <input
-                    className="w-2/3 bg-slate-50 border border-slate-200 rounded-lg py-3 px-4 text-xs font-bold focus:bg-white focus:border-[#1F3B8B] outline-none transition-all placeholder:text-slate-400 placeholder:font-medium shadow-sm"
+                    className="w-full sm:w-2/3 bg-slate-50 border border-slate-200 rounded-lg py-3 px-4 text-xs font-bold focus:bg-white focus:border-[#1F3B8B] outline-none transition-all placeholder:text-slate-400 placeholder:font-medium shadow-sm"
                     placeholder={namePlaceholder}
                     value={n} onChange={e => setN(e.target.value)}
                 />
             </div>
-            {/* 🟢 ปรับปุ่มเพิ่มข้อมูลให้เป็นสีเขียว Emerald */}
             <button type="submit" disabled={isSubmitting || loading || !c.trim()} className="w-full bg-emerald-600 text-white rounded-lg py-3 text-sm font-bold uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95">
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} บันทึกข้อมูล
             </button>
@@ -306,7 +293,7 @@ function SelectCard({ active, onClick, onDelete, title, subtitle, badge }) {
     return (
         <div 
             onClick={onClick} 
-            className={`p-4 rounded-xl cursor-pointer transition-all duration-200 border flex justify-between items-center group relative overflow-hidden outline-none ${
+            className={`p-4 rounded-xl cursor-pointer transition-all duration-200 border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 group relative overflow-hidden outline-none ${
                 active 
                     ? 'bg-[#1F3B8B]/5 border-[#1F3B8B]/40 shadow-sm' 
                     : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm'
@@ -314,19 +301,19 @@ function SelectCard({ active, onClick, onDelete, title, subtitle, badge }) {
         >
             <div className="z-10 flex flex-col justify-center">
                 <p className={`font-bold uppercase text-sm tracking-wide transition-colors ${active ? 'text-[#1F3B8B]' : 'text-slate-900 group-hover:text-[#1F3B8B]'}`}>{title}</p>
-                <p className={`text-xs font-bold uppercase truncate max-w-[140px] mt-0.5 transition-colors ${active ? 'text-[#1F3B8B]/70' : 'text-slate-500'}`}>{subtitle}</p>
+                <p className={`text-xs font-bold uppercase truncate max-w-full sm:max-w-[140px] mt-0.5 transition-colors ${active ? 'text-[#1F3B8B]/70' : 'text-slate-500'}`}>{subtitle}</p>
             </div>
 
-            <div className="flex flex-col items-end gap-2 z-10">
+            <div className="flex flex-row items-center justify-between w-full sm:w-auto sm:flex-col sm:items-end gap-2 z-10">
                 <div className="flex items-center gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className={`p-2 rounded-lg transition-all active:scale-95 border border-transparent ${active ? 'text-slate-400 hover:text-rose-500 hover:bg-white hover:border-rose-200' : 'bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 opacity-0 group-hover:opacity-100'}`}>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className={`p-2 rounded-lg transition-all active:scale-95 border border-transparent ${active ? 'text-slate-400 hover:text-rose-500 hover:bg-white hover:border-rose-200' : 'bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 opacity-100 md:opacity-0 group-hover:opacity-100'}`}>
                         <Trash2 className="w-4 h-4" />
                     </button>
                     <span className={`text-xs font-bold px-2.5 py-1.5 rounded-md uppercase transition-colors ${active ? 'bg-white text-[#1F3B8B] border border-[#1F3B8B]/20 shadow-sm' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 border border-slate-200'}`}>
                         {badge}
                     </span>
                 </div>
-                <ArrowRight className={`w-4 h-4 transition-all duration-300 ${active ? 'translate-x-0 opacity-100 text-[#1F3B8B]' : '-translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 text-slate-400'}`} strokeWidth={2} />
+                <ArrowRight className={`hidden sm:block w-4 h-4 transition-all duration-300 ${active ? 'translate-x-0 opacity-100 text-[#1F3B8B]' : '-translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 text-slate-400'}`} strokeWidth={2} />
             </div>
         </div>
     );

@@ -33,11 +33,9 @@ export default function ProductsPage() {
     const [errMsg, setErrMsg] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // --- Modal States ---
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [updateTarget, setUpdateTarget] = useState(null);
 
-    // 🟢 [แปะเพิ่ม] State สำหรับป็อปอัพสำเร็จ
     const [showUpdateSuccessModal, setShowUpdateSuccessModal] = useState(false);
     const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
 
@@ -152,7 +150,6 @@ export default function ProductsPage() {
         setUpdateTarget(id);
     }
 
-    // 🟢 วางทับฟังก์ชัน executeUpdate เดิม
     async function executeUpdate() {
         if (!updateTarget) return;
         setIsSubmitting(true);
@@ -168,7 +165,7 @@ export default function ProductsPage() {
                     locationId: editForm.locationId || undefined,
                 })
             });
-            setShowUpdateSuccessModal(true); // 🟢 สั่งเปิด Pop-up แก้ไขสำเร็จ
+            setShowUpdateSuccessModal(true);
             setEditingId(null);
             await load();
         } catch (err) {
@@ -179,14 +176,13 @@ export default function ProductsPage() {
         }
     }
 
-    // 🟢 วางทับฟังก์ชัน executeDelete เดิม
     async function executeDelete() {
         if (!deleteTarget) return;
         setIsSubmitting(true);
         setBusyId(deleteTarget.id);
         try {
             await apiFetch(`/master/products/${deleteTarget.id}`, { method: "DELETE" });
-            setShowDeleteSuccessModal(true); // 🟢 สั่งเปิด Pop-up ลบสำเร็จ
+            setShowDeleteSuccessModal(true);
             await load();
         } catch (err) {
             toast.error("ไม่สามารถลบได้ (อาจมีข้อมูลอ้างอิงอยู่ในระบบ)");
@@ -221,7 +217,6 @@ export default function ProductsPage() {
         <AuthGate>
             <Toaster position="top-right" />
 
-            {/* --- Modals ตาม Theme หลัก --- */}
             {deleteTarget && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-rose-100 flex flex-col items-center text-center">
@@ -265,9 +260,6 @@ export default function ProductsPage() {
                 </div>
             )}
 
-            {/* 🟢 วางจุดที่ 4 ทั้ง 2 กล่องลงตรงนี้เลยครับ 🟢 */}
-
-            {/* 🪟 MODAL: แก้ไขข้อมูลสำเร็จ */}
             {showUpdateSuccessModal && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
@@ -289,7 +281,6 @@ export default function ProductsPage() {
                 </div>
             )}
 
-            {/* 🪟 MODAL: ลบข้อมูลสำเร็จ */}
             {showDeleteSuccessModal && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
@@ -311,12 +302,8 @@ export default function ProductsPage() {
                 </div>
             )}
 
-
-            {/* --- End Modals --- */}
-
             <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-                {/* --- HEADER --- */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6 print:hidden">
                     <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-4">
@@ -353,7 +340,6 @@ export default function ProductsPage() {
                     </div>
                 )}
 
-                {/* --- BATCH ENTRY CARD --- */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-500">
                     <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-4">
                         <div className="space-y-1.5">
@@ -381,8 +367,8 @@ export default function ProductsPage() {
                     </div>
 
                     <div className="px-6 md:px-8 pb-8 pt-6">
-                        <div className="border border-slate-200 rounded-xl overflow-hidden">
-                            <table className="w-full text-sm border-collapse">
+                        <div className="border border-slate-200 rounded-xl overflow-x-auto">
+                            <table className="w-full text-sm border-collapse min-w-[800px]">
                                 <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase text-slate-600 tracking-wider">
                                     <tr>
                                         <th className="py-4 px-6 text-left w-48">รหัส SKU (พรีวิว)</th>
@@ -452,7 +438,6 @@ export default function ProductsPage() {
                     </div>
                 </div>
 
-                {/* --- MASTER LEDGER TABLE --- */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-500">
                     <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div className="space-y-1.5">
@@ -468,7 +453,7 @@ export default function ProductsPage() {
                     </div>
 
                     <div className="overflow-x-auto min-h-[500px]">
-                        <table className="min-w-full border-collapse">
+                        <table className="min-w-full border-collapse min-w-[1000px]">
                             <thead className="bg-slate-50 border-b border-slate-200">
                                 <tr>
                                     <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">รหัส SKU</th>
@@ -575,7 +560,6 @@ export default function ProductsPage() {
                                                         </button>
                                                     </div>
                                                 ) : (
-                                                    // 💡 ลบ opacity-0 group-hover:opacity-100 ออกจาก div นี้แล้ว
                                                     <div className="flex justify-end gap-2">
                                                         <button
                                                             onClick={() => startEdit(p)}

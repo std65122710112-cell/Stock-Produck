@@ -29,11 +29,9 @@ function MasterDataSection({
     const [editName, setEditName] = useState("");
     const [editAbbr, setEditAbbr] = useState("");
 
-    // --- Modal States ---
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [updateTarget, setUpdateTarget] = useState(null);
     
-    // 🟢 [เพิ่ม] State สำหรับป็อปอัพสำเร็จ
     const [showUpdateSuccessModal, setShowUpdateSuccessModal] = useState(false);
     const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
 
@@ -90,7 +88,6 @@ function MasterDataSection({
                 method: "PUT",
                 body: JSON.stringify(payload)
             });
-            // 🟢 เปิดป็อปอัพสำเร็จแทนการใช้ Toast
             setEditingId(null);
             setUpdateTarget(null);
             setShowUpdateSuccessModal(true);
@@ -106,7 +103,6 @@ function MasterDataSection({
         setLoading(true);
         try {
             await apiFetch(`${endpoint}/${deleteTarget}`, { method: "DELETE" });
-            // 🟢 เปิดป็อปอัพลบสำเร็จแทนการใช้ Toast
             if (editingId === deleteTarget) setEditingId(null);
             setShowDeleteSuccessModal(true);
             await load();
@@ -121,9 +117,6 @@ function MasterDataSection({
     return (
         <div className="flex flex-col bg-white rounded-xl border-2 border-slate-200 shadow-md overflow-hidden transition-all duration-300">
 
-            {/* --- Modals --- */}
-            
-            {/* 🪟 ยืนยันการลบ */}
             {deleteTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl border-2 border-rose-100 text-center animate-in zoom-in-95 duration-200">
@@ -143,7 +136,6 @@ function MasterDataSection({
                 </div>
             )}
 
-            {/* 🪟 ลบสำเร็จ */}
             {showDeleteSuccessModal && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
@@ -165,7 +157,6 @@ function MasterDataSection({
                 </div>
             )}
 
-            {/* 🪟 ยืนยันการแก้ไข */}
             {updateTarget && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl border-2 border-slate-200 text-center animate-in zoom-in-95 duration-200">
@@ -182,7 +173,6 @@ function MasterDataSection({
                 </div>
             )}
 
-            {/* 🪟 แก้ไขสำเร็จ */}
             {showUpdateSuccessModal && (
                 <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
                     <div className="bg-white rounded-xl p-8 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200 border-2 border-emerald-100 flex flex-col items-center text-center">
@@ -203,9 +193,7 @@ function MasterDataSection({
                     </div>
                 </div>
             )}
-            {/* --- End Modals --- */}
 
-            {/* Header Area */}
             <div className="p-6 md:p-8 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-3">
                     <div className="p-3 bg-white rounded-lg shadow-sm border border-slate-200 text-[#1F3B8B]">
@@ -218,7 +206,6 @@ function MasterDataSection({
                 </button>
             </div>
 
-            {/* Creation Form */}
             <form onSubmit={create} autoComplete="off" className="p-6 md:px-8 bg-white border-b border-slate-100 flex flex-wrap lg:flex-nowrap gap-4">
                 <div className="flex-1 min-w-[200px]">
                     <input
@@ -231,9 +218,9 @@ function MasterDataSection({
                     />
                 </div>
                 {hasAbbr && (
-                    <div className="w-32">
+                    <div className="w-full lg:w-32">
                         <input
-                            className="w-full border-2 border-slate-200 rounded-xl p-3.5 text-sm font-bold uppercase text-center outline-none focus:border-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-400 text-[#1F3B8B]"
+                            className="w-full border-2 border-slate-200 rounded-xl p-3.5 text-sm font-bold uppercase lg:text-center outline-none focus:border-[#1F3B8B] bg-slate-50 focus:bg-white transition-all placeholder:text-slate-400 text-[#1F3B8B]"
                             placeholder="ตัวย่อ"
                             value={abbr}
                             onChange={(e) => setAbbr(e.target.value.toUpperCase())}
@@ -244,13 +231,12 @@ function MasterDataSection({
                 )}
                 <button
                     disabled={loading || !name.trim()}
-                    className="bg-emerald-600 text-white rounded-xl px-6 py-3.5 font-bold text-sm uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-30 transition-all flex items-center gap-2 shadow-sm active:scale-95 shrink-0"
+                    className="w-full lg:w-auto bg-emerald-600 text-white rounded-xl px-6 py-3.5 font-bold text-sm uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-30 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95 shrink-0"
                 >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />} เพิ่มข้อมูล
                 </button>
             </form>
 
-            {/* Data Table */}
             <div className="overflow-x-auto min-h-[400px]">
                 <table className="min-w-full text-sm border-collapse">
                     <thead className="bg-slate-50 text-xs font-bold uppercase tracking-widest text-slate-500 border-b border-slate-200">
@@ -313,7 +299,7 @@ function MasterDataSection({
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex justify-end gap-2 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => { setEditingId(r.id); setEditName(r.name); setEditAbbr(r.abbr || ""); }}
                                                 disabled={loading}
@@ -349,7 +335,6 @@ export default function MasterSettingsPage() {
             <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-[1600px] mx-auto space-y-8 pb-20">
 
-                    {/* --- HEADER SECTION --- */}
                     <div className="flex flex-col md:flex-row items-start md:items-center border-b border-slate-200 pb-8 gap-6 print:hidden">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-[#1F3B8B]/10 text-[#1F3B8B] rounded-xl shadow-sm border border-[#1F3B8B]/20 flex items-center justify-center shrink-0">
@@ -367,7 +352,6 @@ export default function MasterSettingsPage() {
                         </div>
                     </div>
 
-                    {/* --- 2 COLUMNS LAYOUT --- */}
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                         <MasterDataSection
                             title="จัดการหมวดหมู่สินค้า (Categories)"

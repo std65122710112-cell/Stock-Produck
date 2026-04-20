@@ -11,7 +11,6 @@ import {
 
 const PAGE_SIZE = 30;
 
-// --- Helper Functions ---
 function getSeverity(action = "", method = "", resource = "") {
     const text = `${action} ${method} ${resource}`.toLowerCase();
     if (text.includes("delete") || text.includes("remove") || text.includes("drop") || text.includes("revoke") || text.includes("deny") || text.includes("forbidden") || text.includes("failed") || text.includes("logout")) return "high";
@@ -104,9 +103,7 @@ export default function AuditPage() {
 
     return (
         <AuthGate>
-            <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 min-h-screen ">
-
-                {/* --- HEADER --- */}
+            <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 min-h-screen">
                 <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center border-b border-slate-200 pb-8 gap-6">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-slate-200/50 flex items-center justify-center border border-slate-300 shadow-sm shrink-0">
@@ -124,7 +121,6 @@ export default function AuditPage() {
                     </div>
 
                     <div className="flex items-center gap-4 w-full xl:w-auto">
-                        
                         <button
                             onClick={() => fetchLogs()}
                             disabled={loading || refreshing}
@@ -136,10 +132,7 @@ export default function AuditPage() {
                     </div>
                 </div>
 
-                {/* --- FILTERS PANEL (ปรับปรุงช่องค้นหา) --- */}
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    
-                    {/* แถวที่ 1: ช่องค้นหาแบบเต็มความกว้าง */}
                     <div className="relative group w-full">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#1F3B8B] transition-colors" size={20} />
                         <input
@@ -150,7 +143,6 @@ export default function AuditPage() {
                         />
                     </div>
 
-                    {/* แถวที่ 2: ตัวกรองแบบ Grid 4 คอลัมน์ */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                         <FilterSelect icon={<User size={16} />} value={userFilter} onChange={handleFilterChange(setUserFilter)}>
                             <option value="all">ทุกผู้ใช้</option>
@@ -176,7 +168,6 @@ export default function AuditPage() {
                     </div>
                 </div>
 
-                {/* --- DATA TABLE --- */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative">
                     {loading && !refreshing && (
                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm">
@@ -264,7 +255,6 @@ export default function AuditPage() {
                     </div>
                 </div>
 
-                {/* --- PAGINATION CONTROLS --- */}
                 {!loading && totalPages > 1 && (
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-2 print:hidden">
                         <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -288,9 +278,6 @@ export default function AuditPage() {
     );
 }
 
-// --- SUB-COMPONENTS ---
-
-// ปรับ Padding ของ Filter Dropdowns ให้สมส่วนกับความโค้งมนที่ใหญ่ขึ้น
 function FilterSelect({ icon, value, onChange, children }) {
     return (
         <div className="relative min-w-[120px] w-full">

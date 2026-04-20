@@ -29,13 +29,11 @@ export default function CreateSupplierPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // --- State สำหรับระบบตรวจสอบข้อมูลแบบใหม่ (Inline Error) ---
     const [validationFailed, setValidationFailed] = useState(false);
 
-    // --- Popup States ---
     const [popup, setPopup] = useState({ show: false, type: "success", title: "", message: "", onConfirm: null });
-    const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false); // Popup ยืนยันการบันทึก
-    const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false); // Popup ยืนยันการยกเลิก
+    const [isConfirmSaveOpen, setIsConfirmSaveOpen] = useState(false);
+    const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
 
     const [form, setForm] = useState({
         code: "",
@@ -52,7 +50,7 @@ export default function CreateSupplierPage() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm(prev => ({ ...prev, [name]: value }));
-        // ซ่อน Error เมื่อผู้ใช้เริ่มพิมพ์แก้
+        
         if (validationFailed && (name === "code" || name === "name")) {
             setValidationFailed(false);
         }
@@ -68,7 +66,6 @@ export default function CreateSupplierPage() {
         if (callback) callback();
     };
 
-    // 🔒 1. ดักจับก่อน Submit เพื่อตรวจข้อมูลและเปิด Popup ยืนยันบันทึก
     const handlePreSubmit = (e) => {
         e.preventDefault(); 
         if (!form.code || !form.name) {
@@ -78,7 +75,6 @@ export default function CreateSupplierPage() {
         setIsConfirmSaveOpen(true); 
     };
 
-    // 🔒 2. ลอจิกการส่ง API แบบดั้งเดิม 100% 
     const handleSubmit = async (e) => {
         if (e && e.preventDefault) e.preventDefault();
         setIsConfirmSaveOpen(false); 
@@ -102,17 +98,14 @@ export default function CreateSupplierPage() {
         }
     };
 
-    // 🔒 3. ดักจับก่อนยกเลิก เพื่อเปิด Popup ถามความแน่ใจ
     const handlePreCancel = () => {
         setIsConfirmCancelOpen(true);
     };
 
     return (
         <AuthGate>
-            {/* พื้นหลังเทาอ่อน คุมโทนสะอาดตา */}
-            <div className="min-h-screen  py-8 px-4 sm:px-6 lg:px-8">
+            <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
                 
-                {/* --- CUSTOM NOTIFY MODAL --- */}
                 {popup.show && (
                     <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
                         <div className="bg-white w-full max-w-sm rounded-3xl border border-slate-200 shadow-2xl p-8 text-center space-y-6 animate-in zoom-in-95 duration-150">
@@ -135,7 +128,6 @@ export default function CreateSupplierPage() {
                     </div>
                 )}
 
-                {/* 🔒 POPUP: ยืนยันการบันทึก */}
                 {isConfirmSaveOpen && (
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all print:hidden">
                         <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-sm w-full text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
@@ -167,7 +159,6 @@ export default function CreateSupplierPage() {
                     </div>
                 )}
 
-                {/* 🔒 POPUP: ยืนยันการยกเลิก */}
                 {isConfirmCancelOpen && (
                     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all print:hidden">
                         <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-8 max-w-sm w-full text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
@@ -198,10 +189,8 @@ export default function CreateSupplierPage() {
                     </div>
                 )}
 
-                {/* MAIN FORM CONTAINER */}
                 <div className="max-w-5xl mx-auto space-y-8 pb-20">
 
-                    {/* 1. TOP NAVIGATION & TITLE */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-8 gap-6">
                         <div className="space-y-2">
                             <button
@@ -222,7 +211,6 @@ export default function CreateSupplierPage() {
 
                     <form onSubmit={handlePreSubmit} className="space-y-8">
 
-                        {/* 2. CORPORATE IDENTITY SECTION */}
                         <section className="bg-white p-8 md:p-10 rounded-3xl border border-slate-200 shadow-sm space-y-8">
                             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                                 <div className="p-2 bg-slate-50 text-[#1F3B8B] rounded-lg border border-slate-200">
@@ -284,7 +272,6 @@ export default function CreateSupplierPage() {
                             </div>
                         </section>
 
-                        {/* 3. CONTACT DETAILS SECTION */}
                         <section className="bg-white p-8 md:p-10 rounded-3xl border border-slate-200 shadow-sm space-y-8">
                             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                                 <div className="p-2 bg-slate-50 text-[#1F3B8B] rounded-lg border border-slate-200">
@@ -338,7 +325,6 @@ export default function CreateSupplierPage() {
                             </div>
                         </section>
 
-                        {/* 4. TERMS & CONDITIONS */}
                         <section className="bg-white p-8 md:p-10 rounded-3xl border border-slate-200 shadow-sm space-y-8">
                             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                                 <div className="p-2 bg-slate-50 text-[#1F3B8B] rounded-lg border border-slate-200">
@@ -372,7 +358,6 @@ export default function CreateSupplierPage() {
                             </div>
                         </section>
 
-                        {/* 5. SUBMIT ACTION BAR */}
                         <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-4">
                             <button
                                 type="button"
