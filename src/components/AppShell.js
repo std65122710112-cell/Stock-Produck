@@ -12,6 +12,10 @@ const menuGroups = [
         title: "ภาพรวมระบบ",
         items: [{ href: "/dashboard", label: "Dashboard", permissions: ["DASHBOARD_VIEW"] }],
     },
+     {
+        title: "ฝ่ายบัญชีและการเงิน",
+        items: [{ href: "/accounting/ap", label: "บัญชีและการเงิน", permissions: ["AP_READ",  "AP_MANAGE"] }],
+    },
     {
         title: "ระบบใบเบิกภายใน",
         items: [

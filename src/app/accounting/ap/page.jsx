@@ -1,0 +1,1255 @@
+"use client";
+
+import AuthGate from "@/components/AuthGate";
+import { apiFetch } from "@/lib/api";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import {
+  Wallet,
+  Plus,
+  Clock,
+  X,
+  Save,
+  RefreshCw,
+  FileText,
+  CheckCircle2,
+  CreditCard,
+  Pencil,
+  Trash2,
+  Paperclip,
+  UploadCloud,
+} from "lucide-react";
+
+const todayInput = () => new Date().toISOString().split("T")[0];
+
+const createDefaultFormData = () => ({
+  invoiceNo: "",
+  taxInvoiceNo: "",
+  supplierId: "",
+  poId: "",
+  grId: "",
+
+  issueDate: todayInput(),
+  receiveDate: todayInput(),
+  dueDate: new Date(new Date().setDate(new Date().getDate() + 30))
+    .toISOString()
+    .split("T")[0],
+
+  subTotal: 0,
+  vatRate: 7,
+  vatAmount: 0,
+  whtRate: 0,
+  whtType: "",
+  whtAmount: 0,
+  grandTotal: 0,
+
+  attachmentUrl: "",
+  remarks: "",
+  items: [],
+});
+
+const toDateInput = (value) => {
+  if (!value) return todayInput();
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return todayInput();
+
+  return date.toISOString().split("T")[0];
+};
+
+const getAttachmentHref = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+
+  // ถ้า frontend/backend อยู่คนละ port ให้ตั้งค่า NEXT_PUBLIC_API_BASE_URL เช่น http://localhost:4000
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  return `${apiBase}${url}`;
+};
+
+export default function AccountsPayablePage() {
+  const [loading, setLoading] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+
+  const [invoices, setInvoices] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [goodsReceipts, setGoodsReceipts] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingInvoiceId, setEditingInvoiceId] = useState(null);
+
+  const [grSearch, setGrSearch] = useState("");
+  const [showGrDropdown, setShowGrDropdown] = useState(false);
+  const [selectedGrInfo, setSelectedGrInfo] = useState({
+    grNo: "",
+    poNo: "",
+    supplierName: "",
+  });
+
+  const [formData, setFormData] = useState(createDefaultFormData());
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const [invData, supData, grData] = await Promise.all([
+        apiFetch("/ap/invoices/pending"),
+        apiFetch("/master/suppliers"),
+        apiFetch("/ap/receipts/available"),
+      ]);
+
+      setInvoices(Array.isArray(invData) ? invData : invData?.data || []);
+      setSuppliers(Array.isArray(supData) ? supData : supData?.data || []);
+      setGoodsReceipts(Array.isArray(grData) ? grData : grData?.data || []);
+    } catch (err) {
+      console.error("Load AP Data Error:", err);
+      toast.error("โหลดข้อมูลล้มเหลว");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const computeFinalAmounts = (subTotal, vatRate, whtRate) => {
+    const sub = Number(subTotal) || 0;
+    const vRate = Number(vatRate) || 0;
+    const wRate = Number(whtRate) || 0;
+
+    const vat = Number((sub * (vRate / 100)).toFixed(2));
+    const wht = Number((sub * (wRate / 100)).toFixed(2));
+    const grand = Number((sub + vat - wht).toFixed(2));
+
+    return {
+      vatAmount: vat,
+      whtAmount: wht,
+      grandTotal: grand,
+    };
+  };
+
+  const normalizeText = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "")
+      .replace(/[().,]/g, "");
+
+  const getGRInfo = (gr) => {
+    const grNo = gr?.receiptNo || gr?.id?.slice(0, 8).toUpperCase() || "";
+    const poNo = gr?.purchaseOrder?.poNumber || gr?.poNumber || "ทั่วไป";
+    const supplierName =
+      gr?.purchaseOrder?.supplier?.name ||
+      gr?.purchaseOrder?.vendorName ||
+      gr?.supplierName ||
+      "";
+
+    return { grNo, poNo, supplierName };
+  };
+
+  const resolveSupplierIdFromGR = (grDetail, supplierRows) => {
+    const supplierList = Array.isArray(supplierRows) ? supplierRows : [];
+
+    const idCandidates = [
+      grDetail?.supplier?.id,
+      grDetail?.supplierId,
+      grDetail?.purchaseOrder?.supplier?.id,
+      grDetail?.purchaseOrder?.supplierId,
+      grDetail?.purchaseOrder?.requisition?.supplier?.id,
+      grDetail?.purchaseOrder?.requisition?.supplierId,
+    ].filter(Boolean);
+
+    for (const id of idCandidates) {
+      const found = supplierList.find((s) => String(s.id) === String(id));
+      if (found) return found.id;
+    }
+
+    const vendorName =
+      grDetail?.purchaseOrder?.supplier?.name ||
+      grDetail?.purchaseOrder?.vendorName ||
+      grDetail?.supplierName ||
+      "";
+
+    const normalizedVendor = normalizeText(vendorName);
+    if (!normalizedVendor) return "";
+
+    const exactMatches = supplierList.filter(
+      (s) =>
+        normalizeText(s.name) === normalizedVendor ||
+        normalizeText(s.code) === normalizedVendor
+    );
+
+    if (exactMatches.length === 1) return exactMatches[0].id;
+
+    const softMatches = supplierList.filter((s) => {
+      const supplierName = normalizeText(s.name);
+      const supplierCode = normalizeText(s.code);
+
+      if (!supplierName && !supplierCode) return false;
+
+      return (
+        supplierName.includes(normalizedVendor) ||
+        normalizedVendor.includes(supplierName) ||
+        supplierCode.includes(normalizedVendor) ||
+        normalizedVendor.includes(supplierCode)
+      );
+    });
+
+    if (softMatches.length === 1) return softMatches[0].id;
+
+    return "";
+  };
+
+  const filteredGoodsReceipts = useMemo(() => {
+    const keyword = grSearch.trim().toLowerCase();
+
+    if (!keyword) return goodsReceipts;
+
+    return goodsReceipts.filter((gr) => {
+      const text = [
+        gr.receiptNo,
+        gr.id,
+        gr.purchaseOrder?.poNumber,
+        gr.poNumber,
+        gr.purchaseOrder?.supplier?.name,
+        gr.purchaseOrder?.vendorName,
+        gr.supplierName,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return text.includes(keyword);
+    });
+  }, [goodsReceipts, grSearch]);
+
+  const clearGRSelection = () => {
+    setGrSearch("");
+    setShowGrDropdown(false);
+    setSelectedGrInfo({ grNo: "", poNo: "", supplierName: "" });
+
+    setFormData((prev) => ({
+      ...prev,
+      grId: "",
+      poId: "",
+      supplierId: "",
+      items: [],
+      subTotal: 0,
+      vatAmount: 0,
+      whtAmount: 0,
+      grandTotal: 0,
+    }));
+  };
+
+  const handleGRSearchChange = (value) => {
+    setGrSearch(value);
+    setShowGrDropdown(true);
+
+    if (!value.trim()) {
+      clearGRSelection();
+      return;
+    }
+
+    if (formData.grId) {
+      setFormData((prev) => ({
+        ...prev,
+        grId: "",
+        poId: "",
+        supplierId: "",
+        items: [],
+        subTotal: 0,
+        vatAmount: 0,
+        whtAmount: 0,
+        grandTotal: 0,
+      }));
+      setSelectedGrInfo({ grNo: "", poNo: "", supplierName: "" });
+    }
+  };
+
+  const handleGRSelection = async (grId, grInfoFromList = null) => {
+    if (!grId) {
+      clearGRSelection();
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      let grDetail = null;
+
+      try {
+        const res = await apiFetch(`/inventory/receipt/${grId}`, {
+          method: "GET",
+        });
+        grDetail = res?.data || res;
+      } catch (historyEndpointError) {
+        console.warn("Fallback to /inbound/receipts/:id", historyEndpointError);
+
+        const fallbackRes = await apiFetch(`/inbound/receipts/${grId}`, {
+          method: "GET",
+        });
+        grDetail = fallbackRes?.data || fallbackRes;
+      }
+
+      if (!grDetail || !Array.isArray(grDetail.items)) {
+        toast.error("ไม่พบรายการสินค้าในใบรับของนี้");
+        return;
+      }
+
+      const mappedItems = grDetail.items.map((item) => {
+        const quantity = Number(item.quantity) || 0;
+        const unitPrice =
+          Number(item.unitCost) || Number(item.product?.unitCost) || 0;
+
+        return {
+          productId: item.productId,
+          sku: item.product?.sku || "N/A",
+          name: item.product?.name || "Unknown",
+          quantity,
+          unitPrice,
+          amount: quantity * unitPrice,
+        };
+      });
+
+      const newSubTotal = mappedItems.reduce((sum, i) => sum + i.amount, 0);
+
+      const totals = computeFinalAmounts(
+        newSubTotal,
+        formData.vatRate,
+        formData.whtRate
+      );
+
+      const poId =
+        grDetail.purchaseOrderId ||
+        grDetail.poId ||
+        grDetail.purchaseOrder?.id ||
+        "";
+
+      const autoSupplierId = resolveSupplierIdFromGR(grDetail, suppliers);
+      const grInfo = grInfoFromList || getGRInfo(grDetail);
+
+      setFormData((prev) => ({
+        ...prev,
+        grId,
+        poId,
+        supplierId: autoSupplierId || "",
+        items: mappedItems,
+        subTotal: newSubTotal,
+        ...totals,
+      }));
+
+      setSelectedGrInfo(grInfo);
+      setGrSearch(grInfo.grNo);
+      setShowGrDropdown(false);
+
+      if (autoSupplierId) {
+        const supplierName =
+          suppliers.find((s) => String(s.id) === String(autoSupplierId))?.name ||
+          grInfo.supplierName ||
+          "ซัพพลายเออร์";
+
+        toast.success(`ดึงซัพพลายเออร์อัตโนมัติ: ${supplierName}`);
+      } else if (grInfo.supplierName) {
+        toast.error(
+          `พบชื่อผู้ขายจาก PO: ${grInfo.supplierName} แต่ยังจับคู่กับทะเบียน Supplier ไม่ได้`
+        );
+      } else {
+        toast.success("ดึงข้อมูลใบรับของสำเร็จ แต่ไม่พบข้อมูลซัพพลายเออร์");
+      }
+    } catch (err) {
+      console.error("Fetch GR Error:", err);
+      toast.error(err.message || "ดึงข้อมูลใบรับของล้มเหลว");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleWHTChange = (rate) => {
+    const rateNum = Number(rate);
+
+    const whtTypeMap = {
+      0: "ไม่มีหัก ณ ที่จ่าย",
+      1: "ค่าขนส่ง (1%)",
+      3: "ค่าบริการ/จ้างทำของ (3%)",
+      5: "ค่าเช่า (5%)",
+    };
+
+    const totals = computeFinalAmounts(
+      formData.subTotal,
+      formData.vatRate,
+      rateNum
+    );
+
+    setFormData((prev) => ({
+      ...prev,
+      whtRate: rateNum,
+      whtType: whtTypeMap[rateNum] || "",
+      ...totals,
+    }));
+  };
+
+  const handleAttachmentUpload = async (file) => {
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("รองรับเฉพาะไฟล์ PDF, JPG, PNG, WEBP");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("ไฟล์ต้องมีขนาดไม่เกิน 10MB");
+      return;
+    }
+
+    const uploadForm = new FormData();
+    uploadForm.append("attachment", file);
+
+    setUploadingAttachment(true);
+
+    try {
+      const res = await apiFetch("/ap/attachments", {
+        method: "POST",
+        body: uploadForm,
+      });
+
+      const attachmentUrl =
+        res?.attachmentUrl || res?.data?.attachmentUrl || res?.url || "";
+
+      if (!attachmentUrl) {
+        throw new Error("ไม่พบ URL ของไฟล์ที่อัปโหลด");
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        attachmentUrl,
+      }));
+
+      toast.success("อัปโหลดไฟล์แนบสำเร็จ");
+    } catch (err) {
+      console.error("Upload Attachment Error:", err);
+      toast.error(err.message || "อัปโหลดไฟล์ไม่สำเร็จ");
+    } finally {
+      setUploadingAttachment(false);
+    }
+  };
+
+  const resetFormState = () => {
+    setEditingInvoiceId(null);
+    setFormData(createDefaultFormData());
+    setGrSearch("");
+    setShowGrDropdown(false);
+    setSelectedGrInfo({ grNo: "", poNo: "", supplierName: "" });
+  };
+
+  const openCreateForm = () => {
+    resetFormState();
+    setShowForm(true);
+  };
+
+  const closeCreateForm = () => {
+    setShowForm(false);
+    resetFormState();
+  };
+
+  const openEditForm = (invoice) => {
+    const gr = invoice.goodsReceipt || null;
+    const po = invoice.purchaseOrder || gr?.purchaseOrder || null;
+
+    const grInfo = {
+      grNo: gr?.receiptNo || "",
+      poNo: po?.poNumber || "ทั่วไป",
+      supplierName:
+        invoice.supplier?.name ||
+        po?.supplier?.name ||
+        po?.vendorName ||
+        "",
+    };
+
+    const mappedItems = (invoice.items || []).map((item) => ({
+      productId: item.productId,
+      sku: item.product?.sku || "N/A",
+      name: item.product?.name || "Unknown",
+      quantity: Number(item.quantity) || 0,
+      unitPrice: Number(item.unitPrice) || 0,
+      amount: Number(item.amount) || 0,
+    }));
+
+    setEditingInvoiceId(invoice.id);
+    setSelectedGrInfo(grInfo);
+    setGrSearch(grInfo.grNo);
+
+    setFormData({
+      invoiceNo: invoice.invoiceNo || "",
+      taxInvoiceNo: invoice.taxInvoiceNo || "",
+      supplierId: invoice.supplierId || "",
+      poId: invoice.poId || po?.id || "",
+      grId: invoice.grId || gr?.id || "",
+
+      issueDate: toDateInput(invoice.issueDate),
+      receiveDate: toDateInput(invoice.receiveDate),
+      dueDate: toDateInput(invoice.dueDate),
+
+      subTotal: Number(invoice.subTotal) || 0,
+      vatRate: Number(invoice.vatRate) || 7,
+      vatAmount: Number(invoice.vatAmount) || 0,
+      whtRate: Number(invoice.whtRate) || 0,
+      whtType: invoice.whtType || "",
+      whtAmount: Number(invoice.whtAmount) || 0,
+      grandTotal: Number(invoice.grandTotal) || 0,
+
+      attachmentUrl: invoice.attachmentUrl || "",
+      remarks: invoice.remarks || "",
+      items: mappedItems,
+    });
+
+    setShowForm(true);
+    setShowGrDropdown(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDeleteInvoice = async (invoice) => {
+    const ok = window.confirm(
+      `ต้องการลบใบแจ้งหนี้เลขที่ ${invoice.invoiceNo} ใช่หรือไม่?`
+    );
+
+    if (!ok) return;
+
+    setLoading(true);
+
+    try {
+      await apiFetch(`/ap/invoices/${invoice.id}`, {
+        method: "DELETE",
+      });
+
+      toast.success("ลบใบแจ้งหนี้สำเร็จ");
+      loadData();
+    } catch (err) {
+      toast.error(err.message || "ลบใบแจ้งหนี้ไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.invoiceNo) return toast.error("กรุณาระบุเลขที่ใบแจ้งหนี้");
+    if (!formData.supplierId) return toast.error("กรุณาเลือกซัพพลายเออร์");
+
+    setLoading(true);
+
+    try {
+      const url = editingInvoiceId
+        ? `/ap/invoices/${editingInvoiceId}`
+        : "/ap/invoices";
+
+      const method = editingInvoiceId ? "PUT" : "POST";
+
+      await apiFetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      toast.success(
+        editingInvoiceId
+          ? "แก้ไขใบแจ้งหนี้สำเร็จ"
+          : "บันทึกการตั้งหนี้สำเร็จ"
+      );
+
+      setShowForm(false);
+      resetFormState();
+      loadData();
+    } catch (err) {
+      toast.error(err.message || "บันทึกข้อมูลไม่สำเร็จ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthGate requiredPermissions={["AP_READ"]}>
+      <Toaster position="top-right" />
+
+      <div className="w-full max-w-[1600px] mx-auto px-4 py-8 space-y-8 min-h-screen">
+        <div className="flex justify-between items-end border-b border-slate-200 pb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center border border-blue-100 shadow-sm">
+              <Wallet className="text-blue-600" />
+            </div>
+
+            <div>
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight uppercase italic">
+                AP & Tax Management
+              </h1>
+
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-emerald-500" />
+                ระบบตั้งหนี้และคำนวณภาษีหัก ณ ที่จ่ายระดับองค์กร
+              </p>
+            </div>
+          </div>
+
+          {!showForm && (
+            <button
+              onClick={openCreateForm}
+              className="bg-[#1F3B8B] text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-900 transition-all shadow-lg flex items-center gap-2"
+            >
+              <Plus size={16} /> สร้างใบตั้งหนี้ใหม่
+            </button>
+          )}
+        </div>
+
+        {showForm && (
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-visible animate-in fade-in zoom-in-95 duration-300">
+            <div className="bg-slate-900 p-6 text-white flex justify-between items-center rounded-t-3xl">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <FileText className="text-blue-400 w-5 h-5" />
+                </div>
+
+                <div>
+                  <span className="font-black text-sm uppercase tracking-widest block">
+                    {editingInvoiceId
+                      ? "Edit Invoice Form"
+                      : "Invoice Entry Form"}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase">
+                    3-Way Matching Verification
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeCreateForm}
+                className="bg-white/5 hover:bg-rose-500/20 hover:text-rose-500 p-2 rounded-full transition-colors"
+              >
+                <X />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-8 space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <div className="w-4 h-[2px] bg-blue-600"></div>
+                    1. ข้อมูลเอกสาร
+                  </h3>
+
+                  <InputGroup
+                    label="เลขที่ใบแจ้งหนี้ (Invoice No.)"
+                    value={formData.invoiceNo}
+                    onChange={(e) =>
+                      setFormData({ ...formData, invoiceNo: e.target.value })
+                    }
+                    required
+                    placeholder="INV-2026-XXXX"
+                  />
+
+                  <InputGroup
+                    label="เลขที่ใบกำกับภาษี (Tax Invoice)"
+                    value={formData.taxInvoiceNo}
+                    onChange={(e) =>
+                      setFormData({ ...formData, taxInvoiceNo: e.target.value })
+                    }
+                    placeholder="ระบุเพื่อทำรายงานภาษีซื้อ"
+                  />
+
+                  <InputGroup
+                    type="date"
+                    label="วันที่รับเอกสารจริง"
+                    value={formData.receiveDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, receiveDate: e.target.value })
+                    }
+                  />
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">
+                      ไฟล์แนบใบแจ้งหนี้ / ใบกำกับภาษี
+                    </label>
+
+                    <div className="border border-dashed border-slate-300 rounded-xl bg-slate-50 p-4 hover:bg-white transition-all">
+                      <label className="flex flex-col items-center justify-center gap-2 cursor-pointer text-center">
+                        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center border border-blue-100">
+                          {uploadingAttachment ? (
+                            <RefreshCw
+                              className="animate-spin text-blue-600"
+                              size={18}
+                            />
+                          ) : (
+                            <UploadCloud className="text-blue-600" size={18} />
+                          )}
+                        </div>
+
+                        <div>
+                          <div className="text-xs font-black text-slate-700 uppercase">
+                            {uploadingAttachment
+                              ? "กำลังอัปโหลด..."
+                              : "คลิกเพื่ออัปโหลดไฟล์"}
+                          </div>
+                          <div className="text-[10px] font-bold text-slate-400 mt-1">
+                            PDF, JPG, PNG, WEBP ขนาดไม่เกิน 10MB
+                          </div>
+                        </div>
+
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          disabled={uploadingAttachment}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            handleAttachmentUpload(file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {formData.attachmentUrl && (
+                      <div className="flex items-center justify-between gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                        <a
+                          href={getAttachmentHref(formData.attachmentUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-black text-blue-700 hover:underline flex items-center gap-2 truncate"
+                        >
+                          <Paperclip size={14} />
+                          เปิดไฟล์แนบที่อัปโหลดแล้ว
+                        </a>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              attachmentUrl: "",
+                            }))
+                          }
+                          className="text-[10px] font-black text-rose-600 hover:text-rose-800 uppercase"
+                        >
+                          ลบออกจากฟอร์ม
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5 relative z-[100]">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                      อ้างอิงใบรับของ / ใบสั่งซื้อ
+                    </label>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={grSearch}
+                          onChange={(e) =>
+                            handleGRSearchChange(e.target.value)
+                          }
+                          onFocus={() => setShowGrDropdown(true)}
+                          onBlur={() => {
+                            setTimeout(() => setShowGrDropdown(false), 180);
+                          }}
+                          placeholder="ค้นหาเลข GR"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 pr-10 text-sm font-bold text-slate-900 outline-none focus:border-blue-600 focus:bg-white transition-all placeholder:text-slate-300"
+                        />
+
+                        {formData.grId && (
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={clearGRSelection}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 transition-colors"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                      </div>
+
+                      <input
+                        type="text"
+                        value={selectedGrInfo.poNo || ""}
+                        readOnly
+                        placeholder="PO จะแสดงอัตโนมัติ"
+                        className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-blue-700 outline-none cursor-default placeholder:text-slate-300"
+                      />
+                    </div>
+
+                    {selectedGrInfo.supplierName && (
+                      <div className="text-[10px] font-bold text-slate-400 ml-1">
+                        Supplier: {selectedGrInfo.supplierName}
+                      </div>
+                    )}
+
+                    {showGrDropdown && (
+                      <div
+                        className="absolute left-0 right-0 top-full z-[9999] mt-2 w-full bg-white border border-slate-200 rounded-2xl shadow-2xl"
+                        style={{
+                          maxHeight: "320px",
+                          overflowY: "auto",
+                          overscrollBehavior: "contain",
+                        }}
+                      >
+                        {filteredGoodsReceipts.length === 0 ? (
+                          <div className="px-4 py-6 text-center text-xs font-bold text-slate-400">
+                            ไม่พบใบรับของที่ตรงกับคำค้นหา
+                          </div>
+                        ) : (
+                          filteredGoodsReceipts.map((gr) => {
+                            const info = getGRInfo(gr);
+
+                            return (
+                              <button
+                                key={gr.id}
+                                type="button"
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={() => handleGRSelection(gr.id, info)}
+                                className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-slate-50 ${
+                                  formData.grId === gr.id
+                                    ? "bg-blue-50"
+                                    : "bg-white"
+                                }`}
+                              >
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+                                  <div>
+                                    <div className="text-sm font-black text-slate-900">
+                                      {info.grNo}
+                                    </div>
+                                    <div className="text-[10px] font-bold text-slate-400">
+                                      GR Reference
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <div className="text-[12px] font-black text-blue-600">
+                                      {info.poNo}
+                                    </div>
+                                    <div className="text-[10px] font-bold text-slate-400">
+                                      PO Reference
+                                    </div>
+                                  </div>
+
+                                  <div className="text-[10px] font-bold text-slate-500 md:text-right">
+                                    {info.supplierName ||
+                                      "ไม่พบชื่อซัพพลายเออร์"}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <div className="w-4 h-[2px] bg-blue-600"></div>
+                    2. คู่ค้าและเครดิต
+                  </h3>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">
+                      ซัพพลายเออร์
+                    </label>
+
+                    <select
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-600 focus:bg-white transition-all appearance-none cursor-pointer"
+                      value={formData.supplierId}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          supplierId: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="">-- เลือกซัพพลายเออร์ --</option>
+                      {suppliers.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.code})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <InputGroup
+                    type="date"
+                    label="วันที่ในเอกสาร"
+                    value={formData.issueDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, issueDate: e.target.value })
+                    }
+                  />
+
+                  <InputGroup
+                    type="date"
+                    label="วันครบกำหนดชำระ"
+                    value={formData.dueDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dueDate: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-4 bg-slate-50 p-6 rounded-3xl border border-slate-200 shadow-inner">
+                  <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mb-4">
+                    3. สรุปภาษีและยอดสุทธิ
+                  </h3>
+
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                        หัก ณ ที่จ่าย (Withholding Tax)
+                      </label>
+
+                      <select
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-black text-slate-700 outline-none focus:border-blue-600"
+                        value={formData.whtRate}
+                        onChange={(e) => handleWHTChange(e.target.value)}
+                      >
+                        <option value="0">0% - ไม่มีหัก ณ ที่จ่าย</option>
+                        <option value="1">1% - ค่าขนส่ง</option>
+                        <option value="3">3% - ค่าบริการ/รับเหมา</option>
+                        <option value="5">5% - ค่าเช่า</option>
+                      </select>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-200 space-y-3 font-bold">
+                      <SummaryRow
+                        label="Sub Total:"
+                        value={formData.subTotal}
+                      />
+                      <SummaryRow
+                        label={`VAT (${formData.vatRate}%):`}
+                        value={formData.vatAmount}
+                      />
+
+                      <div className="flex justify-between text-xs text-rose-500 uppercase tracking-tighter">
+                        <span>WHT ({formData.whtRate}%):</span>
+                        <span>
+                          - ฿
+                          {Number(formData.whtAmount || 0).toLocaleString(
+                            undefined,
+                            { minimumFractionDigits: 2 }
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between text-xl font-black text-[#1F3B8B] pt-2 border-t border-slate-900/10">
+                        <span className="uppercase italic">Net Pay:</span>
+                        <span>
+                          ฿
+                          {Number(formData.grandTotal || 0).toLocaleString(
+                            undefined,
+                            { minimumFractionDigits: 2 }
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ตารางรายการ */}
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <div className="w-4 h-[2px] bg-blue-600"></div>
+                  4. รายละเอียดรายการ (Invoice Line Items)
+                </h3>
+
+                <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                  <table className="min-w-full text-xs">
+                    <thead className="bg-slate-900 text-white">
+                      <tr className="font-black uppercase tracking-widest">
+                        <th className="px-6 py-4 text-left">Product Detail</th>
+                        <th className="px-6 py-4 text-center">Qty</th>
+                        <th className="px-6 py-4 text-right">Unit Price</th>
+                        <th className="px-6 py-4 text-right">Total Amount</th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {formData.items.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan="4"
+                            className="px-6 py-12 text-center text-slate-400 font-bold uppercase tracking-widest italic"
+                          >
+                            เลือกใบ GR เพื่อแสดงรายการโดยอัตโนมัติ
+                          </td>
+                        </tr>
+                      ) : (
+                        formData.items.map((item, idx) => (
+                          <tr key={`${item.productId}-${idx}`}>
+                            <td className="px-6 py-4">
+                              <div className="font-black text-slate-900">
+                                {item.name}
+                              </div>
+                              <div className="text-[10px] text-blue-600 font-bold">
+                                SKU: {item.sku}
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4 text-center font-black text-slate-700">
+                              {Number(item.quantity || 0).toLocaleString()}
+                            </td>
+
+                            <td className="px-6 py-4 text-right font-bold">
+                              ฿
+                              {Number(item.unitPrice || 0).toLocaleString(
+                                undefined,
+                                { minimumFractionDigits: 2 }
+                              )}
+                            </td>
+
+                            <td className="px-6 py-4 text-right font-black text-blue-800">
+                              ฿
+                              {Number(item.amount || 0).toLocaleString(
+                                undefined,
+                                { minimumFractionDigits: 2 }
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">
+                  หมายเหตุภายในฝ่ายบัญชี
+                </label>
+
+                <textarea
+                  value={formData.remarks}
+                  onChange={(e) =>
+                    setFormData({ ...formData, remarks: e.target.value })
+                  }
+                  rows={3}
+                  placeholder="เช่น เอกสารรอตรวจสอบ, รอใบกำกับภาษีตัวจริง, นัดจ่ายรอบสิ้นเดือน"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-600 outline-none transition-all placeholder:text-slate-300 shadow-sm resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={closeCreateForm}
+                  className="px-8 py-3 rounded-xl font-bold text-xs uppercase text-slate-500 hover:bg-slate-100 transition-all tracking-widest"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={loading || uploadingAttachment}
+                  className="px-12 py-3 bg-[#1F3B8B] text-white rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-200 hover:bg-blue-900 transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {loading ? (
+                    <RefreshCw className="animate-spin" size={14} />
+                  ) : (
+                    <Save size={14} />
+                  )}
+                  {editingInvoiceId ? "Update Invoice" : "Post to Ledger"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* ตารางหนี้คงค้าง */}
+        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+          <div className="p-6 bg-slate-50/50 flex justify-between items-center border-b border-slate-200">
+            <div className="flex items-center gap-3">
+              <Clock size={18} className="text-amber-500" />
+              <h3 className="text-xs font-black uppercase text-slate-700 tracking-widest">
+                Pending Accounts Payable
+              </h3>
+            </div>
+
+            <div className="bg-rose-50 text-rose-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter border border-rose-100">
+              ยอดรอจ่ายทั้งหมด: {invoices.length} บิล
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] bg-slate-50/30">
+                  <th className="px-6 py-5">Due Date</th>
+                  <th className="px-6 py-5">Document Info</th>
+                  <th className="px-6 py-5">Supplier Name</th>
+                  <th className="px-6 py-5 text-right">Net Payable</th>
+                  <th className="px-6 py-5 text-center">Action</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-slate-100">
+                {invoices.map((inv) => {
+                  const isOverdue = new Date(inv.dueDate) < new Date();
+
+                  return (
+                    <tr key={inv.id} className="hover:bg-slate-50/50">
+                      <td className="px-6 py-4">
+                        <div
+                          className={`font-black text-sm ${
+                            isOverdue ? "text-rose-600" : "text-slate-900"
+                          }`}
+                        >
+                          {new Date(inv.dueDate).toLocaleDateString("th-TH")}
+                        </div>
+                        {isOverdue && (
+                          <div className="text-[9px] font-black text-white bg-rose-500 px-1.5 py-0.5 rounded w-fit uppercase mt-1">
+                            Overdue
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="font-black text-blue-700 uppercase tracking-tighter">
+                          INV: {inv.invoiceNo}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-bold uppercase">
+                          TAX: {inv.taxInvoiceNo || "N/A"}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-bold uppercase">
+                          รับเอกสาร:{" "}
+                          {inv.receiveDate
+                            ? new Date(inv.receiveDate).toLocaleDateString(
+                                "th-TH"
+                              )
+                            : "N/A"}
+                        </div>
+
+                        {inv.attachmentUrl && (
+                          <a
+                            href={getAttachmentHref(inv.attachmentUrl)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[10px] text-blue-600 font-black uppercase hover:underline inline-flex items-center gap-1 mt-1"
+                          >
+                            <Paperclip size={11} />
+                            เปิดไฟล์แนบ
+                          </a>
+                        )}
+
+                        {inv.remarks && (
+                          <div className="text-[10px] text-slate-500 font-bold mt-1 max-w-[260px] truncate">
+                            Note: {inv.remarks}
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-700">
+                          {inv.supplier?.name || "-"}
+                        </div>
+                        <div className="text-[9px] font-black text-slate-400 uppercase">
+                          Code: {inv.supplier?.code || "-"}
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 text-right font-black text-slate-900 text-base">
+                        ฿
+                        {Number(inv.grandTotal || 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                        })}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEditForm(inv)}
+                            className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
+                          >
+                            <Pencil size={13} /> แก้ไข
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteInvoice(inv)}
+                            className="bg-rose-50 text-rose-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-rose-600 hover:text-white transition-all flex items-center gap-2"
+                          >
+                            <Trash2 size={13} /> ลบ
+                          </button>
+
+                          <button className="bg-emerald-50 text-emerald-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-2">
+                            <CreditCard size={13} /> จ่ายเงิน
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {invoices.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan="5"
+                      className="px-6 py-12 text-center text-slate-400 font-bold uppercase tracking-widest italic"
+                    >
+                      ยังไม่มีรายการหนี้คงค้าง
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </AuthGate>
+  );
+}
+
+function InputGroup({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  required = false,
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">
+        {label} {required && <span className="text-rose-500">*</span>}
+      </label>
+
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        required={required}
+        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-600 outline-none transition-all placeholder:text-slate-300 shadow-sm"
+        placeholder={placeholder}
+      />
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }) {
+  return (
+    <div className="flex justify-between text-xs text-slate-500 uppercase tracking-tighter">
+      <span>{label}</span>
+      <span>
+        ฿
+        {Number(value || 0).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+        })}
+      </span>
+    </div>
+  );
+}
