@@ -4,73 +4,263 @@ import { useEffect, useRef, useState, useTransition, useMemo } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { apiFetch, API_BASE } from "@/lib/api";
 import { clearAccessToken } from "@/lib/auth";
-import { LogOut, ChevronRight, UserCircle, ShieldCheck, Camera, ShieldAlert, Activity, Loader2 } from "lucide-react";
+import {
+    LogOut,
+    ChevronRight,
+    UserCircle,
+    ShieldCheck,
+    Camera,
+    ShieldAlert,
+    Activity,
+    Loader2,
+
+    LayoutDashboard,
+    BarChart3,
+    FileText,
+    ReceiptText,
+    ClipboardCheck,
+    CreditCard,
+    History,
+    Handshake,
+    ClipboardList,
+    CheckSquare,
+    ShoppingCart,
+    FilePlus2,
+    Truck,
+    PackageMinus,
+    ArrowLeftRight,
+    SlidersHorizontal,
+    Boxes,
+    CalendarClock,
+    PackageX,
+    ListChecks,
+    Package,
+    Tags,
+    Warehouse,
+    Users,
+    Building2,
+    ScrollText,
+} from "lucide-react";
 
 // 💡 1. กำหนดสิทธิ์และโครงสร้างเมนู
 const menuGroups = [
     {
         title: "ภาพรวมระบบ",
-        items: [{ href: "/dashboard", label: "Dashboard", permissions: ["DASHBOARD_VIEW"] }],
+        items: [
+            {
+                href: "/dashboard",
+                label: "Dashboard",
+                icon: LayoutDashboard,
+                permissions: ["DASHBOARD_VIEW"],
+            },
+        ],
     },
-     {
+    {
         title: "ฝ่ายบัญชีและการเงิน",
-        items: [{ href: "/accounting/ap", label: "บัญชีและการเงิน", permissions: ["AP_READ",  "AP_MANAGE"] }],
+        items: [
+            {
+                href: "/accounting/dashboard",
+                label: "แดชบอร์ดบัญชีเจ้าหนี้",
+                icon: BarChart3,
+                permissions: ["AP_READ"],
+            },
+            {
+                href: "/accounting/ap",
+                label: "ทะเบียนใบตั้งหนี้",
+                icon: FileText,
+                permissions: ["AP_READ", "AP_MANAGE"],
+            },
+            {
+                href: "/accounting/payment-requests",
+                label: "คำขออนุมัติจ่ายเงิน",
+                icon: ClipboardCheck,
+                permissions: ["AP_PAYMENT_REQUEST", "AP_PAYMENT_APPROVE"],
+            },
+            {
+                href: "/accounting/payments",
+                label: "บันทึกจ่ายเงินเจ้าหนี้",
+                icon: CreditCard,
+                permissions: ["AP_PAYMENT_MANAGE", "AP_PAYMENT_DIRECT"],
+            },
+            {
+                href: "/accounting/history",
+                label: "ประวัติการจ่ายเงิน",
+                icon: History,
+                permissions: ["AP_READ", "AP_PAYMENT_MANAGE", "AP_PAYMENT_VOID"],
+            },
+            {
+                href: "/accounting/supplier-statement",
+                label: "รายงานเจ้าหนี้รายคู่ค้า",
+                icon: Handshake,
+                permissions: ["AP_READ"],
+            },
+        ],
     },
     {
         title: "ระบบใบเบิกภายใน",
         items: [
-            { href: "/inventory/requisition", label: "รายการใบขอเบิกสินค้า", permissions: ["REQUISITION_READ", "REQUISITION_CREATE"] },
-            { href: "/inventory/requisition/approval", label: "อนุมัติใบเบิกพัสดุ", permissions: ["REQUISITION_APPROVE"] },
+            {
+                href: "/inventory/requisition",
+                label: "รายการใบขอเบิกสินค้า",
+                icon: ClipboardList,
+                permissions: ["REQUISITION_READ", "REQUISITION_CREATE"],
+            },
+            {
+                href: "/inventory/requisition/approval",
+                label: "อนุมัติใบเบิกพัสดุ",
+                icon: CheckSquare,
+                permissions: ["REQUISITION_APPROVE"],
+            },
         ],
     },
     {
         title: "ระบบงานจัดซื้อ",
         items: [
-            { href: "/purchase/pr", label: "รายการใบขอซื้อ (PR)", permissions: ["PR_READ", "PR_CREATE"] },
-            { href: "/purchase/pr/approval", label: "พิจารณาอนุมัติขอซื้อ", permissions: ["PR_APPROVE_L1", "PR_APPROVE_L2", "PR_APPROVE_L3"] },
-            { href: "/purchase/create", label: "สร้างใบสั่งซื้อ (PO)", permissions: ["PO_MANAGE"] },
+            {
+                href: "/purchase/pr",
+                label: "รายการใบขอซื้อ (PR)",
+                icon: ShoppingCart,
+                permissions: ["PR_READ", "PR_CREATE"],
+            },
+            {
+                href: "/purchase/pr/approval",
+                label: "พิจารณาอนุมัติขอซื้อ",
+                icon: ClipboardCheck,
+                permissions: ["PR_APPROVE_L1", "PR_APPROVE_L2", "PR_APPROVE_L3"],
+            },
+            {
+                href: "/purchase/create",
+                label: "สร้างใบสั่งซื้อ (PO)",
+                icon: FilePlus2,
+                permissions: ["PO_MANAGE"],
+            },
         ],
     },
     {
         title: "การจัดการคลังสินค้า",
         items: [
-            { href: "/inbound", label: "รับสินค้าเข้าคลัง (GR)", permissions: ["INBOUND_CREATE"] },
-            { href: "/outbound", label: "เบิกจ่ายสินค้า (DO)", permissions: ["OUTBOUND_CREATE"] },
-            { href: "/inventory/transfer", label: "โอนย้ายระหว่างคลัง", permissions: ["TRANSFER_MANAGE"] },
-            { href: "/inventory/adjust", label: "ปรับปรุงยอดสต๊อก", permissions: ["ADJUSTMENT_MANAGE"] },
+            {
+                href: "/inbound",
+                label: "รับสินค้าเข้าคลัง (GR)",
+                icon: Truck,
+                permissions: ["INBOUND_CREATE"],
+            },
+            {
+                href: "/outbound",
+                label: "เบิกจ่ายสินค้า (DO)",
+                icon: PackageMinus,
+                permissions: ["OUTBOUND_CREATE"],
+            },
+            {
+                href: "/inventory/transfer",
+                label: "โอนย้ายระหว่างคลัง",
+                icon: ArrowLeftRight,
+                permissions: ["TRANSFER_MANAGE"],
+            },
+            {
+                href: "/inventory/adjust",
+                label: "ปรับปรุงยอดสต๊อก",
+                icon: SlidersHorizontal,
+                permissions: ["ADJUSTMENT_MANAGE"],
+            },
         ],
     },
     {
         title: "สต๊อกและรายงาน",
         items: [
-            { href: "/inventory/balances", label: "ยอดสินค้าคงเหลือ", permissions: ["INVENTORY_READ"] },
-            { href: "/reports/expiry", label: "ตรวจสอบวันหมดอายุ", permissions: ["REPORT_EXPORT"] },
-            { href: "/inventory/low-stock", label: "สินค้าใกล้หมด (Min)", permissions: ["INVENTORY_READ"] },
-            { href: "/inventory/agedstock", label: "สินค้าค้างสต๊อก (Aged)", permissions: ["INVENTORY_READ"] },
-            { href: "/history", label: "ประวัติความเคลื่อนไหว", permissions: ["MOVEMENT_READ"] },
-            { href: "/reports", label: "รายงานภาพรวม", permissions: ["REPORT_EXPORT"] },
+            {
+                href: "/inventory/balances",
+                label: "ยอดสินค้าคงเหลือ",
+                icon: Boxes,
+                permissions: ["INVENTORY_READ"],
+            },
+            {
+                href: "/reports/expiry",
+                label: "ตรวจสอบวันหมดอายุ",
+                icon: CalendarClock,
+                permissions: ["REPORT_EXPORT"],
+            },
+            {
+                href: "/inventory/low-stock",
+                label: "สินค้าใกล้หมด (Min)",
+                icon: PackageX,
+                permissions: ["INVENTORY_READ"],
+            },
+            {
+                href: "/inventory/agedstock",
+                label: "สินค้าค้างสต๊อก (Aged)",
+                icon: History,
+                permissions: ["INVENTORY_READ"],
+            },
+            {
+                href: "/history",
+                label: "ประวัติความเคลื่อนไหว",
+                icon: ListChecks,
+                permissions: ["MOVEMENT_READ"],
+            },
+            {
+                href: "/reports",
+                label: "รายงานภาพรวม",
+                icon: BarChart3,
+                permissions: ["REPORT_EXPORT"],
+            },
         ],
     },
     {
         title: "ฐานข้อมูลหลัก",
         items: [
-            { href: "/master/products", label: "ฐานข้อมูลสินค้า", permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"] },
-            { href: "/master/suppliers", label: "ฐานข้อมูลคู่ค้า", permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"] },
-            { href: "/master/categoriesandunits", label: "หมวดหมู่และหน่วยนับ", permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"] },
-            { href: "/master/warehousessettings", label: "ตั้งค่าคลังและจุดจัดเก็บ", permissions: ["WAREHOUSE_MANAGE"] }, 
+            {
+                href: "/master/products",
+                label: "ฐานข้อมูลสินค้า",
+                icon: Package,
+                permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"],
+            },
+            {
+                href: "/master/suppliers",
+                label: "ฐานข้อมูลคู่ค้า",
+                icon: Handshake,
+                permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"],
+            },
+            {
+                href: "/master/categoriesandunits",
+                label: "หมวดหมู่และหน่วยนับ",
+                icon: Tags,
+                permissions: ["MASTER_DATA_READ", "MASTER_DATA_MANAGE"],
+            },
+            {
+                href: "/master/warehousessettings",
+                label: "ตั้งค่าคลังและจุดจัดเก็บ",
+                icon: Warehouse,
+                permissions: ["WAREHOUSE_MANAGE"],
+            },
         ],
     },
     {
         title: "ความปลอดภัยและระบบ",
         items: [
-            { href: "/users", label: "จัดการพนักงานและสิทธิ์", permissions: ["USER_MANAGE"] },
-            { href: "/company", label: "ตั้งค่าข้อมูลบริษัท", permissions: ["SYSTEM_SETTINGS_MANAGE"] },
-            { href: "/audit", label: "ประวัติการใช้งาน (Audit)", permissions: ["AUDIT_LOG_VIEW"] },
+            {
+                href: "/users",
+                label: "จัดการพนักงานและสิทธิ์",
+                icon: Users,
+                permissions: ["USER_MANAGE"],
+            },
+            {
+                href: "/company",
+                label: "ตั้งค่าข้อมูลบริษัท",
+                icon: Building2,
+                permissions: ["SYSTEM_SETTINGS_MANAGE"],
+            },
+            {
+                href: "/audit",
+                label: "ประวัติการใช้งาน (Audit)",
+                icon: ScrollText,
+                permissions: ["AUDIT_LOG_VIEW"],
+            },
         ],
     },
 ];
 
-function MenuButton({ href, label, isActive, onNavigate, isPending }) {
+function MenuButton({ href, label, icon: Icon, isActive, onNavigate, isPending }) {
     return (
         <button
             type="button"
@@ -84,11 +274,25 @@ function MenuButton({ href, label, isActive, onNavigate, isPending }) {
                 ${isPending && !isActive ? "opacity-50" : "opacity-100"}
             `}
         >
-            <div className="flex items-center gap-3 relative z-10">
-                <div className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${isActive ? "bg-white scale-110 shadow-sm" : "bg-slate-300 group-hover:bg-[#2563eb]"}`} />
-                <span className="leading-5 tracking-wide">{label}</span>
+            <div className="flex items-center gap-3 relative z-10 min-w-0">
+                <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-300 ${isActive
+                            ? "bg-white/15 text-white shadow-sm"
+                            : "bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-[#2563eb]"
+                        }`}
+                >
+                    {Icon ? <Icon className="h-4 w-4" /> : null}
+                </div>
+
+                <span className="leading-5 tracking-wide truncate">{label}</span>
             </div>
-            <ChevronRight className={`w-4 h-4 transition-transform duration-300 ${isActive ? "text-white/80 translate-x-1" : "text-slate-300 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"}`} />
+
+            <ChevronRight
+                className={`w-4 h-4 shrink-0 transition-transform duration-300 ${isActive
+                        ? "text-white/80 translate-x-1"
+                        : "text-slate-300 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"
+                    }`}
+            />
         </button>
     );
 }
@@ -105,8 +309,8 @@ export default function AppShell({ children }) {
     const [userFullName, setUserFullName] = useState(null);
     const [userRole, setUserRole] = useState(null);
     const [userAvatar, setUserAvatar] = useState(null);
-    
-    const [userPerms, setUserPerms] = useState(null); 
+
+    const [userPerms, setUserPerms] = useState(null);
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [accessModal, setAccessModal] = useState({ isOpen: false, message: "", shouldRedirect: false });
 
@@ -135,7 +339,7 @@ export default function AppShell({ children }) {
                     setUserFullName(fullName);
                     setUserRole(res.roleName || "Member");
                     if (res.avatarUrl) setUserAvatar(res.avatarUrl);
-                    
+
                     const perms = Array.isArray(res.perms) ? res.perms : [];
                     setUserPerms(perms);
 
@@ -147,22 +351,22 @@ export default function AppShell({ children }) {
                 router.replace("/login");
             }
         }
-        
+
         setIsAuthorized(false);
         fetchUserProfileAndCheckAccess();
     }, [path, router]);
 
     const checkRouteAccess = (currentPath, perms) => {
         let matchedItem = null;
-        
+
         for (const group of menuGroups) {
             for (const item of group.items) {
                 if (item.href === "/dashboard") {
                     if (currentPath === "/dashboard") matchedItem = item;
                 } else if (currentPath.startsWith(item.href)) {
-                     if (!matchedItem || item.href.length > matchedItem.href.length) {
-                         matchedItem = item;
-                     }
+                    if (!matchedItem || item.href.length > matchedItem.href.length) {
+                        matchedItem = item;
+                    }
                 }
             }
         }
@@ -171,7 +375,7 @@ export default function AppShell({ children }) {
             const requiredPerms = matchedItem.permissions;
             if (requiredPerms && requiredPerms.length > 0) {
                 const hasAccess = requiredPerms.some(p => perms.includes(p));
-                
+
                 if (!hasAccess) {
                     setAccessModal({
                         isOpen: true,
@@ -182,29 +386,29 @@ export default function AppShell({ children }) {
                 }
             }
         }
-        
+
         setIsAuthorized(true);
     };
 
     const handleNavigate = (href) => {
         if (href === path) return;
-        
+
         if (userPerms) {
             let targetItem = null;
             for (const group of menuGroups) {
                 targetItem = group.items.find(item => item.href === href);
-                if(targetItem) break;
+                if (targetItem) break;
             }
-            
-            if(targetItem && targetItem.permissions.length > 0) {
+
+            if (targetItem && targetItem.permissions.length > 0) {
                 const hasAccess = targetItem.permissions.some(p => userPerms.includes(p));
-                if(!hasAccess) {
+                if (!hasAccess) {
                     setAccessModal({
                         isOpen: true,
                         message: "คุณไม่มีสิทธิ์เข้าถึงเมนูนี้ กรุณาติดต่อผู้ดูแลระบบ",
                         shouldRedirect: false
                     });
-                    return; 
+                    return;
                 }
             }
         }
@@ -262,10 +466,10 @@ export default function AppShell({ children }) {
                 ...group,
                 items: group.items.filter(item => {
                     if (item.permissions.length === 0) return true;
-                    return item.permissions.some(p => userPerms.includes(p)); 
+                    return item.permissions.some(p => userPerms.includes(p));
                 })
             }))
-            .filter(group => group.items.length > 0); 
+            .filter(group => group.items.length > 0);
     }, [userPerms]);
 
     const handleCloseModal = () => {
@@ -281,7 +485,7 @@ export default function AppShell({ children }) {
 
     return (
         <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans selection:bg-blue-100 selection:text-[#1F3B8B] relative">
-            
+
             {/* Modal แจ้งเตือนสิทธิ์ */}
             {accessModal.isOpen && (
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -396,7 +600,7 @@ export default function AppShell({ children }) {
                         <nav className="flex-1 space-y-10">
                             {userPerms === null ? (
                                 <div className="animate-pulse space-y-6 opacity-40 px-2">
-                                    {[1,2,3].map(i => <div key={i} className="h-20 bg-slate-100 rounded-2xl" />)}
+                                    {[1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-100 rounded-2xl" />)}
                                 </div>
                             ) : (
                                 filteredMenuGroups.map((group) => (
@@ -407,12 +611,22 @@ export default function AppShell({ children }) {
                                         </div>
                                         <div className="space-y-1.5">
                                             {group.items.map((n) => {
-                                                const isBetterMatchInMenu = allMenuItems.some(other => 
+                                                const isBetterMatchInMenu = allMenuItems.some(other =>
                                                     other.href !== n.href && path.startsWith(other.href) && other.href.length > n.href.length
                                                 );
                                                 const isActive = path === n.href || (n.href !== "/dashboard" && path.startsWith(n.href + "/") && !isBetterMatchInMenu);
-                                                
-                                                return <MenuButton key={n.href} href={n.href} label={n.label} isActive={isActive} isPending={isPending && pendingHref === n.href} onNavigate={handleNavigate} />;
+
+                                                return (
+                                                    <MenuButton
+                                                        key={n.href}
+                                                        href={n.href}
+                                                        label={n.label}
+                                                        icon={n.icon}
+                                                        isActive={isActive}
+                                                        isPending={isPending && pendingHref === n.href}
+                                                        onNavigate={handleNavigate}
+                                                    />
+                                                );
                                             })}
                                         </div>
                                     </section>

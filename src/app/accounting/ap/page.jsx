@@ -13,11 +13,12 @@ import {
   RefreshCw,
   FileText,
   CheckCircle2,
-  CreditCard,
   Pencil,
   Trash2,
   Paperclip,
   UploadCloud,
+  ExternalLink,
+  Image as ImageIcon,
 } from "lucide-react";
 
 const todayInput = () => new Date().toISOString().split("T")[0];
@@ -59,11 +60,80 @@ const toDateInput = (value) => {
 
 const getAttachmentHref = (url) => {
   if (!url) return "";
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (/^https?:\/\//i.test(url)) return url;
 
-  // ถ้า frontend/backend อยู่คนละ port ให้ตั้งค่า NEXT_PUBLIC_API_BASE_URL เช่น http://localhost:4000
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  return `${apiBase}${url}`;
+  const rawBase =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "";
+
+  const cleanBase = rawBase.replace(/\/api\/?$/i, "").replace(/\/$/, "");
+  const cleanPath = url.startsWith("/") ? url : `/${url}`;
+
+  if (cleanBase) return `${cleanBase}${cleanPath}`;
+
+  return cleanPath;
+};
+
+const isImageAttachment = (url = "") => {
+  return /\.(jpg|jpeg|png|webp)$/i.test(url);
+};
+
+const isPdfAttachment = (url = "") => {
+  return /\.pdf$/i.test(url);
+};
+
+const formatMoney = (value) =>
+  Number(value || 0).toLocaleString("th-TH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+const getPaymentAmounts = (invoice) => {
+  const paidAmount = Number(invoice?.paidAmount || 0);
+
+  const outstandingAmount =
+    invoice?.outstandingAmount !== undefined
+      ? Number(invoice.outstandingAmount || 0)
+      : Math.max(Number(invoice?.grandTotal || 0) - paidAmount, 0);
+
+  return {
+    paidAmount,
+    outstandingAmount,
+  };
+};
+
+const getInvoiceStatusInfo = (invoice) => {
+  const { paidAmount, outstandingAmount } = getPaymentAmounts(invoice);
+  const status = invoice?.status || "PENDING";
+
+  if (status === "PAID" || outstandingAmount <= 0) {
+    return {
+      label: "ชำระแล้ว",
+      className: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    };
+  }
+
+  if (status === "PARTIAL_PAID" || paidAmount > 0) {
+    return {
+      label: "ชำระบางส่วน",
+      className: "bg-blue-50 text-blue-700 border-blue-100",
+    };
+  }
+
+  const isOverdue = invoice?.dueDate && new Date(invoice.dueDate) < new Date();
+
+  if (isOverdue) {
+    return {
+      label: "เกินกำหนดชำระ",
+      className: "bg-rose-50 text-rose-700 border-rose-100",
+    };
+  }
+
+  return {
+    label: "รอชำระ",
+    className: "bg-amber-50 text-amber-700 border-amber-100",
+  };
 };
 
 export default function AccountsPayablePage() {
@@ -85,6 +155,12 @@ export default function AccountsPayablePage() {
   });
 
   const [formData, setFormData] = useState(createDefaultFormData());
+
+  const [attachmentPreview, setAttachmentPreview] = useState({
+    isOpen: false,
+    url: "",
+    name: "",
+  });
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -343,7 +419,8 @@ export default function AccountsPayablePage() {
 
       if (autoSupplierId) {
         const supplierName =
-          suppliers.find((s) => String(s.id) === String(autoSupplierId))?.name ||
+          suppliers.find((s) => String(s.id) === String(autoSupplierId))
+            ?.name ||
           grInfo.supplierName ||
           "ซัพพลายเออร์";
 
@@ -385,6 +462,30 @@ export default function AccountsPayablePage() {
       whtType: whtTypeMap[rateNum] || "",
       ...totals,
     }));
+  };
+
+  const openAttachmentPreview = (
+    url,
+    name = "ไฟล์แนบใบแจ้งหนี้ / ใบกำกับภาษี"
+  ) => {
+    if (!url) {
+      toast.error("ไม่พบไฟล์แนบ");
+      return;
+    }
+
+    setAttachmentPreview({
+      isOpen: true,
+      url,
+      name,
+    });
+  };
+
+  const closeAttachmentPreview = () => {
+    setAttachmentPreview({
+      isOpen: false,
+      url: "",
+      name: "",
+    });
   };
 
   const handleAttachmentUpload = async (file) => {
@@ -465,10 +566,7 @@ export default function AccountsPayablePage() {
       grNo: gr?.receiptNo || "",
       poNo: po?.poNumber || "ทั่วไป",
       supplierName:
-        invoice.supplier?.name ||
-        po?.supplier?.name ||
-        po?.vendorName ||
-        "",
+        invoice.supplier?.name || po?.supplier?.name || po?.vendorName || "",
     };
 
     const mappedItems = (invoice.items || []).map((item) => ({
@@ -558,9 +656,7 @@ export default function AccountsPayablePage() {
       });
 
       toast.success(
-        editingInvoiceId
-          ? "แก้ไขใบแจ้งหนี้สำเร็จ"
-          : "บันทึกการตั้งหนี้สำเร็จ"
+        editingInvoiceId ? "แก้ไขใบแจ้งหนี้สำเร็จ" : "บันทึกการตั้งหนี้สำเร็จ"
       );
 
       setShowForm(false);
@@ -716,15 +812,20 @@ export default function AccountsPayablePage() {
 
                     {formData.attachmentUrl && (
                       <div className="flex items-center justify-between gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-                        <a
-                          href={getAttachmentHref(formData.attachmentUrl)}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openAttachmentPreview(
+                              formData.attachmentUrl,
+                              "ไฟล์แนบใบแจ้งหนี้ / ใบกำกับภาษี"
+                            )
+                          }
                           className="text-xs font-black text-blue-700 hover:underline flex items-center gap-2 truncate"
                         >
                           <Paperclip size={14} />
                           เปิดไฟล์แนบที่อัปโหลดแล้ว
-                        </a>
+                          <ExternalLink size={12} />
+                        </button>
 
                         <button
                           type="button"
@@ -752,9 +853,7 @@ export default function AccountsPayablePage() {
                         <input
                           type="text"
                           value={grSearch}
-                          onChange={(e) =>
-                            handleGRSearchChange(e.target.value)
-                          }
+                          onChange={(e) => handleGRSearchChange(e.target.value)}
                           onFocus={() => setShowGrDropdown(true)}
                           onBlur={() => {
                             setTimeout(() => setShowGrDropdown(false), 180);
@@ -936,24 +1035,12 @@ export default function AccountsPayablePage() {
 
                       <div className="flex justify-between text-xs text-rose-500 uppercase tracking-tighter">
                         <span>WHT ({formData.whtRate}%):</span>
-                        <span>
-                          - ฿
-                          {Number(formData.whtAmount || 0).toLocaleString(
-                            undefined,
-                            { minimumFractionDigits: 2 }
-                          )}
-                        </span>
+                        <span>- ฿{formatMoney(formData.whtAmount)}</span>
                       </div>
 
                       <div className="flex justify-between text-xl font-black text-[#1F3B8B] pt-2 border-t border-slate-900/10">
                         <span className="uppercase italic">Net Pay:</span>
-                        <span>
-                          ฿
-                          {Number(formData.grandTotal || 0).toLocaleString(
-                            undefined,
-                            { minimumFractionDigits: 2 }
-                          )}
-                        </span>
+                        <span>฿{formatMoney(formData.grandTotal)}</span>
                       </div>
                     </div>
                   </div>
@@ -1005,19 +1092,11 @@ export default function AccountsPayablePage() {
                             </td>
 
                             <td className="px-6 py-4 text-right font-bold">
-                              ฿
-                              {Number(item.unitPrice || 0).toLocaleString(
-                                undefined,
-                                { minimumFractionDigits: 2 }
-                              )}
+                              ฿{formatMoney(item.unitPrice)}
                             </td>
 
                             <td className="px-6 py-4 text-right font-black text-blue-800">
-                              ฿
-                              {Number(item.amount || 0).toLocaleString(
-                                undefined,
-                                { minimumFractionDigits: 2 }
-                              )}
+                              ฿{formatMoney(item.amount)}
                             </td>
                           </tr>
                         ))
@@ -1069,62 +1148,68 @@ export default function AccountsPayablePage() {
           </div>
         )}
 
-        {/* ตารางหนี้คงค้าง */}
+        {/* ตารางใบตั้งหนี้ */}
         <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
           <div className="p-6 bg-slate-50/50 flex justify-between items-center border-b border-slate-200">
             <div className="flex items-center gap-3">
               <Clock size={18} className="text-amber-500" />
-              <h3 className="text-xs font-black uppercase text-slate-700 tracking-widest">
-                Pending Accounts Payable
+              <h3 className="text-xs font-black text-slate-700 tracking-widest">
+                รายการใบตั้งหนี้เจ้าหนี้
               </h3>
             </div>
 
-            <div className="bg-rose-50 text-rose-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter border border-rose-100">
-              ยอดรอจ่ายทั้งหมด: {invoices.length} บิล
+            <div className="bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-[10px] font-black tracking-tighter border border-blue-100">
+              จำนวนรายการทั้งหมด: {invoices.length} บิล
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="w-full min-w-[1120px] text-sm">
               <thead>
-                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] bg-slate-50/30">
-                  <th className="px-6 py-5">Due Date</th>
-                  <th className="px-6 py-5">Document Info</th>
-                  <th className="px-6 py-5">Supplier Name</th>
-                  <th className="px-6 py-5 text-right">Net Payable</th>
-                  <th className="px-6 py-5 text-center">Action</th>
+                <tr className="text-[10px] font-black text-slate-400 tracking-[0.2em] bg-slate-50/30">
+                  <th className="px-6 py-5 text-left">กำหนดชำระ</th>
+                  <th className="px-6 py-5 text-left">ข้อมูลเอกสาร</th>
+                  <th className="px-6 py-5 text-left">ซัพพลายเออร์</th>
+                  <th className="px-6 py-5 text-right">ยอดสุทธิ</th>
+                  <th className="px-6 py-5 text-right">จ่ายแล้ว</th>
+                  <th className="px-6 py-5 text-right">คงเหลือ</th>
+                  <th className="px-6 py-5 text-center">สถานะ</th>
+                  <th className="px-6 py-5 text-center">จัดการ</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-slate-100">
                 {invoices.map((inv) => {
-                  const isOverdue = new Date(inv.dueDate) < new Date();
+                  const { paidAmount, outstandingAmount } =
+                    getPaymentAmounts(inv);
+
+                  const isPaid =
+                    inv.status === "PAID" ||
+                    Number(outstandingAmount || 0) <= 0;
+
+                  const canModify =
+                    inv.status === "PENDING" && Number(paidAmount || 0) <= 0;
 
                   return (
                     <tr key={inv.id} className="hover:bg-slate-50/50">
-                      <td className="px-6 py-4">
-                        <div
-                          className={`font-black text-sm ${
-                            isOverdue ? "text-rose-600" : "text-slate-900"
-                          }`}
-                        >
-                          {new Date(inv.dueDate).toLocaleDateString("th-TH")}
+                      <td className="px-6 py-4 align-top">
+                        <div className="font-black text-sm text-slate-900 whitespace-nowrap">
+                          {inv.dueDate
+                            ? new Date(inv.dueDate).toLocaleDateString("th-TH")
+                            : "-"}
                         </div>
-                        {isOverdue && (
-                          <div className="text-[9px] font-black text-white bg-rose-500 px-1.5 py-0.5 rounded w-fit uppercase mt-1">
-                            Overdue
-                          </div>
-                        )}
                       </td>
 
-                      <td className="px-6 py-4">
-                        <div className="font-black text-blue-700 uppercase tracking-tighter">
-                          INV: {inv.invoiceNo}
+                      <td className="px-6 py-4 align-top">
+                        <div className="font-black text-blue-700 tracking-tighter whitespace-nowrap">
+                          เลขที่ใบแจ้งหนี้: {inv.invoiceNo}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase">
-                          TAX: {inv.taxInvoiceNo || "N/A"}
+
+                        <div className="text-[10px] text-slate-400 font-bold whitespace-nowrap">
+                          ใบกำกับภาษี: {inv.taxInvoiceNo || "N/A"}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase">
+
+                        <div className="text-[10px] text-slate-400 font-bold whitespace-nowrap">
                           รับเอกสาร:{" "}
                           {inv.receiveDate
                             ? new Date(inv.receiveDate).toLocaleDateString(
@@ -1133,62 +1218,91 @@ export default function AccountsPayablePage() {
                             : "N/A"}
                         </div>
 
+                        <div className="text-[10px] text-slate-400 font-bold whitespace-nowrap">
+                          PO: {inv.purchaseOrder?.poNumber || "-"} | GR:{" "}
+                          {inv.goodsReceipt?.receiptNo || "-"}
+                        </div>
+
                         {inv.attachmentUrl && (
-                          <a
-                            href={getAttachmentHref(inv.attachmentUrl)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[10px] text-blue-600 font-black uppercase hover:underline inline-flex items-center gap-1 mt-1"
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openAttachmentPreview(
+                                inv.attachmentUrl,
+                                `ไฟล์แนบใบแจ้งหนี้: ${inv.invoiceNo || ""}`
+                              )
+                            }
+                            className="text-[10px] text-blue-600 font-black hover:underline inline-flex items-center gap-1 mt-1"
                           >
                             <Paperclip size={11} />
                             เปิดไฟล์แนบ
-                          </a>
+                            <ExternalLink size={10} />
+                          </button>
                         )}
 
                         {inv.remarks && (
                           <div className="text-[10px] text-slate-500 font-bold mt-1 max-w-[260px] truncate">
-                            Note: {inv.remarks}
+                            หมายเหตุ: {inv.remarks}
                           </div>
                         )}
                       </td>
 
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-slate-700">
+                      <td className="px-6 py-4 align-top">
+                        <div className="font-bold text-slate-700 max-w-[260px] truncate">
                           {inv.supplier?.name || "-"}
                         </div>
-                        <div className="text-[9px] font-black text-slate-400 uppercase">
-                          Code: {inv.supplier?.code || "-"}
+                        <div className="text-[9px] font-black text-slate-400">
+                          รหัสคู่ค้า: {inv.supplier?.code || "-"}
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 text-right font-black text-slate-900 text-base">
-                        ฿
-                        {Number(inv.grandTotal || 0).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                      <td className="px-6 py-4 text-right align-top font-black text-slate-900 whitespace-nowrap">
+                        ฿{formatMoney(inv.grandTotal)}
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 text-right align-top font-bold text-emerald-700 whitespace-nowrap">
+                        ฿{formatMoney(paidAmount)}
+                      </td>
+
+                      <td className="px-6 py-4 text-right align-top font-black whitespace-nowrap">
+                        <span
+                          className={
+                            isPaid ? "text-emerald-700" : "text-rose-600"
+                          }
+                        >
+                          ฿{formatMoney(outstandingAmount)}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4 text-center align-top">
+                        <InvoiceStatusBadge invoice={inv} />
+                      </td>
+
+                      <td className="px-6 py-4 align-top">
                         <div className="flex justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => openEditForm(inv)}
-                            className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
-                          >
-                            <Pencil size={13} /> แก้ไข
-                          </button>
+                          {canModify ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openEditForm(inv)}
+                                className="bg-blue-50 text-blue-700 px-4 py-2.5 rounded-xl text-[10px] font-black hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
+                              >
+                                <Pencil size={13} /> แก้ไข
+                              </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteInvoice(inv)}
-                            className="bg-rose-50 text-rose-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-rose-600 hover:text-white transition-all flex items-center gap-2"
-                          >
-                            <Trash2 size={13} /> ลบ
-                          </button>
-
-                          <button className="bg-emerald-50 text-emerald-700 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-2">
-                            <CreditCard size={13} /> จ่ายเงิน
-                          </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteInvoice(inv)}
+                                className="bg-rose-50 text-rose-700 px-4 py-2.5 rounded-xl text-[10px] font-black hover:bg-rose-600 hover:text-white transition-all flex items-center gap-2"
+                              >
+                                <Trash2 size={13} /> ลบ
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-[10px] font-black text-slate-400">
+                              {isPaid ? "ชำระแล้ว" : "มีประวัติการจ่าย"}
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1198,10 +1312,10 @@ export default function AccountsPayablePage() {
                 {invoices.length === 0 && (
                   <tr>
                     <td
-                      colSpan="5"
-                      className="px-6 py-12 text-center text-slate-400 font-bold uppercase tracking-widest italic"
+                      colSpan="8"
+                      className="px-6 py-12 text-center text-slate-400 font-bold tracking-widest italic"
                     >
-                      ยังไม่มีรายการหนี้คงค้าง
+                      ยังไม่มีรายการใบตั้งหนี้
                     </td>
                   </tr>
                 )}
@@ -1209,8 +1323,94 @@ export default function AccountsPayablePage() {
             </table>
           </div>
         </div>
+
+        {attachmentPreview.isOpen && attachmentPreview.url && (
+          <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="w-full max-w-5xl max-h-[92vh] bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0">
+                    {isImageAttachment(attachmentPreview.url) ? (
+                      <ImageIcon className="text-blue-400" size={22} />
+                    ) : (
+                      <FileText className="text-blue-400" size={22} />
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-black tracking-widest">
+                      ไฟล์แนบใบแจ้งหนี้ / ใบกำกับภาษี
+                    </h3>
+                    <p className="text-[10px] font-bold text-slate-400 truncate">
+                      {attachmentPreview.name}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeAttachmentPreview}
+                  className="w-10 h-10 rounded-full bg-white/5 hover:bg-rose-500/20 hover:text-rose-400 transition-all flex items-center justify-center"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-4 bg-slate-50 max-h-[calc(92vh-88px)] overflow-auto">
+                {isImageAttachment(attachmentPreview.url) ? (
+                  <div className="w-full flex justify-center">
+                    <img
+                      src={getAttachmentHref(attachmentPreview.url)}
+                      alt={attachmentPreview.name || "ไฟล์แนบใบแจ้งหนี้"}
+                      className="max-w-full max-h-[75vh] object-contain rounded-2xl border border-slate-200 bg-white shadow-sm"
+                      onError={() => {
+                        toast.error(
+                          "เปิดรูปไม่สำเร็จ กรุณาตรวจสอบการตั้งค่า static uploads ของ backend"
+                        );
+                      }}
+                    />
+                  </div>
+                ) : isPdfAttachment(attachmentPreview.url) ? (
+                  <iframe
+                    src={getAttachmentHref(attachmentPreview.url)}
+                    title="ไฟล์แนบใบแจ้งหนี้ / ใบกำกับภาษี"
+                    className="w-full h-[75vh] rounded-2xl border border-slate-200 bg-white"
+                  />
+                ) : (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+                    <FileText size={42} className="mx-auto text-slate-400" />
+                    <div className="mt-4 text-sm font-black text-slate-700">
+                      ไม่สามารถแสดงตัวอย่างไฟล์ชนิดนี้ได้
+                    </div>
+                    <a
+                      href={getAttachmentHref(attachmentPreview.url)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-4 inline-flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-xl text-xs font-black hover:bg-slate-700"
+                    >
+                      <ExternalLink size={14} />
+                      เปิดไฟล์
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AuthGate>
+  );
+}
+
+function InvoiceStatusBadge({ invoice }) {
+  const statusInfo = getInvoiceStatusInfo(invoice);
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center px-3 py-1 rounded-full border text-[10px] font-black whitespace-nowrap ${statusInfo.className}`}
+    >
+      {statusInfo.label}
+    </span>
   );
 }
 
@@ -1244,12 +1444,7 @@ function SummaryRow({ label, value }) {
   return (
     <div className="flex justify-between text-xs text-slate-500 uppercase tracking-tighter">
       <span>{label}</span>
-      <span>
-        ฿
-        {Number(value || 0).toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-        })}
-      </span>
+      <span>฿{formatMoney(value)}</span>
     </div>
   );
 }
