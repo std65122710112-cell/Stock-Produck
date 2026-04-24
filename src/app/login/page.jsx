@@ -127,7 +127,9 @@ export default function LoginPage() {
                         if (userPerms.includes("REQUISITION_READ") || userPerms.includes("REQUISITION_CREATE")) targetRoute = "/inventory/requisition";
                         else if (userPerms.includes("PR_READ") || userPerms.includes("PR_CREATE")) targetRoute = "/purchase/pr";
                         else if (userPerms.includes("INBOUND_READ") || userPerms.includes("INBOUND_CREATE")) targetRoute = "/inbound";
-                        else if (userPerms.includes("OUTBOUND_READ") || userPerms.includes("OUTBOUND_MANAGE")) targetRoute = "/outbound";
+                       else if (userPerms.includes("OUTBOUND_READ") || userPerms.includes("OUTBOUND_CREATE")) {
+                                    targetRoute = "/outbound";
+                                }
                         else if (userPerms.includes("INVENTORY_READ")) targetRoute = "/inventory/balances";
                         else if (userPerms.includes("MASTER_DATA_READ")) targetRoute = "/master/products";
                         else if (userPerms.includes("USER_MANAGE")) targetRoute = "/users";
