@@ -581,7 +581,7 @@ export default function ProfessionalOutboundPage() {
               <button
                 type="button"
                 onClick={modal.onConfirm}
-                className={`flex-1 px-4 py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest text-white shadow-sm transition-colors ${
+                className={`flex-1 px-4 py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest text-white shadow-sm transition-colors active:scale-95 ${
                   modal.type === "danger"
                     ? "bg-rose-600 hover:bg-rose-700"
                     : "bg-emerald-600 hover:bg-emerald-700"
@@ -599,7 +599,7 @@ export default function ProfessionalOutboundPage() {
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" />
 
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 border border-emerald-100 animate-in zoom-in-95 duration-200">
-            <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-emerald-100 text-emerald-600 border border-emerald-200">
+            <div className="mx-auto w-20 h-20 rounded-full flex items-center justify-center mb-6 bg-emerald-100 text-emerald-600 border border-emerald-200 shadow-inner">
               <CheckCircle2 className="w-10 h-10" />
             </div>
 
@@ -623,7 +623,7 @@ export default function ProfessionalOutboundPage() {
                 type="button"
                 onClick={handleOpenDoPdf}
                 disabled={isOpeningPdf}
-                className="w-full py-4 mb-3 bg-[#1F3B8B] text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#172e6d] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-4 mb-3 bg-[#1F3B8B] text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-[#172e6d] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95"
               >
                 {isOpeningPdf ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -633,7 +633,7 @@ export default function ProfessionalOutboundPage() {
                 เปิด PDF ใบจ่ายสินค้า
               </button>
             ) : (
-              <div className="w-full mb-3 bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs font-bold text-amber-700 leading-relaxed text-center">
+              <div className="w-full mb-3 bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs font-bold text-amber-700 leading-relaxed text-center shadow-sm">
                 บันทึกใบจ่ายสำเร็จ แต่ยังไม่ได้รับลิงก์ PDF จาก backend
               </div>
             )}
@@ -645,7 +645,7 @@ export default function ProfessionalOutboundPage() {
                 setGeneratedDoPdfUrl("");
                 setCreatedDoNo("");
               }}
-              className="w-full py-4 rounded-xl font-black text-base text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg transition-all active:scale-95"
+              className="w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg transition-all active:scale-95"
             >
               ตกลง
             </button>
@@ -660,26 +660,26 @@ export default function ProfessionalOutboundPage() {
               <button
                 type="button"
                 onClick={() => setViewMode("LIST")}
-                className="flex items-center gap-2 w-fit text-base font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
+                className="flex items-center gap-2 w-fit text-sm font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" /> ย้อนกลับ
+                <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
               </button>
             )}
 
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
-                  <Truck className="w-7 h-7 text-[#1F3B8B]" />
+                <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                  <Truck className="w-6 h-6 text-[#1F3B8B]" />
                 </div>
 
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
                     {viewMode === "LIST"
                       ? "คิวเบิกและประวัติการนำจ่าย"
                       : "บันทึกการเบิกพัสดุ"}
                   </h1>
 
-                  <p className="text-base text-slate-500 mt-1.5 font-medium flex items-center gap-2">
+                  <p className="text-sm text-slate-500 mt-1 font-medium flex items-center gap-1.5">
                     <MapPinned className="w-4 h-4" />
                     Inventory Outbound Management •
                     ระบบบริหารจัดการนำจ่ายสินค้าและตรวจสอบล๊อตสินค้า
@@ -694,58 +694,58 @@ export default function ProfessionalOutboundPage() {
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center border shadow-sm bg-indigo-50 text-indigo-600 border-indigo-100">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm bg-indigo-50 text-indigo-600 border-indigo-100">
                   <LayoutDashboard className="w-5 h-5" />
                 </div>
 
-                <h2 className="text-lg font-bold text-slate-800 tracking-wide uppercase">
+                <h2 className="text-base font-bold text-slate-800 tracking-wider uppercase">
                   รายการใบเบิกพัสดุที่ผ่านการอนุมัติ (Approved SR)
                 </h2>
               </div>
 
-              <div className="bg-sky-50 text-sky-700 border border-sky-200 text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider">
+              <div className="bg-sky-50 text-sky-700 border border-sky-200 text-[11px] px-4 py-1.5 rounded-full font-bold uppercase tracking-widest tabular-nums">
                 {allSRs.length} รายการในระบบ
               </div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-slate-100 border-b border-slate-200">
                   <tr>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       เลขที่ใบเบิก
                     </th>
 
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       ผู้ขอเบิก / แผนก
                     </th>
 
-                    <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       วันที่ต้องการใช้
                     </th>
 
-                    <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       ความเร่งด่วน
                     </th>
 
-                    <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       สถานะ
                     </th>
 
-                    <th className="py-4 px-6 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       ดำเนินการ
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-slate-100 bg-white/50">
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {isLoading ? (
                     <tr>
                       <td colSpan="6" className="py-20 text-center">
                         <div className="flex flex-col items-center gap-3">
                           <div className="w-8 h-8 border-4 border-slate-200 border-t-[#1F3B8B] rounded-full animate-spin"></div>
 
-                          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">
+                          <p className="text-slate-500 font-bold text-[11px] uppercase tracking-widest">
                             กำลังโหลดข้อมูลระบบ...
                           </p>
                         </div>
@@ -772,17 +772,17 @@ export default function ProfessionalOutboundPage() {
                         >
                           <td className="py-4 px-6">
                             <span
-                              className={`text-sm font-bold tracking-tight uppercase ${
+                              className={`text-sm font-bold tracking-tight uppercase tabular-nums ${
                                 sr.status === "COMPLETED"
                                   ? "text-slate-400"
-                                  : "text-[#1e3b8a]"
+                                  : "text-[#1F3B8B] group-hover:text-blue-700 transition-colors"
                               }`}
                             >
                               {sr.srNumber}
                             </span>
 
                             {sr.referenceNo && (
-                              <p className="text-[10px] font-bold text-slate-400 mt-1">
+                              <p className="text-[10px] font-bold text-slate-400 mt-1 tracking-wider uppercase">
                                 REF: {sr.referenceNo}
                               </p>
                             )}
@@ -794,18 +794,18 @@ export default function ProfessionalOutboundPage() {
                                 className={`text-sm font-bold uppercase ${
                                   sr.status === "COMPLETED"
                                     ? "text-slate-400"
-                                    : "text-slate-800"
+                                    : "text-slate-900"
                                 }`}
                               >
                                 {sr.user?.firstName} {sr.user?.lastName}
                               </span>
 
-                              <span className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
-                                {sr.department?.name}
+                              <span className="text-[10px] font-bold text-slate-500 border border-slate-200 px-2 py-0.5 rounded-md bg-slate-50 uppercase tracking-wide w-fit mt-1">
+                                {sr.department?.name || "General"}
                               </span>
 
                               {sr.deliveryLocation && (
-                                <span className="text-[10px] font-bold text-slate-400 mt-0.5 flex items-center gap-1">
+                                <span className="text-[10px] font-bold text-slate-400 mt-1 flex items-center gap-1">
                                   <MapPin className="w-3 h-3" />
                                   {sr.deliveryLocation}
                                 </span>
@@ -813,13 +813,13 @@ export default function ProfessionalOutboundPage() {
                             </div>
                           </td>
 
-                          <td className="py-4 px-6 text-center text-xs font-bold text-slate-600">
+                          <td className="py-4 px-6 text-center text-sm font-bold text-slate-600 tabular-nums">
                             {formatThaiDate(sr.requiredDate)}
                           </td>
 
                           <td className="py-4 px-6 text-center">
                             <span
-                              className={`inline-flex px-3 py-1.5 rounded-md text-[11px] font-black uppercase tracking-wider border ${p.className}`}
+                              className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm ${p.className}`}
                             >
                               {p.text}
                             </span>
@@ -851,14 +851,14 @@ export default function ProfessionalOutboundPage() {
 
                           <td className="py-4 px-6 text-right">
                             {sr.status === "COMPLETED" ? (
-                              <span className="text-xs font-bold text-slate-400 uppercase italic pr-4">
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest italic pr-4">
                                 จ่ายออกสำเร็จ ✓
                               </span>
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => handleSelectSR(sr)}
-                                className="bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 inline-flex items-center justify-center ml-auto"
+                                className="bg-white text-[#1F3B8B] border border-slate-200 hover:border-[#1F3B8B] hover:bg-[#1F3B8B] hover:text-white px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 inline-flex items-center justify-center ml-auto"
                               >
                                 จัดของ & จ่ายออก
                               </button>
@@ -877,145 +877,130 @@ export default function ProfessionalOutboundPage() {
         {viewMode === "FORM" && selectedSR && (
           <form
             onSubmit={handleSubmit}
-            className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500"
+            className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500"
           >
-            <div className="p-8 md:p-10 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
-              <div className="space-y-2">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+            {/* Header Document */}
+            <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                   เลขที่ใบนำจ่าย (Delivery Order):
                 </span>
-
-                <h2 className="text-3xl md:text-4xl font-black text-emerald-600 tabular-nums whitespace-nowrap">
+                <h2 className="text-2xl md:text-3xl font-bold text-emerald-600 tabular-nums whitespace-nowrap tracking-tight">
                   {doNo}
                 </h2>
               </div>
 
-              <div className="flex flex-col items-start md:items-end justify-center">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+              <div className="text-left md:text-right">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">
                   อ้างอิงใบเบิก (SR Ref.):
                 </span>
-
-                <p className="text-lg md:text-xl font-bold text-slate-900 tracking-tight tabular-nums">
+                <p className="text-base font-bold text-slate-900 tracking-tight tabular-nums">
                   {selectedSR.srNumber}
                 </p>
               </div>
             </div>
 
-            <div className="p-8 md:p-10 border-b border-slate-200">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest">
+            {/* Basic Info */}
+            <div className="p-6 md:p-8 border-b border-slate-200">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
                   ข้อมูลพื้นฐานจากใบเบิกต้นทาง
                 </h2>
 
-                <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-md border border-slate-200">
-                  <Calendar className="w-4 h-4 text-slate-400" />
+                <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm tabular-nums">
+                  <Calendar className="w-3.5 h-3.5" />
                   วันที่ขอเบิก: {formatThaiDate(selectedSR.createdAt)}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 md:gap-10 mb-10">
+              {/* Grid 6 คอลัมน์สำหรับข้อมูลพื้นฐาน */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-6 mb-8">
                 <InfoBox
                   label="ผู้ขอเบิกพัสดุ"
-                  value={`${selectedSR.user?.firstName || ""} ${
-                    selectedSR.user?.lastName || ""
-                  }`}
+                  value={`${selectedSR.user?.firstName || ""} ${selectedSR.user?.lastName || ""}`}
                 />
-
                 <InfoBox
                   label="ผู้อนุมัติเบิก"
-                  value={`${selectedSR.approver?.firstName || "System"} ${
-                    selectedSR.approver?.lastName || ""
-                  }`}
+                  value={`${selectedSR.approver?.firstName || "System"} ${selectedSR.approver?.lastName || ""}`}
                 />
-
                 <InfoBox
                   label="แผนกที่เบิก"
                   value={selectedSR.department?.name || "ส่วนกลาง"}
                 />
-
                 <InfoBox
                   label="เลขอ้างอิงโครงการ"
                   value={selectedSR.referenceNo || "-"}
                 />
-
                 <InfoBox
                   label="วันที่ต้องการใช้งาน"
                   value={formatThaiDate(selectedSR.requiredDate)}
                 />
-
-                <div className="flex flex-col justify-center space-y-2">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                <div className="flex flex-col justify-start">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">
                     ความเร่งด่วน
                   </span>
-
                   <span
-                    className={`w-fit px-3 py-1.5 rounded-md text-[11px] font-black uppercase tracking-wider border ${selectedPriority.className}`}
+                    className={`w-fit px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest border shadow-sm ${selectedPriority.className}`}
                   >
                     {selectedPriority.text}
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-4">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+              {/* จัดเรียงวัตถุประสงค์และจุดส่งมอบใหม่แบบ 3 คอลัมน์ */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1">
                     วัตถุประสงค์ / โครงการ
                   </span>
-
-                  <p className="text-base text-slate-800 font-semibold leading-relaxed p-6 bg-slate-50 rounded-xl border border-slate-100 italic">
+                  <p className="text-base text-slate-900 font-bold leading-relaxed p-5 bg-slate-50 rounded-xl border border-slate-100 min-h-[80px]">
                     "{selectedSR.purpose || "ไม่ได้ระบุวัตถุประสงค์"}"
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1">
                     จุดส่งมอบ / จุดใช้งาน
                   </span>
-
-                  <p className="text-base text-slate-800 font-semibold leading-relaxed p-6 bg-slate-50 rounded-xl border border-slate-100">
+                  <p className="text-base text-slate-900 font-bold leading-relaxed p-5 bg-slate-50 rounded-xl border border-slate-100 min-h-[80px]">
                     {selectedSR.deliveryLocation || "ไม่ได้ระบุ"}
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1">
                     หมายเหตุจากผู้เบิก (SR Note)
                   </span>
-
-                  <p className="text-base text-slate-800 font-semibold leading-relaxed p-6 bg-slate-50 rounded-xl border border-slate-100 italic">
+                  <p className="text-base text-slate-900 font-bold leading-relaxed p-5 bg-slate-50 rounded-xl border border-slate-100 min-h-[80px]">
                     "{selectedSR.remarks || "ไม่มีหมายเหตุเพิ่มเติม"}"
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="px-8 md:px-10 py-8 md:py-10 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-6">
+        
+            <div className="px-6 md:px-8 py-6 md:py-8 border-b border-slate-200">
+              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-4">
                 รายการพัสดุที่ต้องจัดเตรียมและนำจ่าย
               </h2>
 
-              <div className="border border-slate-200 rounded-xl overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1200px]">
-                  <thead className="bg-slate-100 border-b border-slate-200 text-sm font-bold uppercase text-slate-600">
+              <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-sm">
+                <table className="min-w-full text-left border-collapse min-w-[1000px]">
+                  <thead className="bg-slate-100 border-b border-slate-200 text-[11px] font-bold uppercase text-slate-500 tracking-widest">
                     <tr>
-                      <th className="p-5 text-left">รายการพัสดุ / SKU</th>
-
-                      <th className="p-5 text-center w-32">ยอดเบิกรวม</th>
-
-                      <th className="p-5 text-left w-[42%]">
-                        เลือกล๊อต / คลัง / ตำแหน่งจัดเก็บ{" "}
-                        <span className="text-rose-500">*</span>
+                      <th className="p-4 text-left w-[25%]">รายการพัสดุ / SKU</th>
+                      <th className="p-4 text-center w-24">ยอดเบิกรวม</th>
+                      <th className="p-4 text-left w-[40%]">
+                        เลือกล๊อต / คลัง / ตำแหน่งจัดเก็บ <span className="text-rose-500">*</span>
                       </th>
-
-                      <th className="p-5 text-center w-48 whitespace-nowrap">
+                      <th className="p-4 text-center w-32 whitespace-nowrap">
                         จำนวนที่จ่าย <span className="text-rose-500">*</span>
                       </th>
-
-                      <th className="p-5 text-center w-32">จัดการ</th>
+                      <th className="p-4 text-center w-20">จัดการ</th>
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 bg-white">
                     {items.map((item, idx) => {
                       const lots = getAvailableLots(item.productId);
                       const stock = getAvailableStock(
@@ -1046,68 +1031,67 @@ export default function ProfessionalOutboundPage() {
                       return (
                         <tr
                           key={item.id}
-                          className="hover:bg-slate-50/50 transition-colors"
+                          className="hover:bg-slate-50/50 transition-colors group"
                         >
-                          <td className="p-5">
+                          <td className="p-4 align-top">
                             {isFirstOfGroup ? (
                               <div className="flex flex-col">
-                                <p className="font-bold text-slate-900 text-lg">
+                                <p className="font-bold text-slate-900 text-sm">
                                   {item.productName}
                                 </p>
 
-                                <p className="text-sm text-blue-600 font-bold uppercase mt-1">
+                                <p className="text-[10px] text-[#1F3B8B] font-bold uppercase mt-1 tracking-wider">
                                   SKU: {item.sku}
                                 </p>
 
-                                <p className="text-[11px] text-slate-400 font-bold mt-1">
+                                <p className="text-[10px] text-slate-500 font-bold mt-1 uppercase tracking-wider">
                                   หน่วยนับ: {item.unitName}
                                 </p>
 
                                 {item.remark && (
-                                  <p className="text-[11px] text-amber-600 font-bold mt-2 flex items-center gap-1.5 italic">
-                                    <Info className="w-3.5 h-3.5" />
+                                  <p className="text-[10px] text-amber-600 font-bold mt-2 flex items-center gap-1 italic">
+                                    <Info className="w-3.5 h-3.5 shrink-0" />
                                     หมายเหตุ: {item.remark}
                                   </p>
                                 )}
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2 pl-6 text-slate-400">
-                                <div className="w-4 h-4 border-l-2 border-b-2 border-slate-300 rounded-bl-lg mb-1"></div>
-
-                                <span className="text-xs font-bold uppercase italic tracking-wider">
+                              <div className="flex items-center gap-1.5 pl-4 text-slate-400">
+                                <div className="w-3 h-3 border-l-2 border-b-2 border-slate-300 rounded-bl mb-0.5 shrink-0"></div>
+                                <span className="text-[10px] font-bold uppercase italic tracking-widest">
                                   แบ่งเบิกเพิ่ม
                                 </span>
                               </div>
                             )}
                           </td>
 
-                          <td className="p-5 text-center">
+                          <td className="p-4 text-center align-top pt-5">
                             {isFirstOfGroup ? (
                               <div className="flex flex-col items-center">
-                                <span className="font-bold text-slate-900 text-xl tabular-nums">
+                                <span className="font-bold text-slate-900 text-lg tabular-nums">
                                   {item.requiredQty}
                                 </span>
 
                                 <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-md mt-1 border tabular-nums uppercase ${
+                                  className={`text-[9px] font-bold px-2 py-0.5 rounded-md mt-1 border tabular-nums uppercase tracking-widest whitespace-nowrap ${
                                     isFullyPicked
                                       ? "bg-emerald-50 text-emerald-600 border-emerald-200"
                                       : isOverRequired
-                                        ? "bg-rose-50 text-rose-600 border-rose-200"
-                                        : "bg-amber-50 text-amber-600 border-amber-200"
+                                      ? "bg-rose-50 text-rose-600 border-rose-200"
+                                      : "bg-amber-50 text-amber-600 border-amber-200"
                                   }`}
                                 >
                                   รวม: {currentTotalPicked}/{item.requiredQty}
                                 </span>
                               </div>
                             ) : (
-                              <span className="text-slate-300 font-bold">
+                              <span className="text-slate-300 font-bold text-lg tabular-nums">
                                 -
                               </span>
                             )}
                           </td>
 
-                          <td className="p-5">
+                          <td className="p-4 align-top pt-4">
                             <select
                               required
                               value={item.selectedBalanceKey}
@@ -1118,7 +1102,7 @@ export default function ProfessionalOutboundPage() {
                                   e.target.value
                                 )
                               }
-                              className={`w-full border rounded-lg p-3.5 text-sm font-bold outline-none transition-all cursor-pointer ${
+                              className={`w-full border rounded-lg p-2.5 text-sm font-bold outline-none transition-all cursor-pointer shadow-sm ${
                                 item.selectedBalanceKey
                                   ? "border-slate-300 text-slate-900 focus:border-[#1F3B8B]"
                                   : "border-slate-200 text-slate-500 focus:border-[#1F3B8B]"
@@ -1142,34 +1126,30 @@ export default function ProfessionalOutboundPage() {
                                   {l.expDate
                                     ? ` | EXP: ${formatThaiDate(l.expDate)}`
                                     : ""}
-                                  {l.unitCost
-                                    ? ` | ต้นทุน: ฿${formatCurrency(
-                                        l.unitCost
-                                      )}`
-                                    : ""}
                                 </option>
                               ))}
                             </select>
 
                             {item.selectedBalanceKey && (
-                              <div className="mt-2 space-y-1">
-                                <p className="text-[11px] font-bold text-slate-500">
+                              <div className="mt-2 space-y-0.5">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                   ล๊อตที่เลือก:{" "}
                                   <span className="text-[#1F3B8B]">
                                     {item.lotNumber || "-"}
                                   </span>
                                 </p>
 
-                                <p className="text-[11px] font-bold text-slate-400">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
                                   คงเหลือในล๊อตนี้:{" "}
-                                  {Number(stock || 0).toLocaleString()}{" "}
-                                  {item.unitName}
+                                  <span className="text-slate-700 tabular-nums">
+                                    {Number(stock || 0).toLocaleString()} {item.unitName}
+                                  </span>
                                 </p>
                               </div>
                             )}
                           </td>
 
-                          <td className="p-5 text-center">
+                          <td className="p-4 text-center align-top pt-4">
                             <input
                               type="number"
                               min="1"
@@ -1181,36 +1161,36 @@ export default function ProfessionalOutboundPage() {
                                   e.target.value
                                 )
                               }
-                              className={`w-28 mx-auto block border rounded-lg py-2.5 text-center tabular-nums font-bold text-lg outline-none transition-all ${
+                              className={`w-24 mx-auto block border rounded-lg py-2 text-center tabular-nums font-bold text-sm outline-none transition-all shadow-sm ${
                                 isOverStock || isOverRequired
-                                  ? "border-rose-400 bg-rose-50 text-rose-900 focus:ring-2 focus:ring-rose-100"
+                                  ? "border-rose-300 bg-rose-50 text-rose-900 focus:ring-2 focus:ring-rose-100"
                                   : "border-slate-200 bg-white text-slate-900 focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
                               }`}
                             />
 
                             {isOverStock && (
-                              <p className="text-[11px] text-rose-500 font-bold mt-2">
-                                เกินคงเหลือในล๊อตนี้
+                              <p className="text-[10px] text-rose-500 font-bold mt-1.5 uppercase tracking-widest">
+                                เกินคงเหลือล๊อตนี้
                               </p>
                             )}
 
                             {isOverRequired && (
-                              <p className="text-[11px] text-rose-500 font-bold mt-2">
+                              <p className="text-[10px] text-rose-500 font-bold mt-1.5 uppercase tracking-widest">
                                 เกินยอดอนุมัติ
                               </p>
                             )}
                           </td>
 
-                          <td className="p-5 text-center">
+                          <td className="p-4 text-center align-top pt-4">
                             <div className="flex items-center justify-center gap-2">
                               {isFirstOfGroup && (
                                 <button
                                   type="button"
                                   onClick={() => handleSplitItem(item)}
                                   title="แยกเบิกจากล๊อตอื่น"
-                                  className="p-2.5 bg-white text-slate-400 border border-slate-200 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors shadow-sm"
+                                  className="p-2 bg-white text-slate-400 border border-slate-200 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors shadow-sm active:scale-95"
                                 >
-                                  <Plus className="w-5 h-5" />
+                                  <Plus className="w-4 h-4 shrink-0" />
                                 </button>
                               )}
 
@@ -1219,9 +1199,9 @@ export default function ProfessionalOutboundPage() {
                                 onClick={() => removeItem(item.id)}
                                 title="ลบรายการนี้"
                                 disabled={items.length === 1}
-                                className="p-2.5 bg-white text-slate-400 border border-slate-200 rounded-lg hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-sm disabled:opacity-50"
+                                className="p-2 bg-white text-slate-400 border border-slate-200 rounded-lg hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-sm disabled:opacity-50 active:scale-95"
                               >
-                                <Trash2 className="w-5 h-5" />
+                                <Trash2 className="w-4 h-4 shrink-0" />
                               </button>
                             </div>
                           </td>
@@ -1233,10 +1213,11 @@ export default function ProfessionalOutboundPage() {
               </div>
             </div>
 
-            <div className="p-8 md:p-10 bg-slate-50 flex flex-col gap-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            {/* Footer Action */}
+            <div className="p-6 md:p-8 bg-slate-50 flex flex-col gap-6 border-t border-slate-200">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                     หมายเหตุการนำจ่าย (Remarks)
                   </label>
 
@@ -1244,25 +1225,25 @@ export default function ProfessionalOutboundPage() {
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
                     rows="3"
-                    className="w-full border rounded-lg bg-white p-4 text-base font-medium text-slate-700 outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all resize-none shadow-sm placeholder:text-slate-400"
+                    className="w-full border border-slate-200 rounded-xl bg-white p-4 text-sm font-bold text-slate-700 outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all resize-none shadow-sm placeholder:text-slate-400 min-h-[80px]"
                     placeholder="ระบุสภาพสินค้าหรือข้อความฝากถึงผู้รับ..."
                   />
                 </div>
 
                 <div className="flex flex-col justify-center items-center lg:items-end gap-4">
                   <div className="flex flex-col items-center lg:items-end w-full">
-                    <p className="text-xs font-bold uppercase text-slate-500 tracking-widest mb-1">
+                    <p className="text-[11px] font-bold uppercase text-slate-500 tracking-widest mb-1">
                       สถานะความพร้อมข้อมูล
                     </p>
 
                     {canSubmit ? (
-                      <div className="flex items-center gap-2 text-emerald-600 font-black text-lg uppercase tracking-wider">
-                        <CheckCircle2 className="w-5 h-5" />
+                      <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-[11px] uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
                         พร้อมตัดสต๊อก
                       </div>
                     ) : (
-                      <div className="flex items-center gap-2 text-amber-600 font-bold text-sm uppercase tracking-wider">
-                        <Clock className="w-4 h-4" />
+                      <div className="flex items-center gap-1.5 text-amber-600 font-bold text-[11px] uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100 text-center md:text-left">
+                        <Clock className="w-4 h-4 shrink-0" />
                         กรุณาเลือกล๊อตสินค้าและจำนวนจ่ายให้ครบตามยอดอนุมัติ
                       </div>
                     )}
@@ -1271,14 +1252,14 @@ export default function ProfessionalOutboundPage() {
                   <button
                     type="submit"
                     disabled={!canSubmit || isSubmitting}
-                    className="w-full lg:w-auto min-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full lg:w-auto min-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex flex-row items-center justify-center gap-2 whitespace-nowrap"
                   >
                     {isSubmitting ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin shrink-0" />
                     ) : (
                       <>
-                        <CheckCircle2 className="w-5 h-5" />
-                        ยืนยันการนำจ่าย
+                        <CheckCircle2 className="w-5 h-5 shrink-0" />
+                        <span>ยืนยันการนำจ่าย</span>
                       </>
                     )}
                   </button>
@@ -1294,12 +1275,12 @@ export default function ProfessionalOutboundPage() {
 
 function InfoBox({ label, value }) {
   return (
-    <div className="flex flex-col justify-center space-y-2">
-      <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+    <div className="flex flex-col justify-start">
+      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">
         {label}
       </span>
 
-      <span className="text-lg md:text-xl font-bold text-slate-900 line-clamp-2">
+      <span className="text-base font-bold text-slate-900 line-clamp-2">
         {value || "-"}
       </span>
     </div>

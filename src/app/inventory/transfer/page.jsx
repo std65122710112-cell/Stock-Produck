@@ -295,30 +295,30 @@ export default function TwoStepTransferPage() {
           <div className="flex flex-col gap-4 w-full">
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
-                  <ArrowRightLeft className="w-7 h-7 text-[#1F3B8B]" />
+                <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                  <ArrowRightLeft className="w-6 h-6 text-[#1F3B8B]" />
                 </div>
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
                     โอนย้ายสินค้าระหว่างคลัง
                     <span className="bg-[#1F3B8B] text-white text-[10px] px-2.5 py-1 rounded-md tracking-widest font-bold shadow-sm uppercase mt-1 xl:mt-0">
                       System
                     </span>
                   </h1>
-                  <p className="text-base text-slate-500 mt-1.5 font-medium flex items-center gap-2">
+                  <p className="text-sm text-slate-500 mt-1 font-medium flex items-center gap-1.5">
                     <Database className="w-4 h-4" /> Inventory Movement Control
                     • ระบบบริหารจัดการส่งออกและรับเข้าพัสดุ
                   </p>
                 </div>
               </div>
 
-              <div className="flex bg-slate-100 p-1.5 rounded-xl w-full xl:w-auto">
+              <div className="flex bg-slate-100 p-1.5 rounded-xl w-full xl:w-auto shadow-sm">
                 <button
                   onClick={() => {
                     setActiveTab("SHIP");
                     setSelectedTransfer(null);
                   }}
-                  className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                  className={`flex-1 xl:flex-none px-5 py-2.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                     activeTab === "SHIP"
                       ? "bg-white text-[#1F3B8B] shadow-sm border border-slate-200/50"
                       : "text-slate-500 hover:text-slate-700"
@@ -328,7 +328,7 @@ export default function TwoStepTransferPage() {
                 </button>
                 <button
                   onClick={() => setActiveTab("RECEIVE")}
-                  className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                  className={`flex-1 xl:flex-none px-5 py-2.5 rounded-xl font-bold text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                     activeTab === "RECEIVE"
                       ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50"
                       : "text-slate-500 hover:text-slate-700"
@@ -342,31 +342,31 @@ export default function TwoStepTransferPage() {
         </div>
 
         {activeTab === "SHIP" && (
-          <div className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col animate-in fade-in duration-500">
-            <div className="p-8 md:p-10 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-8">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in fade-in duration-500">
+            <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50">
+              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-6">
                 1. ข้อมูลบิลโอนย้ายพัสดุ
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">
                     เลขที่เอกสาร (ระบบกำหนดให้อัตโนมัติ)
                   </label>
-                  <div className="flex items-center gap-4 w-full border border-slate-200 bg-slate-50 rounded-lg p-3.5 outline-none cursor-not-allowed">
+                  <div className="flex items-center gap-3 w-full border border-slate-200 bg-slate-50 rounded-xl p-3.5 outline-none cursor-not-allowed shadow-sm">
                     <RefreshCw className="w-4 h-4 text-slate-400" />
-                    <span className="text-base font-bold text-slate-500">
+                    <span className="text-sm font-bold text-slate-500 tabular-nums">
                       {previewTransferNo}
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">
                     หมายเหตุ / เหตุผลการโอนย้าย
                   </label>
                   <textarea
-                    className="w-full border rounded-lg p-3.5 text-base font-medium text-slate-900 focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 outline-none transition-all placeholder:text-slate-400 resize-none"
+                    className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-bold text-slate-900 focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 outline-none transition-all placeholder:text-slate-400 resize-none shadow-sm"
                     rows="1"
                     placeholder="ระบุเหตุผลสั้นๆ เช่น ย้ายไปเก็บโซนใหม่..."
                     value={reason}
@@ -376,14 +376,14 @@ export default function TwoStepTransferPage() {
               </div>
             </div>
 
-            <div className="p-8 md:p-10 border-b border-slate-200">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest">
+            <div className="p-6 md:p-8 border-b border-slate-200">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
                   2. รายการพัสดุที่ต้องการย้ายตำแหน่ง
                 </h2>
                 <button
                   onClick={addShipItem}
-                  className="bg-white text-[#1F3B8B] border border-slate-200 hover:bg-slate-50 px-4 py-2.5 rounded-lg text-sm font-bold uppercase transition-all shadow-sm flex items-center gap-2 active:scale-95"
+                  className="bg-white text-[#1F3B8B] border border-slate-200 hover:bg-slate-50 hover:border-[#1F3B8B] px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all shadow-sm flex items-center justify-center gap-2 active:scale-95"
                 >
                   <Plus className="w-4 h-4" /> เพิ่มรายการ
                 </button>
@@ -397,15 +397,15 @@ export default function TwoStepTransferPage() {
                   return (
                     <div
                       key={idx}
-                      className="flex flex-col gap-6 p-6 bg-slate-50/50 border border-slate-200 rounded-xl items-start hover:border-[#1F3B8B]/30 transition-all"
+                      className="flex flex-col gap-6 p-6 bg-slate-50/50 border border-slate-200 rounded-xl items-start hover:border-[#1F3B8B]/30 transition-all shadow-sm"
                     >
                       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 w-full">
-                        <div className="space-y-2">
-                          <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">
                             เลือกสินค้า <span className="text-rose-500">*</span>
                           </label>
                           <select
-                            className="w-full border rounded-lg p-3.5 text-sm font-bold uppercase outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white text-slate-900"
+                            className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-bold uppercase outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white text-slate-900 shadow-sm"
                             value={it.productId}
                             onChange={(e) =>
                               updateShipItem(idx, "productId", e.target.value)
@@ -420,12 +420,12 @@ export default function TwoStepTransferPage() {
                           </select>
                         </div>
 
-                        <div className="space-y-2">
-                          <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">
                             ต้นทาง / ล็อต <span className="text-rose-500">*</span>
                           </label>
                           <select
-                            className="w-full border rounded-lg p-3.5 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white text-slate-900"
+                            className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white text-slate-900 shadow-sm"
                             value={it.sourceBalanceKey}
                             onChange={(e) =>
                               updateShipItem(idx, "sourceBalanceKey", e.target.value)
@@ -441,12 +441,12 @@ export default function TwoStepTransferPage() {
                           </select>
                         </div>
 
-                        <div className="space-y-2">
-                          <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">
                             ปลายทาง <span className="text-rose-500">*</span>
                           </label>
                           <select
-                            className="w-full border rounded-lg p-3.5 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white text-slate-900"
+                            className="w-full border border-slate-200 rounded-xl p-3.5 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white text-slate-900 shadow-sm"
                             value={it.toLocationId}
                             onChange={(e) =>
                               updateShipItem(idx, "toLocationId", e.target.value)
@@ -461,15 +461,15 @@ export default function TwoStepTransferPage() {
                           </select>
                         </div>
 
-                        <div className="space-y-2">
-                          <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">
                             จำนวน <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="number"
                             min="1"
                             max={Number(selectedBalance?.quantity || 0)}
-                            className="w-full border rounded-lg p-3.5 text-center font-bold text-base outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all text-slate-900"
+                            className="w-full border border-slate-200 rounded-xl p-3.5 text-center font-bold text-sm outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all text-slate-900 tabular-nums shadow-sm"
                             value={it.quantity}
                             onChange={(e) =>
                               updateShipItem(idx, "quantity", e.target.value)
@@ -478,28 +478,28 @@ export default function TwoStepTransferPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-                        <div className="text-sm font-bold text-slate-500">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full mt-2">
+                        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                           {selectedBalance ? (
-                            <div className="space-y-1">
-                              <div>
+                            <div className="flex flex-wrap items-center gap-4">
+                              <span>
                                 ต้นทาง:{" "}
                                 <span className="text-slate-800">
                                   {formatLocationFull(selectedBalance.location)}
                                 </span>
-                              </div>
-                              <div>
+                              </span>
+                              <span>
                                 ล็อต:{" "}
                                 <span className="text-slate-800">
                                   {selectedBalance.lot?.lotNumber || "-"}
                                 </span>
-                              </div>
-                              <div>
+                              </span>
+                              <span>
                                 คงเหลือ:{" "}
-                                <span className="text-slate-800">
+                                <span className="text-slate-800 tabular-nums">
                                   {Number(selectedBalance.quantity || 0).toLocaleString()}
                                 </span>
-                              </div>
+                              </span>
                             </div>
                           ) : (
                             <span>กรุณาเลือกต้นทาง/ล็อต</span>
@@ -509,11 +509,11 @@ export default function TwoStepTransferPage() {
                         <button
                           type="button"
                           onClick={() => removeShipItem(idx)}
-                          className="p-3 text-slate-400 hover:text-rose-600 bg-white border border-slate-200 rounded-lg hover:bg-rose-50 transition-all shadow-sm self-end"
+                          className="p-3 text-slate-400 hover:text-rose-600 bg-white border border-slate-200 rounded-xl hover:bg-rose-50 hover:border-rose-200 transition-all shadow-sm self-end active:scale-95 disabled:opacity-50"
                           disabled={shipItems.length === 1}
                           title="ลบรายการ"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -522,13 +522,13 @@ export default function TwoStepTransferPage() {
               </div>
             </div>
 
-            <div className="p-8 md:p-10 bg-slate-50 flex justify-end">
+            <div className="p-6 md:p-8 bg-slate-50 flex justify-end border-t border-slate-200">
               <button
                 onClick={handleShip}
                 disabled={!canShip || isSubmitting}
-                className="w-full md:w-auto min-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full md:w-auto min-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <Truck className="w-5 h-5" />{" "}
+                <Truck className="w-4 h-4" />{" "}
                 {isSubmitting ? "กำลังบันทึก..." : "ยืนยันการส่งออกสินค้า"}
               </button>
             </div>
@@ -540,63 +540,63 @@ export default function TwoStepTransferPage() {
             {!selectedTransfer ? (
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
                 <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
-                  <h2 className="text-lg font-bold text-slate-800 tracking-wide uppercase">
+                  <h2 className="text-base font-bold text-slate-900 tracking-wider uppercase">
                     รายการพัสดุอยู่ระหว่างจัดส่ง (In-Transit)
                   </h2>
-                  <div className="bg-sky-50 text-sky-700 border border-sky-200 text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-wider">
+                  <div className="bg-sky-50 text-sky-700 border border-sky-200 text-[11px] px-3 py-1.5 rounded-md font-bold uppercase tracking-widest tabular-nums">
                     {pendingTransfers.length} รายการ
                   </div>
                 </div>
 
                 {pendingTransfers.length === 0 ? (
-                  <div className="text-center py-24 bg-white text-slate-400 font-bold uppercase text-sm">
+                  <div className="text-center py-20 bg-white text-slate-400 font-bold uppercase text-[11px] tracking-widest">
                     ไม่มีรายการค้างรับในขณะนี้
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="min-w-full border-collapse text-left">
-                      <thead className="bg-slate-50 border-b border-slate-200">
-                        <tr className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                          <th className="p-6">เลขที่เอกสาร</th>
-                          <th className="p-6">ผู้ส่ง</th>
-                          <th className="p-6">จำนวนรายการ</th>
-                          <th className="p-6 text-center">วันที่ส่ง</th>
-                          <th className="p-6 text-right">ดำเนินการ</th>
+                      <thead className="bg-slate-100 border-b border-slate-200">
+                        <tr className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                          <th className="p-5">เลขที่เอกสาร</th>
+                          <th className="p-5">ผู้ส่ง</th>
+                          <th className="p-5 text-center">จำนวนรายการ</th>
+                          <th className="p-5 text-center">วันที่ส่ง</th>
+                          <th className="p-5 text-right">ดำเนินการ</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 bg-white/50">
+                      <tbody className="divide-y divide-slate-100 bg-white">
                         {pendingTransfers.map((t) => (
                           <tr
                             key={t.id}
-                            className="hover:bg-slate-50/50 transition-colors"
+                            className="hover:bg-slate-50/50 transition-colors group"
                           >
-                            <td className="p-6">
-                              <span className="text-sm font-bold text-[#1e3b8a] uppercase tracking-tight">
+                            <td className="p-5">
+                              <span className="text-sm font-bold text-[#1F3B8B] uppercase tracking-tight group-hover:text-blue-700 tabular-nums">
                                 {t.transferNo}
                               </span>
                             </td>
-                            <td className="p-6">
-                              <span className="text-sm font-bold text-slate-800">
+                            <td className="p-5">
+                              <span className="text-sm font-bold text-slate-900">
                                 {t.issuedUser?.firstName || "System"}{" "}
                                 {t.issuedUser?.lastName || ""}
                               </span>
                             </td>
-                            <td className="p-6">
-                              <span className="text-sm font-bold text-slate-700">
+                            <td className="p-5 text-center">
+                              <span className="text-sm font-bold text-slate-700 tabular-nums">
                                 {t.items?.length || 0} รายการ
                               </span>
                             </td>
-                            <td className="p-6 text-center text-sm font-bold text-slate-500 tabular-nums">
+                            <td className="p-5 text-center text-sm font-bold text-slate-600 tabular-nums">
                               {t.shippedAt
                                 ? new Date(t.shippedAt).toLocaleString("th-TH")
                                 : "-"}
                             </td>
-                            <td className="p-6 text-right">
+                            <td className="p-5 text-right">
                               <button
                                 onClick={() => selectTransferToReceive(t)}
-                                className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-emerald-700 transition-all shadow-sm active:scale-95 inline-flex items-center gap-2 ml-auto"
+                                className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-sm active:scale-95 inline-flex items-center justify-center gap-2 ml-auto"
                               >
-                                <CheckSquare className="w-4 h-4" /> ตรวจรับสินค้า
+                                <CheckSquare className="w-3.5 h-3.5" /> ตรวจรับสินค้า
                               </button>
                             </td>
                           </tr>
@@ -607,13 +607,13 @@ export default function TwoStepTransferPage() {
                 )}
               </div>
             ) : (
-              <div className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col">
-                <div className="p-8 md:p-10 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6 items-start md:items-center">
-                  <div className="space-y-2">
-                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500">
+                <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6 items-start md:items-center">
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       Confirmation Process
                     </span>
-                    <h2 className="text-3xl md:text-4xl font-black text-[#1F3B8B] tabular-nums whitespace-nowrap">
+                    <h2 className="text-2xl md:text-3xl font-black text-[#1F3B8B] tabular-nums whitespace-nowrap tracking-tight">
                       {selectedTransfer.transferNo}
                     </h2>
                   </div>
@@ -623,26 +623,26 @@ export default function TwoStepTransferPage() {
                       setSelectedTransfer(null);
                       setReceiveItems([]);
                     }}
-                    className="text-sm font-bold text-slate-500 hover:text-[#1F3B8B] underline uppercase tracking-widest transition-colors"
+                    className="text-[11px] font-bold text-slate-500 hover:text-[#1F3B8B] underline uppercase tracking-widest transition-colors"
                   >
                     ยกเลิกรายการ
                   </button>
                 </div>
 
-                <div className="p-8 md:p-10 border-b border-slate-200">
-                  <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-6">
+                <div className="p-6 md:p-8 border-b border-slate-200">
+                  <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-5">
                     รายการพัสดุและตำแหน่งรับเข้า
                   </h2>
 
-                  <div className="border border-slate-200 rounded-xl overflow-hidden">
+                  <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                     <table className="w-full border-collapse text-left">
                       <thead className="bg-slate-100 border-b border-slate-200">
-                        <tr className="text-sm font-bold text-slate-600 uppercase tracking-widest">
-                          <th className="p-5">พัสดุ / SKU</th>
-                          <th className="p-5">ล็อต</th>
-                          <th className="p-5 w-[30%]">ตำแหน่งจัดเก็บ</th>
-                          <th className="p-5 text-center w-32">ยอดส่งมา</th>
-                          <th className="p-5 text-center w-40">
+                        <tr className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                          <th className="p-4">พัสดุ / SKU</th>
+                          <th className="p-4">ล็อต</th>
+                          <th className="p-4 w-[30%]">ตำแหน่งจัดเก็บ</th>
+                          <th className="p-4 text-center w-32">ยอดส่งมา</th>
+                          <th className="p-4 text-center w-40">
                             ยอดรับจริง <span className="text-rose-500">*</span>
                           </th>
                         </tr>
@@ -658,38 +658,38 @@ export default function TwoStepTransferPage() {
                                   isMissing ? "bg-rose-50/30" : ""
                                 }`}
                               >
-                                <td className="p-5">
-                                  <p className="font-bold text-slate-900 text-lg">
+                                <td className="p-4">
+                                  <p className="font-bold text-slate-900 text-sm">
                                     {it.productName}
                                   </p>
-                                  <p className="text-sm text-blue-600 font-bold uppercase mt-1 tabular-nums">
+                                  <p className="text-[10px] text-[#1F3B8B] font-bold uppercase mt-1 tabular-nums tracking-wider">
                                     SKU: {it.sku}
                                   </p>
                                 </td>
-                                <td className="p-5">
-                                  <p className="text-base font-bold text-slate-700">
+                                <td className="p-4">
+                                  <p className="text-sm font-bold text-slate-700">
                                     {it.lotNumber}
                                   </p>
                                 </td>
-                                <td className="p-5">
-                                  <p className="text-base font-bold text-slate-700 leading-relaxed">
+                                <td className="p-4">
+                                  <p className="text-sm font-bold text-slate-700 leading-relaxed">
                                     {it.targetLocationDetail}
                                   </p>
                                 </td>
-                                <td className="p-5 text-center">
-                                  <span className="text-2xl font-black text-slate-400 tabular-nums">
+                                <td className="p-4 text-center">
+                                  <span className="text-xl font-black text-slate-400 tabular-nums">
                                     {it.shippedQty}
                                   </span>
                                 </td>
-                                <td className="p-5 text-center">
+                                <td className="p-4 text-center">
                                   <input
                                     type="number"
                                     min="0"
                                     max={it.shippedQty}
-                                    className={`w-full max-w-[120px] mx-auto border rounded-lg p-3 text-xl font-bold text-center outline-none transition-all tabular-nums ${
+                                    className={`w-full max-w-[100px] mx-auto border rounded-xl p-2.5 text-base font-bold text-center outline-none transition-all tabular-nums shadow-sm ${
                                       isMissing
                                         ? "border-rose-400 text-rose-600 bg-white focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
-                                        : "border-slate-200 bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
+                                        : "border-slate-200 bg-white text-slate-900 focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
                                     }`}
                                     value={it.receivedQty}
                                     onChange={(e) => updateReceiveItem(idx, e.target.value)}
@@ -700,10 +700,10 @@ export default function TwoStepTransferPage() {
                               {isMissing && (
                                 <tr className="bg-rose-50 border-none">
                                   <td colSpan="5" className="px-5 py-3">
-                                    <div className="flex items-center gap-2 text-rose-600 text-sm font-bold uppercase tracking-widest">
-                                      <AlertTriangle className="w-4 h-4" />
+                                    <div className="flex items-center gap-2 text-rose-600 text-[10px] font-bold uppercase tracking-widest">
+                                      <AlertTriangle className="w-3.5 h-3.5" />
                                       ตรวจพบสินค้าขาด (สูญหาย{" "}
-                                      {Number(it.shippedQty) - Number(it.receivedQty)} ชิ้น)
+                                      <span className="tabular-nums">{Number(it.shippedQty) - Number(it.receivedQty)}</span> ชิ้น)
                                       ระบบจะทำบันทึกแจ้งเตือนอัตโนมัติ
                                     </div>
                                   </td>
@@ -717,13 +717,13 @@ export default function TwoStepTransferPage() {
                   </div>
                 </div>
 
-                <div className="p-8 md:p-10 bg-slate-50 flex justify-end">
+                <div className="p-6 md:p-8 bg-slate-50 flex justify-end border-t border-slate-200">
                   <button
                     onClick={handleReceive}
                     disabled={!canReceive || isSubmitting}
-                    className="w-full md:w-auto min-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full md:w-auto min-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    <CheckSquare className="w-5 h-5" />{" "}
+                    <CheckSquare className="w-4 h-4" />{" "}
                     {isSubmitting ? "กำลังยืนยัน..." : "รับสินค้าและปิดใบโอนย้าย"}
                   </button>
                 </div>
