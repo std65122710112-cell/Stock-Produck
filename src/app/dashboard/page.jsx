@@ -489,25 +489,52 @@ function LegendDot({ color, label }) {
     );
 }
 
-function ActionCard({ title, value, sub, icon, href, color, alert }) {
-    const themes = {
-        blue: "text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-600 hover:text-white",
-        indigo: "text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-600 hover:text-white",
-        rose: "text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-600 hover:text-white"
-    };
-    return (
-        <Link href={href} className="bg-white p-6 rounded-[2rem] border-2 border-slate-100 shadow-sm relative overflow-hidden group hover:shadow-lg transition-all flex items-center justify-between">
-            {alert && <div className="absolute top-0 right-0 w-1.5 h-full bg-rose-500 animate-pulse"></div>}
-            <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{title}</p>
-                <p className="text-3xl font-black text-slate-950 tabular-nums">{value.toLocaleString()}</p>
-                <p className="text-[9px] font-black text-slate-400 mt-1 uppercase tracking-widest">{sub}</p>
-            </div>
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all group-hover:scale-110 ${themes[color]}`}>
-                {React.cloneElement(icon, { size: 24 })}
-            </div>
-        </Link>
-    );
+function ActionCard({
+  title = "-",
+  value = 0,
+  sub = "",
+  color = "slate",
+  icon = null,
+}) {
+  const themes = {
+    blue: "bg-blue-50 text-blue-600 border-blue-100",
+    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
+    amber: "bg-amber-50 text-amber-600 border-amber-100",
+    rose: "bg-rose-50 text-rose-600 border-rose-100",
+    purple: "bg-purple-50 text-purple-600 border-purple-100",
+    slate: "bg-slate-50 text-slate-600 border-slate-100",
+  };
+
+  const safeNumber = Number(value ?? 0);
+  const displayValue = Number.isFinite(safeNumber)
+    ? safeNumber.toLocaleString("th-TH")
+    : "0";
+
+  const themeClass = themes[color] || themes.slate;
+
+  return (
+    <div className="group bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4">
+      <div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+          {title}
+        </p>
+
+        <p className="text-3xl font-black text-slate-950 tabular-nums">
+          {displayValue}
+        </p>
+
+        <p className="text-[9px] font-black text-slate-400 mt-1 uppercase tracking-widest">
+          {sub || ""}
+        </p>
+      </div>
+
+      <div
+        className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all group-hover:scale-110 ${themeClass}`}
+      >
+        {icon}
+      </div>
+    </div>
+  );
 }
 
 const DailyMovementTooltip = ({ active, payload, label }) => {
