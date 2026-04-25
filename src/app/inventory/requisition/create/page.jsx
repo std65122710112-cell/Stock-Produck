@@ -59,9 +59,6 @@ function mergeProductsFromBalances(products, balances) {
 
     const existing = map.get(p.id) || {};
 
-    // สำคัญ:
-    // ใช้ข้อมูลจาก master/products เป็นหลัก
-    // ไม่ให้ข้อมูลจาก stock balance ไปทับ unitCost / price ของ master
     map.set(p.id, {
       ...p,
       ...existing,
@@ -73,7 +70,6 @@ function mergeProductsFromBalances(products, balances) {
       unit: existing.unit || p.unit,
       unitName: existing.unitName || p.unitName,
 
-      // รักษาราคาหลักของสินค้าไว้ก่อน
       unitCost:
         Number(existing.unitCost || 0) > 0 ? existing.unitCost : p.unitCost,
 
@@ -239,8 +235,6 @@ export default function CreateStockRequisitionPage() {
     const product = getProduct(productId);
     if (!productId || !product) return 0;
 
-    // หน้าใบเบิกให้ใช้ "ราคาหลักของสินค้า" ก่อน
-    // ไม่ใช้ราคาเฉลี่ยจากหลายล็อต
     const masterPrice =
       Number(product.unitCost || 0) ||
       Number(product.price || 0) ||
@@ -250,8 +244,6 @@ export default function CreateStockRequisitionPage() {
       return masterPrice;
     }
 
-    // fallback กรณี master ไม่มีราคา
-    // ไม่เฉลี่ยหลายล็อตแล้ว ให้ใช้ราคาต่ำสุดที่พบใน stock balance เป็นราคาอ้างอิง
     const balanceRows = stockBalances.filter((b) =>
       isSameProduct(b, productId, product)
     );
@@ -524,18 +516,16 @@ export default function CreateStockRequisitionPage() {
 
     return createPortal(
       <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border-2 border-slate-200">
-          <div className="p-6 flex items-center justify-between bg-emerald-50 border-b border-emerald-100">
+        <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+          <div className="p-5 flex items-center justify-between bg-emerald-50 border-b border-emerald-100">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-600">
-                <ShieldCheck className="w-6 h-6" />
+              <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600">
+                <ShieldCheck className="w-5 h-5" />
               </div>
-
               <div>
-                <h3 className="text-lg font-black tracking-tight text-emerald-950">
+                <h3 className="text-base font-bold text-emerald-950">
                   ยืนยันส่งใบขอเบิก
                 </h3>
-
                 <p className="text-[10px] font-bold uppercase text-emerald-600 tracking-widest">
                   Requisition Confirmation
                 </p>
@@ -545,22 +535,22 @@ export default function CreateStockRequisitionPage() {
             <button
               type="button"
               onClick={() => setConfirmSubmitModal(false)}
-              className="p-2 text-slate-400 hover:text-slate-700 bg-white rounded-full transition-colors border border-slate-200 shadow-sm"
+              className="p-1.5 text-slate-400 hover:text-slate-700 bg-white rounded-md transition-colors border border-slate-200 shadow-sm"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="p-8">
-            <div className="flex flex-col items-center gap-5 mb-8">
-              <p className="text-base font-bold text-slate-700 text-center leading-tight max-w-[300px] mx-auto">
+          <div className="p-6">
+            <div className="flex flex-col items-center gap-4 mb-6">
+              <p className="text-sm font-bold text-slate-700 text-center leading-relaxed">
                 คุณตรวจสอบความถูกต้องของรายการ
                 <br />
                 และข้อมูลพัสดุเรียบร้อยแล้วใช่หรือไม่?
               </p>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 w-full shadow-sm">
-                <p className="text-[12px] font-bold text-slate-500 text-center leading-relaxed">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-3 w-full shadow-sm">
+                <p className="text-[11px] font-bold text-slate-500 text-center leading-relaxed">
                   เมื่อยืนยัน ระบบจะสร้างเอกสารใบขอเบิก
                   <br />
                   และส่งเข้าสู่คิวเพื่อรอการอนุมัติทันที
@@ -568,22 +558,21 @@ export default function CreateStockRequisitionPage() {
               </div>
             </div>
 
-            <div className="bg-white border-2 border-emerald-100 rounded-2xl p-5 mb-8 text-center shadow-sm">
-              <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1.5">
+            <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-4 mb-6 text-center shadow-sm">
+              <p className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-1">
                 มูลค่าเบิกจ่ายรวม
               </p>
-
-              <p className="text-3xl font-black text-emerald-600 tabular-nums">
+              <p className="text-2xl font-bold text-emerald-600 tabular-nums">
                 ฿{formatCurrency(grandTotalValue)}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 disabled={isLoading}
                 onClick={() => setConfirmSubmitModal(false)}
-                className="py-3.5 rounded-xl font-black text-sm text-slate-500 bg-white border-2 border-slate-100 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                className="py-2.5 rounded-xl font-bold text-sm text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
               >
                 ยกเลิก
               </button>
@@ -592,10 +581,10 @@ export default function CreateStockRequisitionPage() {
                 type="button"
                 disabled={isLoading}
                 onClick={executeSubmitSR}
-                className="py-3.5 rounded-xl font-black text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50"
+                className="py-2.5 rounded-xl font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50"
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4" /> ยืนยันส่งข้อมูล
@@ -615,23 +604,22 @@ export default function CreateStockRequisitionPage() {
 
     return createPortal(
       <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
-        <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border-2 border-emerald-100">
-          <div className="p-10 flex flex-col items-center text-center">
-            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 animate-bounce">
-              <CheckCircle2 className="w-12 h-12" />
+        <div className="bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-300 border border-emerald-100">
+          <div className="p-8 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5 animate-bounce">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
 
-            <h3 className="text-2xl font-black text-slate-900 mb-2">
+            <h3 className="text-xl font-bold text-slate-900 mb-2">
               ส่งใบขอเบิกสำเร็จ
             </h3>
 
-            <p className="text-sm font-bold text-slate-500 leading-relaxed mb-8">
+            <p className="text-sm font-medium text-slate-500 leading-relaxed mb-6">
               ระบบได้รับข้อมูลใบขอเบิกเลขที่
               <br />
-              <span className="text-[#1F3B8B] font-black text-lg">
+              <span className="text-[#1F3B8B] font-bold text-base mt-1 block">
                 {createdSrNumber || formData.srNumber}
               </span>
-              <br />
               เรียบร้อยแล้ว
             </p>
 
@@ -640,17 +628,17 @@ export default function CreateStockRequisitionPage() {
                 type="button"
                 onClick={handleOpenPdf}
                 disabled={isOpeningPdf}
-                className="w-full py-4 mb-3 bg-[#1F3B8B] text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-[#172e6d] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3 mb-3 bg-[#1F3B8B] text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#172e6d] transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isOpeningPdf ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <FileText className="w-5 h-5" />
+                  <FileText className="w-4 h-4" />
                 )}
                 เปิดใบขอเบิก PDF
               </button>
             ) : (
-              <div className="w-full mb-3 bg-amber-50 border border-amber-100 rounded-2xl p-3 text-xs font-bold text-amber-700 leading-relaxed">
+              <div className="w-full mb-3 bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs font-bold text-amber-700 leading-relaxed">
                 ระบบบันทึกใบเบิกสำเร็จ แต่ยังไม่ได้รับลิงก์ PDF จาก backend
               </div>
             )}
@@ -661,7 +649,7 @@ export default function CreateStockRequisitionPage() {
                 setShowSuccessModal(false);
                 router.push("/inventory/requisition");
               }}
-              className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg"
+              className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-sm"
             >
               ไปหน้ารายการใบเบิก
             </button>
@@ -672,7 +660,7 @@ export default function CreateStockRequisitionPage() {
                 setShowSuccessModal(false);
                 resetFormForNewSR();
               }}
-              className="w-full mt-3 py-3 bg-white border-2 border-slate-200 text-slate-500 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
+              className="w-full mt-3 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
             >
               สร้างใบเบิกใหม่
             </button>
@@ -689,235 +677,224 @@ export default function CreateStockRequisitionPage() {
       <ConfirmSubmitPortal />
       <SuccessModalPortal />
 
-      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-500">
-        <div className="flex flex-col md:flex-row justify-between items-start border-b border-slate-200 pb-8 gap-6 print:hidden">
-          <div className="flex flex-col gap-6">
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-500">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start border-b border-slate-200 pb-6 gap-6 print:hidden">
+          <div className="flex flex-col gap-4">
             <button
               type="button"
               onClick={() => router.back()}
-              className="flex items-center gap-2.5 text-sm font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors w-fit"
+              className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors w-fit"
             >
               <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
             </button>
 
-            <div className="flex items-center gap-5">
-              <div className="w-14 h-14 rounded-2xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
-                <ClipboardPenLine className="w-7 h-7 text-[#1F3B8B]" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                <ClipboardPenLine className="w-6 h-6 text-[#1F3B8B]" />
               </div>
 
               <div>
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                   สร้างใบขอเบิกพัสดุ
                 </h1>
-
-                <p className="text-base text-slate-500 mt-1 font-bold">
-                  กรอกรายละเอียดและรายการพัสดุที่ต้องการเบิกใช้งาน
-                  (Material Requisition)
+                <p className="text-sm text-slate-500 mt-1 font-medium">
+                  กรอกรายละเอียดและรายการพัสดุที่ต้องการเบิกใช้งาน (Material Requisition)
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        <form onSubmit={triggerSubmitSR} className="space-y-8" noValidate>
-          <div className="bg-white rounded-2xl border-2 border-slate-300 shadow-md overflow-hidden">
-            <div className="p-8 md:p-10 border-b-2 border-slate-200 bg-white">
-              <h2 className="text-lg font-black text-slate-900 uppercase tracking-wider mb-8 pb-5 border-b-2 border-slate-100">
-                ข้อมูลและรายละเอียดทั่วไป
-              </h2>
+        <form onSubmit={triggerSubmitSR} className="space-y-6" noValidate>
+          {/* General Info Card */}
+<div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+  <div className="p-6 md:p-8">
+    <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-6 pb-4 border-b border-slate-100">
+      ข้อมูลและรายละเอียดทั่วไป
+    </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-8">
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest block">
-                      เลขที่ใบเบิก (ระบบออกให้)
-                    </label>
+    {/* ปรับ Grid ใหม่เป็น 3 คอลัมน์ในจอใหญ่ เพื่อจัดสรรพื้นที่ให้พอดีกับความยาวข้อมูล */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      
+      {/* Row 1 */}
+      <div>
+        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+          เลขที่ใบเบิก (ระบบออกให้)
+        </label>
+        <input
+          type="text"
+          value={formData.srNumber}
+          readOnly
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-bold text-slate-500 outline-none tabular-nums"
+        />
+      </div>
 
-                    <input
-                      type="text"
-                      value={formData.srNumber}
-                      readOnly
-                      className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl p-4 text-base font-black text-slate-500 outline-none tabular-nums"
-                    />
-                  </div>
+      <div>
+        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+          วันที่ต้องการใช้งาน <span className="text-rose-500">*</span>
+        </label>
+        <input
+          required
+          type="date"
+          name="requiredDate"
+          value={formData.requiredDate}
+          onChange={handleFormChange}
+          className={`w-full border rounded-xl p-3 text-sm font-bold outline-none transition-all text-slate-900 ${
+            errors.requiredDate
+              ? "border-rose-300 bg-rose-50 focus:ring-4 focus:ring-rose-100"
+              : "border-slate-200 focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 bg-white hover:bg-slate-50 focus:bg-white"
+          }`}
+        />
+        {errors.requiredDate && (
+          <p className="text-xs font-bold text-rose-500 mt-1.5 flex items-center gap-1">
+            <AlertCircle className="w-3.5 h-3.5" /> {errors.requiredDate}
+          </p>
+        )}
+      </div>
 
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest block">
-                      วัตถุประสงค์การใช้งาน{" "}
-                      <span className="text-rose-500">*</span>
-                    </label>
+      <div>
+        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+          ความเร่งด่วน
+        </label>
+        <select
+          name="priority"
+          value={formData.priority}
+          onChange={handleFormChange}
+          className="w-full border border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 transition-all text-slate-900 bg-white hover:bg-slate-50 focus:bg-white"
+        >
+          <option value="NORMAL">ปกติ</option>
+          <option value="HIGH">ด่วน</option>
+          <option value="URGENT">ด่วนมาก</option>
+        </select>
+      </div>
 
-                    <input
-                      required
-                      type="text"
-                      name="purpose"
-                      value={formData.purpose}
-                      onChange={handleFormChange}
-                      className={`w-full border-2 rounded-xl p-4 text-base font-bold outline-none transition-all text-slate-900 ${
-                        errors.purpose
-                          ? "border-rose-400 bg-rose-50 focus:ring-4 focus:ring-rose-100 placeholder-rose-300"
-                          : "border-slate-200 focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 placeholder-slate-400 bg-white"
-                      }`}
-                      placeholder="เช่น เพื่อซ่อมบำรุงเซิร์ฟเวอร์หลักของบริษัท..."
-                    />
+      {/* Row 2 */}
+      <div>
+        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+          แผนกที่เบิก (Cost Center) <span className="text-rose-500">*</span>
+        </label>
+        <select
+          required
+          name="departmentId"
+          value={formData.departmentId}
+          onChange={handleFormChange}
+          className={`w-full border rounded-xl p-3 text-sm font-bold outline-none transition-all text-slate-900 ${
+            errors.departmentId
+              ? "border-rose-300 bg-rose-50 focus:ring-4 focus:ring-rose-100"
+              : "border-slate-200 focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 bg-white hover:bg-slate-50 focus:bg-white"
+          }`}
+        >
+          <option value="">-- กรุณาเลือกแผนกต้นสังกัด --</option>
+          {departments.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.name}
+            </option>
+          ))}
+        </select>
+        {errors.departmentId && (
+          <p className="text-xs font-bold text-rose-500 mt-1.5 flex items-center gap-1">
+            <AlertCircle className="w-3.5 h-3.5" /> {errors.departmentId}
+          </p>
+        )}
+      </div>
 
-                    {errors.purpose && (
-                      <p className="text-sm font-bold text-rose-500 mt-2 flex items-center gap-1.5">
-                        <AlertCircle className="w-4 h-4" /> {errors.purpose}
-                      </p>
-                    )}
-                  </div>
+      {/* วัตถุประสงค์ กินพื้นที่ 2 คอลัมน์ (sm:col-span-2) */}
+      <div className="sm:col-span-1 lg:col-span-2">
+        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+          วัตถุประสงค์การใช้งาน <span className="text-rose-500">*</span>
+        </label>
+        <input
+          required
+          type="text"
+          name="purpose"
+          value={formData.purpose}
+          onChange={handleFormChange}
+          className={`w-full border rounded-xl p-3 text-sm font-bold outline-none transition-all text-slate-900 ${
+            errors.purpose
+              ? "border-rose-300 bg-rose-50 focus:ring-4 focus:ring-rose-100 placeholder-rose-300"
+              : "border-slate-200 focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 placeholder-slate-400 bg-white hover:bg-slate-50 focus:bg-white"
+          }`}
+          placeholder="เช่น เพื่อซ่อมบำรุงเซิร์ฟเวอร์หลักของบริษัท..."
+        />
+        {errors.purpose && (
+          <p className="text-xs font-bold text-rose-500 mt-1.5 flex items-center gap-1">
+            <AlertCircle className="w-3.5 h-3.5" /> {errors.purpose}
+          </p>
+        )}
+      </div>
 
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest block">
-                      วันที่ต้องการใช้งาน{" "}
-                      <span className="text-rose-500">*</span>
-                    </label>
+      {/* Row 3 */}
+      <div>
+        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+          เลขอ้างอิงโครงการ / งาน
+        </label>
+        <input
+          type="text"
+          name="referenceNo"
+          value={formData.referenceNo}
+          onChange={handleFormChange}
+          className="w-full border border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 transition-all text-slate-900 bg-white hover:bg-slate-50 focus:bg-white"
+          placeholder="Job No. / Project ID"
+        />
+      </div>
 
-                    <input
-                      required
-                      type="date"
-                      name="requiredDate"
-                      value={formData.requiredDate}
-                      onChange={handleFormChange}
-                      className={`w-full border-2 rounded-xl p-4 text-base font-bold outline-none transition-all text-slate-900 ${
-                        errors.requiredDate
-                          ? "border-rose-400 bg-rose-50 focus:ring-4 focus:ring-rose-100"
-                          : "border-slate-200 focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 bg-white"
-                      }`}
-                    />
+      {/* สถานที่ส่งมอบ กินพื้นที่ 2 คอลัมน์ */}
+      <div className="sm:col-span-1 lg:col-span-2">
+        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+          สถานที่ส่งมอบ / จุดใช้งาน
+        </label>
+        <input
+          type="text"
+          name="deliveryLocation"
+          value={formData.deliveryLocation}
+          onChange={handleFormChange}
+          className="w-full border border-slate-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 transition-all text-slate-900 bg-white hover:bg-slate-50 focus:bg-white"
+          placeholder="เช่น ห้อง IT, หน้างาน..."
+        />
+      </div>
 
-                    {errors.requiredDate && (
-                      <p className="text-sm font-bold text-rose-500 mt-2 flex items-center gap-1.5">
-                        <AlertCircle className="w-4 h-4" />{" "}
-                        {errors.requiredDate}
-                      </p>
-                    )}
-                  </div>
-                </div>
+    </div>
+  </div>
+</div>
 
-                <div className="space-y-8">
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest block">
-                      แผนกที่เบิก (Cost Center){" "}
-                      <span className="text-rose-500">*</span>
-                    </label>
-
-                    <select
-                      required
-                      name="departmentId"
-                      value={formData.departmentId}
-                      onChange={handleFormChange}
-                      className={`w-full border-2 rounded-xl p-4 text-base font-bold outline-none transition-all text-slate-900 ${
-                        errors.departmentId
-                          ? "border-rose-400 bg-rose-50 focus:ring-4 focus:ring-rose-100"
-                          : "border-slate-200 focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 bg-white"
-                      }`}
-                    >
-                      <option value="">-- กรุณาเลือกแผนกต้นสังกัด --</option>
-                      {departments.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    {errors.departmentId && (
-                      <p className="text-sm font-bold text-rose-500 mt-2 flex items-center gap-1.5">
-                        <AlertCircle className="w-4 h-4" />{" "}
-                        {errors.departmentId}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest block">
-                      ความเร่งด่วน
-                    </label>
-
-                    <select
-                      name="priority"
-                      value={formData.priority}
-                      onChange={handleFormChange}
-                      className="w-full border-2 border-slate-200 rounded-xl p-4 text-base font-bold outline-none focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 transition-all text-slate-900 bg-white"
-                    >
-                      <option value="NORMAL">ปกติ</option>
-                      <option value="HIGH">ด่วน</option>
-                      <option value="URGENT">ด่วนมาก</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest block">
-                      เลขอ้างอิงโครงการ / งาน
-                    </label>
-
-                    <input
-                      type="text"
-                      name="referenceNo"
-                      value={formData.referenceNo}
-                      onChange={handleFormChange}
-                      className="w-full border-2 border-slate-200 rounded-xl p-4 text-base font-bold outline-none focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 transition-all text-slate-900 bg-white"
-                      placeholder="Job No. / Project ID"
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest block">
-                      สถานที่ส่งมอบ / จุดใช้งาน
-                    </label>
-
-                    <input
-                      type="text"
-                      name="deliveryLocation"
-                      value={formData.deliveryLocation}
-                      onChange={handleFormChange}
-                      className="w-full border-2 border-slate-200 rounded-xl p-4 text-base font-bold outline-none focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 transition-all text-slate-900 bg-white"
-                      placeholder="เช่น ห้อง IT, อาคาร A ชั้น 2, หน้างานโครงการ..."
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-8 md:p-10 bg-slate-50/50 border-b-2 border-slate-200">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-                <h2 className="text-lg font-black text-slate-900 uppercase tracking-wider">
+          {/* Item Details Card */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-6 md:p-8 bg-slate-50/50">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
                   ระบุรายการพัสดุที่ต้องการเบิก
                 </h2>
-
                 <button
                   type="button"
                   onClick={addItem}
-                  className="bg-emerald-600 text-white text-sm font-black px-6 py-3 rounded-xl uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-md flex items-center gap-2 w-full md:w-auto justify-center"
+                  className="bg-emerald-600 text-white text-xs font-bold px-4 py-2.5 rounded-lg uppercase tracking-wider hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2 w-full md:w-auto justify-center"
                 >
-                  <Plus className="w-5 h-5" /> เพิ่มรายการพัสดุ
+                  <Plus className="w-4 h-4" /> เพิ่มรายการพัสดุ
                 </button>
               </div>
 
-              <div className="overflow-x-auto rounded-2xl border-2 border-slate-200 bg-white shadow-sm">
+              <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
                 <table className="min-w-full text-left border-collapse">
-                  <thead className="bg-slate-100 border-b-2 border-slate-200">
-                    <tr className="text-xs font-black uppercase text-slate-600 tracking-widest whitespace-nowrap">
-                      <th className="p-5 text-left">เลือกพัสดุ (Asset SKU)</th>
-                      <th className="p-5 text-center">คงเหลือรวม</th>
-                      <th className="p-5 text-center">หน่วยนับ</th>
-                      <th className="p-5 text-right">ราคา/หน่วย</th>
-                      <th className="p-5 text-center w-48">
-                        จำนวนเบิก <span className="text-rose-500">*</span>
-                      </th>
-                      <th className="p-5 text-right">มูลค่ารวม</th>
-                      <th className="p-5 text-left">หมายเหตุรายชิ้น</th>
-                      <th className="p-5 w-20 text-center">ลบ</th>
+                  <thead className="bg-slate-100 border-b border-slate-200">
+                    <tr className="text-[11px] font-bold uppercase text-slate-500 tracking-widest whitespace-nowrap">
+                      <th className="p-4 text-left">เลือกพัสดุ (Asset SKU)</th>
+                      <th className="p-4 text-center">คงเหลือรวม</th>
+                      <th className="p-4 text-center">หน่วยนับ</th>
+                      <th className="p-4 text-right">ราคา/หน่วย</th>
+                      <th className="p-4 text-center w-40">จำนวนเบิก <span className="text-rose-500">*</span></th>
+                      <th className="p-4 text-right">มูลค่ารวม</th>
+                      <th className="p-4 text-left">หมายเหตุรายชิ้น</th>
+                      <th className="p-4 w-16 text-center">ลบ</th>
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y-2 divide-slate-100">
+                  <tbody className="divide-y divide-slate-100">
                     {items.map((item, index) => {
                       const product = getProduct(item.productId);
                       const totalStock = getAvailableStock(item.productId);
-                      const isOver =
-                        item.productId && Number(item.quantity) > totalStock;
+                      const isOver = item.productId && Number(item.quantity) > totalStock;
 
                       const errProduct = errors.items?.[index]?.productId;
                       const errQuantity = errors.items?.[index]?.quantity;
@@ -926,142 +903,105 @@ export default function CreateStockRequisitionPage() {
                       const rowTotal = unitPrice * (Number(item.quantity) || 0);
 
                       return (
-                        <tr
-                          key={item.id}
-                          className="hover:bg-slate-50 transition-colors duration-200"
-                        >
-                          <td className="p-5 min-w-90 align-top">
+                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors duration-200">
+                          <td className="p-4 min-w-[280px] align-top">
                             <select
                               required
                               value={item.productId}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "productId",
-                                  e.target.value
-                                )
-                              }
-                              className={`w-full border-2 rounded-xl p-3.5 text-base font-black uppercase outline-none transition-all text-slate-900 ${
+                              onChange={(e) => handleItemChange(index, "productId", e.target.value)}
+                              className={`w-full border rounded-lg p-2.5 text-sm font-bold outline-none transition-all text-slate-900 ${
                                 errProduct
-                                  ? "border-rose-400 bg-rose-50 focus:ring-4 focus:ring-rose-100"
-                                  : "border-slate-200 focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 bg-white"
+                                  ? "border-rose-300 bg-rose-50 focus:ring-2 focus:ring-rose-100"
+                                  : "border-slate-200 focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 bg-white"
                               }`}
                             >
                               <option value="">-- ค้นหา / เลือกรายการ --</option>
                               {products.map((p) => (
                                 <option key={p.id} value={p.id}>
-                                  [{p.displaySku || p.warehouseSku || p.sku}]{" "}
-                                  {p.name}
+                                  [{p.displaySku || p.warehouseSku || p.sku}] {p.name}
                                 </option>
                               ))}
                             </select>
-
                             {product && (
-                              <p className="text-[11px] font-bold text-slate-400 mt-2">
+                              <p className="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-wide">
                                 {product.name}
                               </p>
                             )}
-
                             {errProduct && (
-                              <p className="text-sm font-bold text-rose-500 mt-2 flex items-center gap-1.5">
-                                <AlertCircle className="w-4 h-4" /> {errProduct}
+                              <p className="text-xs font-bold text-rose-500 mt-1.5 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" /> {errProduct}
                               </p>
                             )}
                           </td>
 
-                          <td className="p-5 text-center align-top pt-8">
-                            <div
-                              className={`inline-block px-4 py-1.5 rounded-lg font-black text-base tabular-nums border ${
-                                totalStock > 0
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                  : "bg-rose-50 text-rose-600 border-rose-200"
-                              }`}
-                            >
+                          <td className="p-4 text-center align-top pt-5">
+                            <div className={`inline-block px-3 py-1 rounded-md font-bold text-sm tabular-nums border ${
+                              totalStock > 0 ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
+                            }`}>
                               {totalStock.toLocaleString()}
                             </div>
                           </td>
 
-                          <td className="p-5 text-center align-top pt-8">
-                            <span className="text-sm font-black text-slate-500">
-                              {item.productId
-                                ? getProductUnit(item.productId)
-                                : "-"}
+                          <td className="p-4 text-center align-top pt-5">
+                            <span className="text-xs font-bold text-slate-500">
+                              {item.productId ? getProductUnit(item.productId) : "-"}
                             </span>
                           </td>
 
-                          <td className="p-5 text-right align-top pt-8">
-                            <span className="text-lg font-black text-slate-600 tabular-nums">
-                              {item.productId
-                                ? `฿${formatCurrency(unitPrice)}`
-                                : "-"}
+                          <td className="p-4 text-right align-top pt-5">
+                            <span className="text-sm font-bold text-slate-700 tabular-nums">
+                              {item.productId ? `฿${formatCurrency(unitPrice)}` : "-"}
                             </span>
                           </td>
 
-                          <td className="p-5 align-top pt-5">
+                          <td className="p-4 align-top">
                             <input
                               type="number"
                               min="1"
                               value={item.quantity}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "quantity",
-                                  e.target.value
-                                )
-                              }
-                              className={`w-full border-2 rounded-xl py-3 text-center font-black text-xl tabular-nums outline-none transition-all ${
+                              onChange={(e) => handleItemChange(index, "quantity", e.target.value)}
+                              className={`w-full border rounded-lg py-2 text-center font-bold text-base tabular-nums outline-none transition-all ${
                                 isOver || errQuantity
-                                  ? "border-rose-400 bg-rose-50 text-rose-700 focus:ring-4 focus:ring-rose-100"
-                                  : "border-slate-200 bg-white text-slate-900 focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10"
+                                  ? "border-rose-300 bg-rose-50 text-rose-700 focus:ring-2 focus:ring-rose-100"
+                                  : "border-slate-200 bg-white text-slate-900 focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
                               }`}
                             />
-
                             {errQuantity && !isOver && (
-                              <p className="text-sm font-bold text-rose-500 mt-2 text-center flex items-center justify-center gap-1.5">
-                                <AlertCircle className="w-4 h-4" />{" "}
-                                {errQuantity}
+                              <p className="text-xs font-bold text-rose-500 mt-1.5 text-center flex items-center justify-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" /> {errQuantity}
                               </p>
                             )}
-
                             {isOver && (
-                              <p className="text-sm font-black text-amber-500 mt-2 text-center flex items-center justify-center gap-1.5">
-                                <AlertCircle className="w-4 h-4" /> สต๊อกไม่พอ
+                              <p className="text-[11px] font-bold text-amber-500 mt-1.5 text-center flex items-center justify-center gap-1 uppercase tracking-wider">
+                                <AlertCircle className="w-3.5 h-3.5" /> สต๊อกไม่พอ
                               </p>
                             )}
                           </td>
 
-                          <td className="p-5 text-right align-top pt-8">
-                            <span className="text-xl font-black text-slate-900 tabular-nums">
-                              {item.productId
-                                ? `฿${formatCurrency(rowTotal)}`
-                                : "-"}
+                          <td className="p-4 text-right align-top pt-5">
+                            <span className="text-base font-bold text-slate-900 tabular-nums">
+                              {item.productId ? `฿${formatCurrency(rowTotal)}` : "-"}
                             </span>
                           </td>
 
-                          <td className="p-5 min-w-[250px] align-top pt-5">
+                          <td className="p-4 min-w-[200px] align-top">
                             <input
                               type="text"
                               value={item.remark}
-                              onChange={(e) =>
-                                handleItemChange(
-                                  index,
-                                  "remark",
-                                  e.target.value
-                                )
-                              }
-                              className="w-full border-2 border-slate-200 rounded-xl p-3.5 text-base font-bold text-slate-700 outline-none focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 transition-all bg-white"
-                              placeholder="สเปก/ขนาด เพิ่มเติม"
+                              onChange={(e) => handleItemChange(index, "remark", e.target.value)}
+                              className="w-full border border-slate-200 rounded-lg p-2.5 text-sm font-bold text-slate-700 outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all bg-white"
+                              placeholder="ระบุสเปกเพิ่มเติม..."
                             />
                           </td>
 
-                          <td className="p-5 text-center align-top pt-6">
+                          <td className="p-4 text-center align-top pt-4">
                             <button
                               type="button"
                               onClick={() => removeItem(index)}
                               disabled={items.length === 1}
-                              className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-colors border-2 border-slate-200 hover:border-rose-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="p-2.5 bg-slate-50 text-slate-400 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-colors border border-slate-200 hover:border-rose-200 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center"
                             >
-                              <Trash2 className="w-5 h-5" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>
@@ -1069,29 +1009,30 @@ export default function CreateStockRequisitionPage() {
                     })}
                   </tbody>
 
-                  <tfoot className="bg-[#1F3B8B]/5">
+                  <tfoot className="bg-[#1F3B8B]/5 border-t border-[#1F3B8B]/10">
                     <tr>
-                      <td colSpan="5" className="p-6 text-right">
-                        <div className="text-sm font-black text-slate-600 uppercase tracking-widest">
+                      <td colSpan="5" className="p-5 text-right">
+                        <div className="text-xs font-bold text-slate-600 uppercase tracking-widest">
                           มูลค่าเบิกจ่ายรวมทั้งสิ้น (Grand Total)
                         </div>
                       </td>
-
-                      <td className="p-6 text-right">
-                        <span className="text-3xl font-black text-emerald-600 tabular-nums">
+                      <td className="p-5 text-right">
+                        <span className="text-xl font-black text-emerald-600 tabular-nums">
                           ฿{formatCurrency(grandTotalValue)}
                         </span>
                       </td>
-
                       <td colSpan="2"></td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
             </div>
+          </div>
 
-            <div className="p-8 md:p-10 bg-white">
-              <h2 className="text-lg font-black text-slate-900 uppercase tracking-wider mb-6">
+          {/* Remarks & Actions Card */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-6 md:p-8">
+              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-4">
                 หมายเหตุเพิ่มเติมถึงผู้อนุมัติ
               </h2>
 
@@ -1099,37 +1040,30 @@ export default function CreateStockRequisitionPage() {
                 name="remarks"
                 value={formData.remarks}
                 onChange={handleFormChange}
-                rows="4"
-                className="w-full bg-white border-2 border-slate-200 rounded-2xl p-6 text-base text-slate-900 outline-none focus:border-[#1F3B8B] focus:ring-4 focus:ring-[#1F3B8B]/10 placeholder-slate-400 transition-all font-bold mb-10"
+                rows="3"
+                className="w-full bg-white border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 placeholder-slate-400 transition-all mb-8 hover:bg-slate-50 focus:bg-white"
                 placeholder="ระบุรายละเอียดเพิ่มเติม ปัญหา ข้อจำกัด หรือคำชี้แจงประกอบการพิจารณา..."
               />
 
-              <div className="flex flex-col md:flex-row justify-between items-center gap-8 pt-8 border-t-2 border-slate-100">
-                <div className="flex items-start gap-4 bg-amber-50 p-5 rounded-2xl border-2 border-amber-100 max-w-xl shadow-sm">
-                  <AlertCircle className="w-6 h-6 text-amber-500 shrink-0 mt-0.5" />
-
-                  <p className="text-sm text-slate-700 leading-relaxed font-bold">
-                    <strong className="text-slate-950 font-black">
-                      ข้อควรระวัง:
-                    </strong>{" "}
-                    ตรวจสอบความถูกต้องของจำนวนเบิกก่อนส่งยืนยัน
-                    หากระบุจำนวนเกินกว่าสต๊อก
-                    ระบบจะแจ้งเตือนเพื่อให้แก้ไขก่อนส่งคำขอ
-                    ส่วนการเลือกล็อตและตำแหน่งจ่ายจริงจะดำเนินการในขั้นตอนจ่ายสินค้าออกโดยคลัง
+              <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-6 border-t border-slate-100">
+                <div className="flex items-start gap-3 bg-amber-50 p-4 rounded-xl border border-amber-100 max-w-xl shadow-sm">
+                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-[13px] text-slate-700 leading-relaxed font-medium">
+                    <strong className="text-slate-950 font-bold">ข้อควรระวัง:</strong>{" "}
+                    ตรวจสอบความถูกต้องของจำนวนเบิกก่อนส่งยืนยัน หากระบุจำนวนเกินกว่าสต๊อก ระบบจะแจ้งเตือนเพื่อให้แก้ไขก่อนส่งคำขอ ส่วนการเลือกล็อตและตำแหน่งจ่ายจริงจะดำเนินการในขั้นตอนจ่ายสินค้าออกโดยคลัง
                   </p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-2xl font-black text-base uppercase tracking-wider shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                  className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold text-sm uppercase tracking-widest shadow-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
-                    <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      <ShieldCheck className="w-6 h-6" />{" "}
-                      ยืนยันการส่งใบขอเบิกพัสดุ
+                      <ShieldCheck className="w-5 h-5" /> ยืนยันการส่งใบขอเบิก
                     </>
                   )}
                 </button>

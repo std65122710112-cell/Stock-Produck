@@ -619,7 +619,7 @@ export default function StockRequisitionListPage() {
                     วัตถุประสงค์การใช้งาน
                   </p>
 
-                  <p className="text-base text-slate-800 font-semibold leading-relaxed p-5 bg-slate-50 rounded-xl border border-slate-100 italic">
+                  <p className="text-base text-slate-900 font-semibold leading-relaxed p-5 bg-slate-50 rounded-xl border border-slate-100">
                     "{selectedSR.purpose}"
                   </p>
                 </div>

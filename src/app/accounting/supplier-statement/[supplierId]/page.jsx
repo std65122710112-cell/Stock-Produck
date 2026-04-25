@@ -451,27 +451,46 @@ function InvoiceList({ invoices, openAttachmentPreview, openPaymentVoucherPdf, p
             {/* ข้อมูลฝั่งซ้าย - จัดเป็น 3 คอลัมน์เพื่อความโปร่งสบาย */}
             <div className="flex-1 min-w-0">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">ใบกำกับภาษี</span> 
-                  <span className="text-[13px] font-bold text-slate-900 truncate" title={invoice.taxInvoiceNo || "N/A"}>{invoice.taxInvoiceNo || "N/A"}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">วันที่เอกสาร</span> 
-                  <span className="text-[13px] font-bold text-slate-900">{formatDateTH(invoice.issueDate)}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">ครบกำหนด</span> 
-                  <span className="text-[13px] font-bold text-rose-600">{formatDateTH(invoice.dueDate)}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">PO Number</span> 
-                  <span className="text-[13px] font-bold text-slate-900 truncate" title={invoice.purchaseOrder?.poNumber || "-"}>{invoice.purchaseOrder?.poNumber || "-"}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">GR Receipt</span> 
-                  <span className="text-[13px] font-bold text-slate-900 truncate" title={invoice.goodsReceipt?.receiptNo || "-"}>{invoice.goodsReceipt?.receiptNo || "-"}</span>
-                </div>
-              </div>
+  {/* ใบกำกับภาษี */}
+  <div className="flex flex-col">
+    <span className="text-[12px] font-bold text-slate-700 mb-1">ใบกำกับภาษี</span> 
+    <span className="text-[13px] font-bold text-slate-900 truncate" title={invoice.taxInvoiceNo || "N/A"}>
+      {invoice.taxInvoiceNo || "N/A"}
+    </span>
+  </div>
+
+  {/* วันที่เอกสาร */}
+  <div className="flex flex-col">
+    <span className="text-[12px] font-bold text-slate-700 mb-1">วันที่เอกสาร</span> 
+    <span className="text-[13px] font-bold text-slate-900">
+      {formatDateTH(invoice.issueDate)}
+    </span>
+  </div>
+
+  {/* ครบกำหนด */}
+  <div className="flex flex-col">
+    <span className="text-[12px] font-bold text-slate-700 mb-1">ครบกำหนด</span> 
+    <span className="text-[13px] font-bold text-rose-600">
+      {formatDateTH(invoice.dueDate)}
+    </span>
+  </div>
+
+  {/* PO Number */}
+  <div className="flex flex-col">
+    <span className="text-[12px] font-bold text-slate-700 mb-1">PO Number</span> 
+    <span className="text-[13px] font-bold text-slate-900 truncate" title={invoice.purchaseOrder?.poNumber || "-"}>
+      {invoice.purchaseOrder?.poNumber || "-"}
+    </span>
+  </div>
+
+  {/* GR Receipt */}
+  <div className="flex flex-col">
+    <span className="text-[12px] font-bold text-slate-700 mb-1">GR Receipt</span> 
+    <span className="text-[13px] font-bold text-slate-900 truncate" title={invoice.goodsReceipt?.receiptNo || "-"}>
+      {invoice.goodsReceipt?.receiptNo || "-"}
+    </span>
+  </div>
+</div>
             </div>
 
             {/* การ์ดสรุปยอดฝั่งขวา - บังคับขนาดสูงสุดไว้ */}
@@ -526,11 +545,22 @@ function PaymentCard({ payment, openAttachmentPreview, openPaymentVoucherPdf, pr
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="font-black text-[13px] text-slate-900 group-hover:text-[#1F3B8B] transition-colors">{payment.pvNo || "-"}</div>
-          <div className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-tighter">
-            {formatDateTH(payment.paymentDate)} | {getPaymentMethodLabel(payment.paymentMethod)}
+          <div className="flex items-baseline gap-1.5 mt-1">
+            <span className="text-[12px] font-bold text-slate-800">
+              {formatDateTH(payment.paymentDate)}
+            </span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-normal">
+              | {getPaymentMethodLabel(payment.paymentMethod)}
+            </span>
           </div>
-          <div className="text-[10px] font-bold text-blue-600 truncate mt-1">
-            Ref: {payment.referenceNo || "-"}
+
+          <div className="flex items-baseline gap-1 mt-0.5 truncate">
+            <span className="text-[12px] font-bold text-slate-800 shrink-0">
+              เลขที่อ้างอิง:
+            </span>
+            <span className="text-[10px] font-bold text-slate-600 truncate">
+              {payment.referenceNo || "-"}
+            </span>
           </div>
         </div>
 
@@ -543,20 +573,22 @@ function PaymentCard({ payment, openAttachmentPreview, openPaymentVoucherPdf, pr
 
       <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-slate-100">
         {!isVoided && (
-          <button
-            type="button"
-            onClick={() => openPaymentVoucherPdf(payment)}
-            disabled={printingPaymentId === payment.id || Boolean(printingPaymentId)}
-            className="inline-flex items-center justify-center flex-1 gap-1.5 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-blue-600 hover:text-white transition-all disabled:opacity-50 outline-none focus:ring-2 focus:ring-blue-500/20"
-          >
-            {printingPaymentId === payment.id ? (
-              <RefreshCw size={12} className="animate-spin" />
-            ) : (
-              <Printer size={12} />
-            )}
-            {printingPaymentId === payment.id ? "กำลังสร้าง" : "พิมพ์ PV"}
-          </button>
-        )}
+            <button
+              type="button"
+              onClick={() => openPaymentVoucherPdf(payment)}
+              disabled={printingPaymentId === payment.id || Boolean(printingPaymentId)}
+              className="inline-flex items-center justify-center flex-1 gap-2 bg-[#dbeafe] text-blue-900 px-4 py-2.5 rounded-lg text-[13px] font-bold transition-colors duration-300 ease-in-out hover:bg-[#1e40af] hover:text-white disabled:opacity-50 outline-none focus:ring-2 focus:ring-blue-500/40"
+            >
+              {printingPaymentId === payment.id ? (
+                <RefreshCw size={14} className="animate-spin text-inherit" />
+              ) : (
+                <Printer size={14} className="text-inherit" />
+              )}
+              <span className="text-inherit">
+                {printingPaymentId === payment.id ? "กำลังสร้าง..." : "พิมพ์ PV"}
+              </span>
+            </button>
+         )}
 
         {payment.attachmentUrl && (
           <button

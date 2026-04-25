@@ -55,7 +55,7 @@ export default function CreatePurchaseOrderPage() {
 
   const [hasSubmittedForm, setHasSubmittedForm] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
-  const [generatedPdfUrl, setGeneratedPdfUrl] = useState(null); // 💡 เก็บ URL PDF เพื่อรอเปิดตอนกดตกลง
+  const [generatedPdfUrl, setGeneratedPdfUrl] = useState(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -65,7 +65,7 @@ export default function CreatePurchaseOrderPage() {
         const [pRes, prRes, poRes, wRes] = await Promise.all([
           apiFetch("/master/products").catch(() => []),
           apiFetch("/api/purchase/pr?status=APPROVED&unused=true").catch(
-            () => [],
+            () => []
           ),
           apiFetch("/inventory/pos").catch(() => []),
           apiFetch("/master/warehouses").catch(() => []),
@@ -73,11 +73,11 @@ export default function CreatePurchaseOrderPage() {
 
         setProducts(pRes || []);
         const validPRs = (prRes || []).filter(
-          (pr) => pr.pdfPath && pr.pdfPath !== "PENDING",
+          (pr) => pr.pdfPath && pr.pdfPath !== "PENDING"
         );
         setApprovedPRs(validPRs);
         const signedPOs = (poRes || []).filter(
-          (po) => po.pdfPath && po.pdfPath !== "PENDING",
+          (po) => po.pdfPath && po.pdfPath !== "PENDING"
         );
         setActivePOs(signedPOs);
         setWarehouses(Array.isArray(wRes) ? wRes : wRes?.data || []);
@@ -170,7 +170,7 @@ export default function CreatePurchaseOrderPage() {
         setVendorName(
           prDetail.supplier
             ? `[${prDetail.supplier.code}] ${prDetail.supplier.name}`
-            : prDetail.vendorName || "",
+            : prDetail.vendorName || ""
         );
         setSupplierId(prDetail.supplier?.id || "");
 
@@ -185,12 +185,12 @@ export default function CreatePurchaseOrderPage() {
 
         setItems(mappedItems);
         setPoNumber(
-          `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`,
+          `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.floor(1000 + Math.random() * 9000)}`
         );
         setSignatureImage(null);
         setProcurementNote("");
         setOrderStatus("ORDERED");
-        setHasSubmittedForm(false); // Reset form submission state
+        setHasSubmittedForm(false);
         setViewMode("FORM");
       }
     } catch (error) {
@@ -213,7 +213,6 @@ export default function CreatePurchaseOrderPage() {
     e.preventDefault();
     setHasSubmittedForm(true);
 
-    // 💡 เช็คความครบถ้วน ถ้าไม่ครบให้หยุดทำงาน เพื่อให้กรอบแดงเด้งเตือน
     if (
       !vendorName.trim() ||
       !selectedPRData?.deliveryLocation ||
@@ -252,7 +251,6 @@ export default function CreatePurchaseOrderPage() {
         id: "submit-po",
       });
 
-      // 💡 บันทึก URL เอกสารไว้ แล้วเปิด Popup สำเร็จ (ยังไม่เปิดหน้าต่างทันที)
       if (response && response.pdfUrl) {
         setGeneratedPdfUrl(response.pdfUrl);
       }
@@ -269,7 +267,7 @@ export default function CreatePurchaseOrderPage() {
 
   const totalAmount = items.reduce(
     (sum, item) => sum + Number(item.orderedQuantity) * Number(item.unitPrice),
-    0,
+    0
   );
   const activeList = filterTab === "READY" ? approvedPRs : activePOs;
 
@@ -278,14 +276,14 @@ export default function CreatePurchaseOrderPage() {
     if (!isMounted || !successModal) return null;
     return createPortal(
       <div className="fixed inset-0 z-[99999] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col items-center max-w-sm w-full border border-slate-200 animate-in zoom-in-95 duration-300">
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-200">
-            <CheckCircle2 className="w-10 h-10" />
+        <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center max-w-sm w-full border border-emerald-100 animate-in zoom-in-95 duration-300">
+          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5 border border-emerald-200 shadow-inner">
+            <CheckCircle2 className="w-8 h-8" strokeWidth={2.5} />
           </div>
-          <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-wider">
+          <h3 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-wider">
             สร้างใบสั่งซื้อสำเร็จ!
           </h3>
-          <p className="text-sm font-bold text-slate-500 text-center mb-8">
+          <p className="text-sm font-bold text-slate-500 text-center mb-6 leading-relaxed">
             ระบบได้บันทึกข้อมูลเรียบร้อยแล้ว
             <br />
             คลิกตกลงเพื่อเปิดเอกสารและกลับสู่หน้ารายการ
@@ -300,13 +298,13 @@ export default function CreatePurchaseOrderPage() {
               setViewMode("LIST");
               setFilterTab("TRACKING");
             }}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95"
           >
             ตกลง
           </button>
         </div>
       </div>,
-      document.body,
+      document.body
     );
   };
 
@@ -315,34 +313,30 @@ export default function CreatePurchaseOrderPage() {
       <Toaster position="top-right" />
       <SuccessPortal />
 
-      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-500">
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-500">
         {/* --- HEADER SECTION --- */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6 print:hidden">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-6 print:hidden">
           <div className="flex flex-col gap-4 w-full">
             {viewMode === "FORM" && (
               <button
                 onClick={() => setViewMode("LIST")}
-                className="flex items-center gap-2 w-fit text-base font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
+                className="flex items-center gap-2 w-fit text-sm font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" /> ย้อนกลับ
+                <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
               </button>
             )}
 
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
-                  <ShoppingCart className="w-7 h-7 text-[#1F3B8B]" />
+                <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                  <ShoppingCart className="w-6 h-6 text-[#1F3B8B]" />
                 </div>
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
-                    {viewMode === "LIST"
-                      ? "ศูนย์กลางการจัดซื้อ"
-                      : "ออกใบสั่งซื้อ (PO)"}
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
+                    {viewMode === "LIST" ? "ศูนย์กลางการจัดซื้อ" : "ออกใบสั่งซื้อ (PO)"}
                   </h1>
-                  <p className="text-base text-slate-500 mt-1.5 font-medium flex items-center gap-2">
-                    <ClipboardList className="w-4 h-4" /> Purchasing Management
-                    System • ฝ่ายจัดซื้อ:
-                    ดำเนินการออกใบสั่งซื้อและติดตามสถานะจาก PR
+                  <p className="text-sm text-slate-500 mt-1 font-medium flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4" /> Purchasing Management System • ฝ่ายจัดซื้อ: ดำเนินการออกใบสั่งซื้อและติดตามสถานะ
                   </p>
                 </div>
               </div>
@@ -351,18 +345,17 @@ export default function CreatePurchaseOrderPage() {
                 <div className="flex bg-slate-100 p-1.5 rounded-xl w-full xl:w-auto">
                   <button
                     onClick={() => setFilterTab("READY")}
-                    className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                       filterTab === "READY"
                         ? "bg-white text-amber-600 shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    <Clock className="w-4 h-4" /> รายการรอออก PO (
-                    {approvedPRs.length})
+                    <Clock className="w-4 h-4" /> รายการรอออก PO ({approvedPRs.length})
                   </button>
                   <button
                     onClick={() => setFilterTab("TRACKING")}
-                    className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                       filterTab === "TRACKING"
                         ? "bg-white text-[#1F3B8B] shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
@@ -382,50 +375,46 @@ export default function CreatePurchaseOrderPage() {
             <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center border shadow-sm ${filterTab === "READY" ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"}`}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm ${
+                    filterTab === "READY" ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                  }`}
                 >
-                  {filterTab === "READY" ? (
-                    <Clock className="w-5 h-5" />
-                  ) : (
-                    <ClipboardList className="w-5 h-5" />
-                  )}
+                  {filterTab === "READY" ? <Clock className="w-5 h-5" /> : <ClipboardList className="w-5 h-5" />}
                 </div>
-                <h2 className="text-lg font-bold text-slate-800 tracking-wide uppercase">
-                  {filterTab === "READY"
-                    ? "รายการใบขอซื้อที่ผ่านการอนุมัติแล้ว"
-                    : "ประวัติการดำเนินการสั่งซื้อพัสดุ"}
+                <h2 className="text-base font-bold text-slate-800 tracking-wider uppercase">
+                  {filterTab === "READY" ? "รายการใบขอซื้อที่ผ่านการอนุมัติแล้ว" : "ประวัติการดำเนินการสั่งซื้อพัสดุ"}
                 </h2>
               </div>
             </div>
 
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-slate-100 border-b border-slate-200">
                   <tr>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       วันที่
                     </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       เลขที่อ้างอิง (PR/PO)
                     </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       ผู้ขอซื้อ / ผู้จัดจำหน่าย
                     </th>
-                    <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       สถานะ
                     </th>
-                    <th className="py-4 px-6 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       ดำเนินการ
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white/50">
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {isLoading ? (
                     <tr>
                       <td colSpan="5" className="py-20 text-center">
                         <div className="flex flex-col items-center gap-3">
-                          <div className="w-8 h-8 border-4 border-slate-200 border-t-[#1F3B8B] rounded-full animate-spin"></div>
-                          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">
+                          <Loader2 className="w-8 h-8 text-slate-300 animate-spin" />
+                          <p className="text-slate-500 font-bold text-[11px] uppercase tracking-widest">
                             กำลังโหลดข้อมูล...
                           </p>
                         </div>
@@ -433,90 +422,77 @@ export default function CreatePurchaseOrderPage() {
                     </tr>
                   ) : activeList.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan="5"
-                        className="py-20 text-center text-slate-400 font-medium italic"
-                      >
+                      <td colSpan="5" className="py-20 text-center text-slate-400 font-medium">
                         <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                        {filterTab === "READY"
-                          ? "ไม่มีใบขอซื้อ (PR) ที่รอการดำเนินการ"
-                          : "ยังไม่มีประวัติการสั่งซื้อ (PO)"}
+                        <span className="text-sm font-bold tracking-wide">
+                          {filterTab === "READY" ? "ไม่มีใบขอซื้อ (PR) ที่รอการดำเนินการ" : "ยังไม่มีประวัติการสั่งซื้อ (PO)"}
+                        </span>
                       </td>
                     </tr>
                   ) : (
                     activeList.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="hover:bg-slate-50/50 transition-colors"
-                      >
-                        <td className="py-4 px-6 text-sm font-bold text-slate-500 tabular-nums">
+                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors group">
+                        <td className="p-5 text-sm font-bold text-slate-500 tabular-nums">
                           {new Date(item.createdAt).toLocaleDateString("th-TH")}
                         </td>
-                        <td className="py-4 px-6">
-                          <span className="text-sm font-bold text-[#1e3b8a] uppercase tracking-tight">
+                        <td className="p-5">
+                          <span className="text-sm font-bold text-[#1F3B8B] tracking-tight group-hover:text-blue-700 transition-colors">
                             {item.poNumber || item.prNumber}
                           </span>
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="p-5">
                           <div className="flex flex-col">
-                            <span className="text-sm font-bold text-slate-800 uppercase">
-                              {item.vendorName ||
-                                `${item.user?.firstName} ${item.user?.lastName}`}
+                            <span className="text-sm font-bold text-slate-900 uppercase tracking-tight">
+                              {item.vendorName || `${item.user?.firstName} ${item.user?.lastName}`}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
+                            <span className="text-[10px] font-bold text-slate-500 border border-slate-200 px-2 py-1 rounded-md bg-slate-50 uppercase tracking-wide w-fit mt-1.5">
                               {item.department?.name || "External Vendor"}
                             </span>
                           </div>
                         </td>
-                        <td className="py-4 px-6 text-center">
+                        <td className="p-5 text-center">
                           <span
-                            className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm flex items-center justify-center gap-1.5 w-fit mx-auto ${
+                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm inline-flex items-center justify-center gap-1.5 ${
                               item.status === "APPROVED"
                                 ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                                 : item.status === "ORDERED"
-                                  ? "bg-blue-50 text-blue-600 border-blue-100"
-                                  : item.status === "SHIPPED"
-                                    ? "bg-purple-50 text-purple-600 border-purple-100"
-                                    : "bg-amber-50 text-amber-600 border-amber-100"
+                                ? "bg-blue-50 text-blue-600 border-blue-100"
+                                : item.status === "SHIPPED"
+                                ? "bg-purple-50 text-purple-600 border-purple-100"
+                                : "bg-amber-50 text-amber-600 border-amber-100"
                             }`}
                           >
-                            {item.status === "APPROVED"
-                              ? "รอออก PO"
-                              : item.status}
+                            {item.status === "APPROVED" ? "รอออก PO" : item.status}
                           </span>
                         </td>
-                        <td className="py-4 px-6 text-right">
+                        <td className="p-5 text-right">
                           <div className="flex items-center justify-end gap-3">
                             {filterTab === "READY" ? (
                               <>
                                 <button
-                                  onClick={() =>
-                                    handleViewPDF(item.pdfPath, "PR")
-                                  }
-                                  className="bg-white text-emerald-600 border border-emerald-200 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-emerald-50 transition-colors flex items-center gap-2 shadow-sm"
+                                  onClick={() => handleViewPDF(item.pdfPath, "PR")}
+                                  className="bg-white text-emerald-600 border border-emerald-200 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-emerald-50 transition-colors flex items-center gap-1.5 shadow-sm"
                                 >
-                                  <FileText className="w-4 h-4" /> ดู PR
+                                  <FileText className="w-3.5 h-3.5" /> ดู PR
                                 </button>
                                 <button
                                   onClick={() => handleSelectPRFromList(item)}
-                                  className="bg-white text-[#1F3B8B] border border-slate-200 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 inline-flex items-center justify-center"
+                                  className="bg-white text-[#1F3B8B] border border-slate-200 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 inline-flex items-center justify-center"
                                 >
                                   สร้างใบ PO
                                 </button>
                               </>
                             ) : (
                               <button
-                                onClick={() =>
-                                  handleViewPDF(item.pdfPath, "PO")
-                                }
+                                onClick={() => handleViewPDF(item.pdfPath, "PO")}
                                 disabled={!item.pdfPath}
-                                className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm ${
+                                className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${
                                   item.pdfPath
-                                    ? "bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white active:scale-95"
-                                    : "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed"
+                                    ? "bg-white text-[#1F3B8B] border border-slate-200 hover:border-[#1F3B8B] hover:bg-[#1F3B8B] hover:text-white active:scale-95"
+                                    : "bg-slate-50 text-slate-400 border border-slate-100 cursor-not-allowed"
                                 }`}
                               >
-                                <FileText className="w-4 h-4" /> ดูเอกสาร PO
+                                <FileText className="w-3.5 h-3.5" /> ดูเอกสาร PO
                               </button>
                             )}
                           </div>
@@ -535,125 +511,114 @@ export default function CreatePurchaseOrderPage() {
           <form
             onSubmit={handleSubmit}
             noValidate
-            className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500"
+            className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500"
           >
             {/* 1. Header Document */}
-            <div className="p-8 md:p-10 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
-              <div className="space-y-2">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+            <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                   อ้างอิงใบขอซื้อ (Source PR):
                 </span>
-                <h2 className="text-3xl md:text-4xl font-black text-[#1F3B8B] tabular-nums whitespace-nowrap">
+                <h2 className="text-2xl md:text-3xl font-bold text-[#1F3B8B] tabular-nums whitespace-nowrap tracking-tight">
                   {selectedPRData?.prNumber}
                 </h2>
               </div>
-              <div className="flex flex-col items-start md:items-end justify-center">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+              <div className="text-left md:text-right">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">
                   วันที่ส่งคำขอ:
                 </span>
-                <p className="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-500" />{" "}
-                  {new Date(selectedPRData.createdAt).toLocaleDateString(
-                    "th-TH",
-                  )}
+                <p className="text-sm font-bold text-slate-900 flex items-center justify-start md:justify-end gap-1.5">
+                  <Clock className="w-4 h-4 text-blue-500" />
+                  {new Date(selectedPRData.createdAt).toLocaleDateString("th-TH")}
                 </p>
               </div>
             </div>
 
             {/* 2. PR Information & Vendor Input */}
-            <div className="p-8 md:p-10 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-8">
+            <div className="p-6 md:p-8 border-b border-slate-200">
+              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-6 pb-4 border-b border-slate-100">
                 ข้อมูลพื้นฐานจากใบขอซื้อ (PR Information)
               </h2>
 
-              {/* Basic Info Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-10">
-                <div className="flex flex-col justify-center space-y-2">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-                    ผู้ขอซื้อ
-                  </span>
-                  <span className="text-lg md:text-xl font-bold text-slate-900">
-                    {selectedPRData?.user?.firstName}{" "}
-                    {selectedPRData?.user?.lastName}
+              {/* Basic Info 3-Column Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                <div className="flex flex-col justify-center space-y-1.5">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">ผู้ขอซื้อ</span>
+                  <span className="text-sm font-bold text-slate-900">
+                    {selectedPRData?.user?.firstName} {selectedPRData?.user?.lastName}
                   </span>
                 </div>
-                <div className="flex flex-col justify-center space-y-2">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-                    แผนก
-                  </span>
-                  <span className="text-lg md:text-xl font-bold text-slate-900">
+                <div className="flex flex-col justify-center space-y-1.5">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">แผนก</span>
+                  <span className="text-sm font-bold text-slate-900">
                     {selectedPRData?.department?.name || "-"}
                   </span>
                 </div>
-                <div className="flex flex-col justify-center space-y-2">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-                    ผู้อนุมัติสั่งซื้อ
-                  </span>
-                  <span className="text-lg md:text-xl font-bold text-slate-900">
+                <div className="flex flex-col justify-center space-y-1.5">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">ผู้อนุมัติสั่งซื้อ</span>
+                  <span className="text-sm font-bold text-slate-900">
                     {selectedPRData?.approver
                       ? `${selectedPRData.approver.firstName} ${selectedPRData.approver.lastName}`
                       : selectedPRData?.status === "APPROVED"
-                        ? "ผู้บริหาร (อนุมัติแล้ว)"
-                        : "-"}
+                      ? "ผู้บริหาร (อนุมัติแล้ว)"
+                      : "-"}
                   </span>
                 </div>
               </div>
 
-              {/* Purpose and Remarks */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                <div className="space-y-4">
+              {/* Purpose and Remarks Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       วัตถุประสงค์ / โครงการ
                     </span>
                     {selectedPRData?.referenceNo && (
-                      <span className="text-xs font-bold text-[#1F3B8B] tracking-wider uppercase">
+                      <span className="text-[10px] font-bold text-[#1F3B8B] tracking-wider uppercase">
                         REF: {selectedPRData.referenceNo}
                       </span>
                     )}
                   </div>
-                  <p className="text-base text-slate-800 font-semibold leading-relaxed p-6 bg-slate-50 rounded-xl border border-slate-100 italic">
-                    "{selectedPRData?.purpose || "-"}"
+                  <p className="text-sm text-slate-900 font-bold leading-relaxed p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    {selectedPRData?.purpose || "-"}
                   </p>
                 </div>
-                <div className="space-y-4">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">
                     หมายเหตุจากผู้ขอซื้อ
                   </span>
-                  <p className="text-base text-slate-800 font-semibold leading-relaxed p-6 bg-slate-50 rounded-xl border border-slate-100 italic">
-                    "{selectedPRData?.remarks || "ไม่มีการระบุหมายเหตุ"}"
+                  <p className="text-sm text-slate-900 font-bold leading-relaxed p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    {selectedPRData?.remarks || "ไม่มีการระบุหมายเหตุ"}
                   </p>
                 </div>
               </div>
 
               {/* Inputs: Vendor & Delivery Location */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-                    ระบุผู้จัดจำหน่าย (Vendor Name){" "}
-                    <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+                    ระบุผู้จัดจำหน่าย (Vendor Name) <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={vendorName}
                     onChange={(e) => setVendorName(e.target.value)}
-                    className={`w-full border rounded-lg p-3.5 text-base font-bold outline-none transition-all ${
+                    className={`w-full border rounded-xl p-3 text-sm font-bold outline-none transition-all ${
                       hasSubmittedForm && !vendorName.trim()
-                        ? "border-rose-400 bg-rose-50 text-rose-900 placeholder-rose-300"
-                        : "border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 placeholder:text-slate-400"
+                        ? "border-rose-300 bg-rose-50 text-rose-900 placeholder-rose-300 focus:ring-2 focus:ring-rose-100"
+                        : "border-slate-200 bg-white text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 hover:bg-slate-50"
                     }`}
                     placeholder="ชื่อบริษัทคู่ค้าที่จะสั่งซื้อ..."
                   />
                   {hasSubmittedForm && !vendorName.trim() && (
-                    <span className="text-[11px] font-bold text-rose-500 mt-1.5 block">
-                      กรุณาระบุชื่อผู้จัดจำหน่าย
+                    <span className="text-[10px] font-bold text-rose-500 mt-1.5 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" /> กรุณาระบุชื่อผู้จัดจำหน่าย
                     </span>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-                    สถานที่ส่งมอบ (Delivery Location){" "}
-                    <span className="text-rose-500">*</span>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
+                    สถานที่ส่งมอบ (Delivery Location) <span className="text-rose-500">*</span>
                   </label>
                   <select
                     value={selectedPRData?.deliveryLocation || ""}
@@ -663,27 +628,23 @@ export default function CreatePurchaseOrderPage() {
                         deliveryLocation: e.target.value,
                       })
                     }
-                    className={`w-full border rounded-lg p-3.5 text-base font-bold outline-none transition-all ${
+                    className={`w-full border rounded-xl p-3 text-sm font-bold outline-none transition-all ${
                       hasSubmittedForm && !selectedPRData?.deliveryLocation
-                        ? "border-rose-400 bg-rose-50 text-rose-900"
-                        : "border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
+                        ? "border-rose-300 bg-rose-50 text-rose-900 focus:ring-2 focus:ring-rose-100"
+                        : "border-slate-200 bg-white text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 hover:bg-slate-50"
                     }`}
                   >
-                    <option value="">
-                      -- เลือกคลังสินค้าที่ต้องการให้ส่งของ --
-                    </option>
+                    <option value="">-- เลือกคลังสินค้าที่ต้องการให้ส่งของ --</option>
                     {warehouses.map((w) => (
                       <option key={w.id} value={w.name}>
                         {w.name}
                       </option>
                     ))}
-                    <option value="อื่นๆ (ระบุในหมายเหตุ)">
-                      อื่นๆ (ระบุในหมายเหตุ)
-                    </option>
+                    <option value="อื่นๆ (ระบุในหมายเหตุ)">อื่นๆ (ระบุในหมายเหตุ)</option>
                   </select>
                   {hasSubmittedForm && !selectedPRData?.deliveryLocation && (
-                    <span className="text-[11px] font-bold text-rose-500 mt-1.5 block">
-                      กรุณาเลือกสถานที่ส่งมอบ
+                    <span className="text-[10px] font-bold text-rose-500 mt-1.5 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" /> กรุณาเลือกสถานที่ส่งมอบ
                     </span>
                   )}
                 </div>
@@ -691,58 +652,45 @@ export default function CreatePurchaseOrderPage() {
             </div>
 
             {/* 3. Items Table */}
-            <div className="px-8 md:px-10 py-8 md:py-10 border-b border-slate-200">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wider">
+            <div className="px-6 md:px-8 py-6 md:py-8 border-b border-slate-200">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider">
                   รายการพัสดุและราคาที่สั่งซื้อ
                 </h3>
-                <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-md border border-slate-200">
-                  <Lock className="w-3.5 h-3.5" /> ข้อมูลล็อกตามใบ PR
+                <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5 uppercase tracking-widest bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                  <Lock className="w-3 h-3" /> ข้อมูลล็อกตามใบ PR
                 </span>
               </div>
 
               <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-slate-100 border-b border-slate-200 text-sm font-bold uppercase text-slate-600">
-                      <th className="p-5 text-left">รายการพัสดุ (Product)</th>
-                      <th className="p-5 text-center w-32">จำนวนสั่ง</th>
-                      <th className="p-5 text-right w-48">ราคา/หน่วย</th>
-                      <th className="p-5 text-right w-48">รวม (บาท)</th>
+                <table className="min-w-full border-collapse">
+                  <thead className="bg-slate-100 border-b border-slate-200">
+                    <tr className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">
+                      <th className="p-4 text-left">รายการพัสดุ (Product)</th>
+                      <th className="p-4 text-center w-32">จำนวนสั่ง</th>
+                      <th className="p-4 text-right w-40">ราคา/หน่วย</th>
+                      <th className="p-4 text-right w-40">รวม (บาท)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 bg-white">
                     {items.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="text-base hover:bg-slate-50/50 transition-colors"
-                      >
-                        <td className="p-5">
-                          <p className="font-bold text-slate-900 text-lg">
-                            {item.productName}
-                          </p>
-                          <p className="text-sm text-blue-600 font-bold uppercase mt-1">
+                      <tr key={item.id} className="text-sm hover:bg-slate-50/50 transition-colors">
+                        <td className="p-4">
+                          <p className="font-bold text-slate-900">{item.productName}</p>
+                          <p className="text-[10px] text-[#1F3B8B] font-bold uppercase mt-0.5 tracking-wider">
                             SKU: {item.productSku}
                           </p>
                         </td>
-                        <td className="p-5 text-center">
-                          <span className="px-4 py-1.5 bg-slate-100 rounded-md font-bold text-[#1F3B8B] text-lg">
+                        <td className="p-4 text-center">
+                          <span className="px-3 py-1 bg-white border border-slate-200 rounded-md font-bold text-[#1F3B8B] tabular-nums">
                             {item.orderedQuantity}
                           </span>
                         </td>
-                        <td className="p-5 text-right tabular-nums font-semibold text-slate-700 text-lg">
-                          ฿
-                          {Number(item.unitPrice).toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                          })}
+                        <td className="p-4 text-right tabular-nums font-bold text-slate-700">
+                          ฿{Number(item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
-                        <td className="p-5 text-right tabular-nums font-bold text-slate-900 text-lg">
-                          ฿
-                          {(
-                            item.orderedQuantity * item.unitPrice
-                          ).toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                          })}
+                        <td className="p-4 text-right tabular-nums font-bold text-slate-900">
+                          ฿{(item.orderedQuantity * item.unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
                     ))}
@@ -751,47 +699,45 @@ export default function CreatePurchaseOrderPage() {
               </div>
             </div>
 
-            {/* 4. Execution Area */}
-            <div className="p-8 md:p-10 bg-slate-50/30">
-              <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-8">
+            {/* 4. Execution Area (3 Columns Grid) */}
+            <div className="p-6 md:p-8 bg-slate-50/50">
+              <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-6 pb-4 border-b border-slate-200">
                 ดำเนินการออกใบสั่งซื้อ (PO Finalize)
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 mb-10">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
                     สถานะเริ่มต้นของ PO
                   </label>
                   <select
                     value={orderStatus}
                     onChange={(e) => setOrderStatus(e.target.value)}
-                    className="w-full border rounded-lg p-3.5 text-base font-bold outline-none transition-all border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
+                    className="w-full border rounded-xl p-3 text-sm font-bold outline-none transition-all border-slate-200 bg-white text-slate-900 hover:bg-slate-50 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
                   >
-                    <option value="ORDERED">
-                      ORDERED (สั่งซื้อแล้ว รอจัดส่ง)
-                    </option>
+                    <option value="ORDERED">ORDERED (สั่งซื้อแล้ว รอจัดส่ง)</option>
                     <option value="SHIPPED">SHIPPED (กำลังจัดส่ง)</option>
                     <option value="URGENT">URGENT (รายการเร่งด่วน)</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
                     บันทึกถึงผู้จำหน่าย (Note)
                   </label>
                   <textarea
                     value={procurementNote}
                     onChange={(e) => setProcurementNote(e.target.value)}
                     placeholder="ระบุรายละเอียดการจัดส่งหรือเงื่อนไขเพิ่มเติม..."
-                    className="w-full border rounded-lg p-3.5 text-base font-medium outline-none transition-all border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 min-h-[140px] placeholder:text-slate-400"
+                    className="w-full border rounded-xl p-3 text-sm font-bold outline-none transition-all border-slate-200 bg-white text-slate-900 hover:bg-slate-50 focus:bg-white focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 min-h-[100px] placeholder:text-slate-400"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
                     ลายเซ็นจัดซื้อ <span className="text-rose-500">*</span>
                   </label>
-                  <div className="relative h-[140px]">
+                  <div className="relative h-[100px]">
                     {signatureImage ? (
-                      <div className="w-full h-full border-2 border-dashed border-emerald-400 rounded-xl bg-white p-4 flex items-center justify-center relative overflow-hidden group shadow-sm">
+                      <div className="w-full h-full border border-emerald-400 rounded-xl bg-white p-2 flex items-center justify-center relative overflow-hidden group shadow-sm">
                         <img
                           src={signatureImage}
                           alt="Signature"
@@ -800,72 +746,63 @@ export default function CreatePurchaseOrderPage() {
                         <button
                           type="button"
                           onClick={() => setSignatureImage(null)}
-                          className="absolute top-3 right-3 text-white bg-rose-500 px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all opacity-0 group-hover:opacity-100 shadow-md hover:bg-rose-600"
+                          className="absolute top-2 right-2 text-white bg-rose-500 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all opacity-0 group-hover:opacity-100 shadow-sm hover:bg-rose-600"
                         >
-                          ลบทิ้ง
+                          ลบ
                         </button>
                       </div>
                     ) : (
                       <label
                         className={`w-full h-full border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all group shadow-sm ${
                           hasSubmittedForm && !signatureImage
-                            ? "border-rose-400 bg-rose-50 hover:bg-rose-100 hover:border-rose-500"
-                            : "border-slate-300 bg-slate-50 hover:border-[#1F3B8B] hover:bg-[#1F3B8B]/5"
+                            ? "border-rose-300 bg-rose-50 hover:bg-rose-100 hover:border-rose-400"
+                            : "border-slate-200 bg-white hover:border-[#1F3B8B] hover:bg-slate-50"
                         }`}
                       >
                         <Upload
-                          className={`w-8 h-8 mb-3 transition-colors ${hasSubmittedForm && !signatureImage ? "text-rose-400 group-hover:text-rose-500" : "text-slate-300 group-hover:text-[#1F3B8B]"}`}
+                          className={`w-6 h-6 mb-2 transition-colors ${hasSubmittedForm && !signatureImage ? "text-rose-400 group-hover:text-rose-500" : "text-slate-300 group-hover:text-[#1F3B8B]"}`}
                         />
                         <span
-                          className={`text-xs font-bold uppercase tracking-widest transition-colors ${hasSubmittedForm && !signatureImage ? "text-rose-500 group-hover:text-rose-600" : "text-slate-500 group-hover:text-[#1F3B8B]"}`}
+                          className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${hasSubmittedForm && !signatureImage ? "text-rose-500 group-hover:text-rose-600" : "text-slate-500 group-hover:text-[#1F3B8B]"}`}
                         >
                           อัปโหลดลายเซ็น
                         </span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleSignatureUpload}
-                          className="hidden"
-                        />
+                        <input type="file" accept="image/*" onChange={handleSignatureUpload} className="hidden" />
                       </label>
                     )}
                   </div>
                   {hasSubmittedForm && !signatureImage && (
-                    <span className="text-[11px] font-bold text-rose-500 mt-1.5 block text-center">
-                      กรุณาลงนามกำกับใบสั่งซื้อก่อนดำเนินการ
+                    <span className="text-[10px] font-bold text-rose-500 mt-1.5 block text-center">
+                      กรุณาลงนามใบสั่งซื้อ
                     </span>
                   )}
                 </div>
               </div>
+            </div>
 
-              {/* Footer Submit */}
-              <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-10 border-t border-slate-200">
-                <div className="flex flex-col items-center md:items-start text-center md:text-left w-full md:w-auto">
-                  <p className="text-xs uppercase font-bold text-slate-500 tracking-widest mb-1">
-                    ยอดรวมมูลค่าการสั่งซื้อทั้งหมด (Grand Total)
-                  </p>
-                  <p className="text-4xl font-black text-emerald-600 tabular-nums">
-                    ฿
-                    {totalAmount.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
-                  </p>
-                </div>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full md:w-auto px-10 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-5 h-5" />{" "}
-                      ยืนยันการสั่งซื้อและออก PO
-                    </>
-                  )}
-                </button>
+            {/* Footer Submit */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6 p-6 md:p-8 border-t border-slate-200 bg-slate-50">
+              <div className="flex flex-col items-center md:items-start text-center md:text-left w-full md:w-auto">
+                <p className="text-[11px] uppercase font-bold text-slate-500 tracking-widest mb-1">
+                  ยอดรวมมูลค่าการสั่งซื้อทั้งหมด (Grand Total)
+                </p>
+                <p className="text-3xl md:text-4xl font-bold text-emerald-600 tabular-nums tracking-tight">
+                  ฿{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
               </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full md:w-auto px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm uppercase tracking-widest shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-5 h-5" /> ยืนยันการสั่งซื้อและออก PO
+                  </>
+                )}
+              </button>
             </div>
           </form>
         )}

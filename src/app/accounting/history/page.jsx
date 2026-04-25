@@ -538,7 +538,7 @@ export default function APPaymentHistoryPage() {
                         ใบกำกับภาษี: {payment.invoice?.taxInvoiceNo || "N/A"}
                         </div>
                         <div className="text-[10px] font-bold text-slate-400 mt-0.5 truncate">
-                          PO: {payment.invoice?.purchaseOrder?.poNumber || "-"}
+                          {payment.invoice?.purchaseOrder?.poNumber || "-"}
                         </div>
                       </Td>
 
@@ -649,7 +649,7 @@ export default function APPaymentHistoryPage() {
                               className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-400 bg-slate-50 border border-slate-100 text-[11px] font-bold tracking-widest opacity-60 cursor-not-allowed"
                               title="ยกเลิกแล้ว"
                             >
-                              <Ban size={12} className="shrink-0" />
+                              
                               ยกเลิกแล้ว
                             </div>
                           )}

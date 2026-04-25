@@ -21,6 +21,7 @@ import {
   BadgeCheck,
   Truck,
   User,
+  Loader2,
 } from "lucide-react";
 import { getAccessToken } from "@/lib/auth";
 
@@ -36,7 +37,7 @@ export default function ApprovePRPage() {
 
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [isApproveSuccessModalOpen, setIsApproveSuccessModalOpen] = useState(false); // 💡 เพิ่ม State ป็อปอัพอนุมัติสำเร็จ
+  const [isApproveSuccessModalOpen, setIsApproveSuccessModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -164,7 +165,6 @@ export default function ApprovePRPage() {
             await handleViewPDF(result.pdfUrl);
         }
 
-        // 💡 เรียกใช้ป็อปอัพแจ้งเตือนว่าสำเร็จ แทนการตั้งเวลาสลับหน้าอัตโนมัติ
         setIsApproveSuccessModalOpen(true);
 
     } catch (error) {
@@ -292,7 +292,6 @@ export default function ApprovePRPage() {
       0
     ) || 0;
 
-  // ป้องกันการ Scroll เมื่อเปิด Popups
   useEffect(() => {
     if (isApproveModalOpen || isRejectModalOpen || isApproveSuccessModalOpen) {
         document.body.style.overflow = "hidden";
@@ -305,30 +304,30 @@ export default function ApprovePRPage() {
   return (
     <AuthGate>
       <Toaster position="top-right" />
-      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-500">
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-500">
         
         {/* --- HEADER --- */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6 print:hidden">
+        <div className="flex flex-col md:flex-row justify-between items-start border-b border-slate-200 pb-6 gap-6 print:hidden">
           <div className="flex flex-col gap-4 w-full">
             {viewMode === "FORM" && (
               <button
                 onClick={() => setViewMode("LIST")}
-                className="flex items-center gap-2 w-fit text-base font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
+                className="flex items-center gap-2 w-fit text-sm font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" /> ย้อนกลับ
+                <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
               </button>
             )}
 
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
-                  <FileCheck className="w-7 h-7 text-[#1F3B8B]" />
+                <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                  <FileCheck className="w-6 h-6 text-[#1F3B8B]" />
                 </div>
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                     {viewMode === "LIST" ? "อนุมัติใบขอซื้อ (PR)" : "พิจารณาอนุมัติเอกสาร"}
                   </h1>
-                  <p className="text-base text-slate-500 mt-1.5 font-medium flex items-center gap-2">
+                  <p className="text-sm text-slate-500 mt-1 font-medium flex items-center gap-2">
                     <UserCheck className="w-4 h-4" /> Executive Purchase Requisition Approval • ระบบตรวจสอบและอนุมัติการจัดซื้อสำหรับผู้บริหาร
                   </p>
                 </div>
@@ -338,7 +337,7 @@ export default function ApprovePRPage() {
                 <div className="flex bg-slate-100 p-1.5 rounded-xl w-full xl:w-auto">
                   <button
                     onClick={() => setFilterTab("PENDING")}
-                    className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                       filterTab === "PENDING"
                         ? "bg-white text-amber-600 shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
@@ -348,7 +347,7 @@ export default function ApprovePRPage() {
                   </button>
                   <button
                     onClick={() => setFilterTab("APPROVED")}
-                    className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                       filterTab === "APPROVED"
                         ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
@@ -367,10 +366,10 @@ export default function ApprovePRPage() {
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center border shadow-sm ${filterTab === "PENDING" ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm ${filterTab === "PENDING" ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"}`}>
                   {filterTab === "PENDING" ? <AlertCircle className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
                 </div>
-                <h2 className="text-lg font-bold text-slate-800 tracking-wide uppercase">
+                <h2 className="text-base font-bold text-slate-800 tracking-wider uppercase">
                   {filterTab === "PENDING" ? "รายการคำขอที่รอการดำเนินการ" : "รายการเอกสารที่ผ่านการอนุมัติแล้ว"}
                 </h2>
               </div>
@@ -378,69 +377,68 @@ export default function ApprovePRPage() {
 
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-slate-100 border-b border-slate-200">
                   <tr>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">วันที่ส่งคำขอ</th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">เลขที่ใบขอซื้อ (PR)</th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">ผู้ขอซื้อ / แผนก</th>
-                    <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">สถานะ</th>
-                    <th className="py-4 px-6 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">ดำเนินการ</th>
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">วันที่ส่งคำขอ</th>
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">เลขที่ใบขอซื้อ (PR)</th>
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">ผู้ขอซื้อ / แผนก</th>
+                    <th className="py-4 px-6 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">สถานะ</th>
+                    <th className="py-4 px-6 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest">ดำเนินการ</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {isLoading ? (
                     <tr>
                       <td colSpan="5" className="py-20 text-center">
                         <div className="flex flex-col items-center gap-3">
-                          <div className="w-8 h-8 border-4 border-slate-200 border-t-[#1F3B8B] rounded-full animate-spin"></div>
+                          <Loader2 className="w-8 h-8 text-slate-300 animate-spin" />
                           <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">กำลังโหลดข้อมูล...</p>
                         </div>
                       </td>
                     </tr>
                   ) : prList.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="py-20 text-center text-slate-400 font-medium italic">
+                      <td colSpan="5" className="py-20 text-center text-slate-400 font-medium">
                         <ClipboardList className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                        ไม่มีข้อมูลในหมวดหมู่นี้
+                        <span className="text-sm font-bold tracking-wide">ไม่มีข้อมูลในหมวดหมู่นี้</span>
                       </td>
                     </tr>
                   ) : (
                     prList.map((pr) => (
-                      <tr key={pr.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-4 px-6 text-sm font-bold text-slate-500 tabular-nums">
+                      <tr key={pr.id} className="hover:bg-slate-50/50 transition-colors group">
+                        <td className="p-5 text-sm font-bold text-slate-500 tabular-nums">
                           {new Date(pr.createdAt).toLocaleDateString("th-TH")}
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="p-5">
                           <div className="flex flex-col">
-                            <span className="text-sm font-bold text-[#1e3b8a] uppercase tracking-tight mb-0.5">
+                            <span className="text-sm font-bold text-[#1F3B8B] tracking-tight group-hover:text-blue-700 transition-colors mb-0.5">
                               {pr.prNumber}
                             </span>
-                            <span className="text-xs font-semibold text-slate-500 truncate max-w-[250px] italic">
+                            <span className="text-[11px] font-semibold text-slate-500 truncate max-w-[250px] italic">
                               "{pr.purpose}"
                             </span>
                           </div>
                         </td>
-                        <td className="py-4 px-6">
+                        <td className="p-5">
                           <div className="flex flex-col">
-                            <span className="text-sm font-bold text-slate-800">
+                            <span className="text-sm font-bold text-slate-900">
                               {pr.user?.firstName} {pr.user?.lastName}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
+                            <span className="text-[10px] font-bold text-slate-500 border border-slate-200 px-2 py-1 rounded-md bg-slate-50 uppercase tracking-wide w-fit mt-1.5">
                               {pr.department?.name || "General"}
                             </span>
                           </div>
                         </td>
-                        <td className="p-6 text-center">
+                        <td className="p-5 text-center">
                           <span
-                            className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border shadow-sm ${
+                            className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm ${
                               pr.status === "APPROVED"
-                                ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                                 : pr.status === "REJECTED"
-                                ? "bg-rose-50 text-rose-600 border-rose-200"
-                                : "bg-amber-50 text-amber-600 border-amber-200"
+                                ? "bg-rose-50 text-rose-600 border-rose-100"
+                                : "bg-amber-50 text-amber-600 border-amber-100"
                             }`}
                           >
-                            {/* 💡 แก้ไขตรงนี้: ใช้ .startsWith("PENDING") แทน === "PENDING" */}
                             {pr.status?.startsWith("PENDING")
                               ? "รออนุมัติ"
                               : pr.status === "APPROVED"
@@ -448,11 +446,11 @@ export default function ApprovePRPage() {
                               : "ปฏิเสธ"}
                           </span>
                         </td>
-                        <td className="py-4 px-6 text-right">
+                        <td className="p-5 text-right">
                           {filterTab === "PENDING" ? (
                             <button
                               onClick={() => handleSelectPRFromList(pr)}
-                              className="bg-white text-[#1F3B8B] border border-slate-200 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 inline-flex items-center justify-center ml-auto"
+                              className="bg-white text-[#1F3B8B] border border-slate-200 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 inline-flex items-center justify-center ml-auto"
                             >
                               ตรวจสอบและอนุมัติ
                             </button>
@@ -460,13 +458,13 @@ export default function ApprovePRPage() {
                             <button
                               onClick={() => handleViewPDF(pr.pdfPath)}
                               disabled={!pr.pdfPath}
-                              className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm ml-auto ${
+                              className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ml-auto ${
                                 pr.pdfPath
-                                  ? "bg-white text-[#1e3b8a] border border-slate-200 hover:border-[#1e3b8a] hover:bg-[#1e3b8a] hover:text-white active:scale-95"
+                                  ? "bg-white text-[#1F3B8B] border border-slate-200 hover:border-[#1F3B8B] hover:bg-[#1F3B8B] hover:text-white active:scale-95"
                                   : "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed"
                               }`}
                             >
-                              <FileText className="w-4 h-4" /> {pr.pdfPath ? "ดูเอกสาร PDF" : "ไม่มีเอกสาร"}
+                              <FileText className="w-3.5 h-3.5" /> {pr.pdfPath ? "ดูเอกสาร PDF" : "ไม่มีเอกสาร"}
                             </button>
                           )}
                         </td>
@@ -481,95 +479,100 @@ export default function ApprovePRPage() {
 
         {/* --- FORM VIEW --- */}
         {viewMode === "FORM" && selectedPRData && (
-          <div className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500">
             
             {/* Header Form */}
-            <div className="p-8 md:p-10 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
-              <div className="space-y-2">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">เอกสารใบขออนุมัติจัดซื้อ (PR):</span>
-                <h2 className="text-3xl md:text-4xl font-black text-[#1F3B8B] tabular-nums whitespace-nowrap">
+            <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">เอกสารใบขออนุมัติจัดซื้อ (PR):</span>
+                <h2 className="text-2xl md:text-3xl font-bold text-[#1F3B8B] tabular-nums whitespace-nowrap tracking-tight">
                   {selectedPRData.prNumber}
                 </h2>
               </div>
-              <div className="flex flex-col items-start md:items-end justify-center">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1.5">วันที่ส่งคำขอ:</span>
-                <p className="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-500" /> {new Date(selectedPRData.createdAt).toLocaleDateString("th-TH")}
+              <div className="text-left md:text-right">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">วันที่ส่งคำขอ:</span>
+                <p className="text-sm font-bold text-slate-900 flex items-center justify-start md:justify-end gap-1.5">
+                  <Clock className="w-4 h-4 text-blue-500" /> {new Date(selectedPRData.createdAt).toLocaleDateString("th-TH")}
                 </p>
               </div>
             </div>
 
             {/* ข้อมูลพื้นฐาน */}
-            <div className="p-8 md:p-10 border-b border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-              <div className="flex flex-col justify-center space-y-2">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">ผู้ขอซื้อ (Requester)</span>
-                <span className="text-lg md:text-xl font-bold text-slate-900">{selectedPRData.user?.firstName} {selectedPRData.user?.lastName}</span>
+            <div className="p-6 md:p-8 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="flex flex-col justify-center space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">ผู้ขอซื้อ (Requester)</span>
+                <span className="text-sm font-bold text-slate-900">{selectedPRData.user?.firstName} {selectedPRData.user?.lastName}</span>
               </div>
               
-              <div className="flex flex-col justify-center space-y-2">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">แผนก (Cost Center)</span>
-                <span className="text-lg md:text-xl font-bold text-slate-900">{selectedPRData.department?.name || "ไม่ระบุแผนก"}</span>
+              <div className="flex flex-col justify-center space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">แผนก (Cost Center)</span>
+                <span className="text-sm font-bold text-slate-900">{selectedPRData.department?.name || "ไม่ระบุแผนก"}</span>
               </div>
 
-              <div className="flex flex-col justify-center space-y-2">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">แนะนำคู่ค้า (Suggested Vendor)</span>
+              <div className="flex flex-col justify-center space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">แนะนำคู่ค้า (Suggested Vendor)</span>
                 {selectedPRData.supplier ? (
-                  <span className="text-lg md:text-xl font-bold text-slate-900 truncate" title={selectedPRData.supplier.name}>{selectedPRData.supplier.name}</span>
+                  <span className="text-sm font-bold text-slate-900 truncate" title={selectedPRData.supplier.name}>{selectedPRData.supplier.name}</span>
                 ) : (
-                  <span className="text-lg md:text-xl font-bold text-slate-400 italic">ไม่ได้ระบุ (ให้จัดซื้อดำเนินการหาคู่ค้าเอง)</span>
+                  <span className="text-sm font-bold text-slate-400 italic">ไม่ได้ระบุ (ให้จัดซื้อดำเนินการหาคู่ค้าเอง)</span>
                 )}
               </div>
             </div>
 
-            <div className="p-8 md:p-10 border-b border-slate-200">
-              <div className="space-y-4">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">วัตถุประสงค์โครงการ (Purpose)</span>
-                <p className="text-lg text-slate-800 font-semibold leading-relaxed p-6 bg-slate-50 rounded-xl border border-slate-100 italic">
-                  "{selectedPRData.purpose || "-"}"
-                </p>
+            <div className="p-6 md:p-8 border-b border-slate-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">วัตถุประสงค์โครงการ (Purpose)</span>
+                  <p className="text-sm text-slate-900 font-bold leading-relaxed p-4 bg-slate-50 rounded-xl border border-slate-200 italic">
+                    "{selectedPRData.purpose || "-"}"
+                  </p>
+                </div>
+                {/* 💡 เผื่อในอนาคตมีช่องหมายเหตุเพิ่ม สามารถใส่ตรงนี้ได้ เพื่อให้ balance grid */}
               </div>
             </div>
 
             {/* รายการพัสดุ */}
-            <div className="px-8 md:px-10 py-8 md:py-10 border-b border-slate-200">
-              <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wider mb-6">
+            <div className="px-6 md:px-8 py-6 md:py-8 border-b border-slate-200">
+              <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-4">
                   รายการพัสดุ
               </h3>
               <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-slate-100 border-b border-slate-200 text-sm font-bold uppercase text-slate-600">
-                      <th className="p-5 text-left">รายการพัสดุ / SKU</th>
-                      <th className="p-5 text-center w-32">จำนวน</th>
-                      <th className="p-5 text-right">ราคาประเมิน/หน่วย</th>
-                      <th className="p-5 text-right">รวม (บาท)</th>
+                <table className="min-w-full border-collapse">
+                  <thead className="bg-slate-100 border-b border-slate-200">
+                    <tr className="text-[11px] font-bold uppercase text-slate-500 tracking-widest">
+                      <th className="p-4 text-left">รายการพัสดุ / SKU</th>
+                      <th className="p-4 text-center w-32">จำนวน</th>
+                      <th className="p-4 text-right">ราคาประเมิน/หน่วย</th>
+                      <th className="p-4 text-right">รวม (บาท)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 bg-white">
                     {selectedPRData.items.map((item, index) => (
-                      <tr key={index} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-5">
-                          <p className="font-bold text-slate-900 text-lg">{item.product?.name || "ไม่ทราบชื่อสินค้า"}</p>
-                          <p className="text-sm text-blue-600 font-bold uppercase mt-1">SKU: {item.product?.sku || "N/A"}</p>
+                      <tr key={index} className="text-sm hover:bg-slate-50/50 transition-colors">
+                        <td className="p-4">
+                          <p className="font-bold text-slate-900">{item.product?.name || "ไม่ทราบชื่อสินค้า"}</p>
+                          <p className="text-[10px] text-[#1F3B8B] font-bold uppercase mt-1 tracking-wider">SKU: {item.product?.sku || "N/A"}</p>
                         </td>
-                        <td className="p-5 text-center">
-                          <span className="px-4 py-1.5 bg-slate-100 rounded-md font-bold text-[#1F3B8B] text-lg">{item.quantity}</span>
+                        <td className="p-4 text-center">
+                          <span className="px-3 py-1 bg-white border border-slate-200 rounded-md font-bold text-[#1F3B8B] tabular-nums">
+                            {item.quantity}
+                          </span>
                         </td>
-                        <td className="p-5 text-right tabular-nums font-semibold text-slate-700 text-lg">
+                        <td className="p-4 text-right tabular-nums font-bold text-slate-700">
                           ฿{Number(item.estimatedPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
-                        <td className="p-5 text-right tabular-nums font-bold text-slate-900 text-lg">
+                        <td className="p-4 text-right tabular-nums font-bold text-slate-900">
                           ฿{(item.quantity * item.estimatedPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-[#1F3B8B]/5">
+                  <tfoot className="bg-[#1F3B8B]/5 border-t border-slate-200">
                     <tr>
-                      <td colSpan="3" className="p-6 text-right text-sm font-bold uppercase tracking-widest text-slate-600">
+                      <td colSpan="3" className="p-5 text-right text-[11px] font-bold uppercase tracking-widest text-slate-600">
                         มูลค่าประเมินรวมทั้งสิ้น (Total Amount)
                       </td>
-                      <td className="p-6 text-right font-black text-2xl md:text-3xl text-[#1e3b8a] tabular-nums">
+                      <td className="p-5 text-right font-bold text-lg md:text-xl text-[#1e3b8a] tabular-nums tracking-tight">
                         ฿{totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
@@ -579,27 +582,27 @@ export default function ApprovePRPage() {
             </div>
 
             {/* ส่วนพิจารณาและลายเซ็น */}
-            <div className="p-8 md:p-10 bg-slate-50/30">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="space-y-4">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+            <div className="p-6 md:p-8 bg-slate-50/50">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
                     ความเห็น/หมายเหตุเพิ่มเติม (ผู้อนุมัติ)
                   </label>
                   <textarea
-                    className="w-full bg-white border border-slate-200 rounded-xl p-5 text-base font-medium text-slate-700 outline-none focus:border-[#1F3B8B] min-h-[180px] transition-all shadow-sm placeholder:text-slate-300"
+                    className="w-full bg-white border border-slate-200 rounded-xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 min-h-[120px] transition-all hover:bg-slate-50 focus:bg-white placeholder:text-slate-400"
                     placeholder="ระบุข้อความถึงฝ่ายจัดซื้อ หรือเหตุผลที่ไม่อนุมัติ..."
                     value={approvalComment}
                     onChange={(e) => setApprovalComment(e.target.value)}
                   />
                 </div>
 
-                <div className="space-y-4">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-2">
                     ลายเซ็นผู้อนุมัติ (Signature) <span className="text-rose-500">*</span>
                   </label>
-                  <div className="relative h-[180px]">
+                  <div className="relative h-[120px]">
                     {signatureImage ? (
-                      <div className="w-full h-full border-2 border-dashed border-emerald-400 rounded-xl bg-white p-4 flex items-center justify-center relative overflow-hidden group shadow-sm">
+                      <div className="w-full h-full border border-emerald-400 rounded-xl bg-white p-2 flex items-center justify-center relative overflow-hidden group shadow-sm">
                         <img
                           src={signatureImage}
                           alt="Signature"
@@ -608,15 +611,15 @@ export default function ApprovePRPage() {
                         <button
                           type="button"
                           onClick={() => setSignatureImage(null)}
-                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 bg-rose-500 hover:bg-rose-600 text-white text-[11px] px-4 py-2 rounded-lg font-bold uppercase tracking-wider transition-all shadow-md"
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 bg-rose-500 hover:bg-rose-600 text-white text-[10px] px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider transition-all shadow-sm"
                         >
                           ลบทิ้ง
                         </button>
                       </div>
                     ) : (
-                      <label className="w-full h-full border-2 border-dashed border-slate-300 rounded-xl bg-white flex flex-col items-center justify-center cursor-pointer hover:border-[#1F3B8B] hover:bg-[#1F3B8B]/5 transition-all group shadow-sm">
-                        <Upload className="w-8 h-8 text-slate-300 group-hover:text-[#1F3B8B] mb-3 transition-colors" />
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest group-hover:text-[#1F3B8B]">
+                      <label className="w-full h-full border-2 border-dashed border-slate-300 rounded-xl bg-white flex flex-col items-center justify-center cursor-pointer hover:border-[#1F3B8B] hover:bg-slate-50 transition-all group shadow-sm">
+                        <Upload className="w-6 h-6 text-slate-300 group-hover:text-[#1F3B8B] mb-2 transition-colors" />
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover:text-[#1F3B8B]">
                           อัปโหลดลายเซ็น
                         </span>
                         <input
@@ -631,12 +634,12 @@ export default function ApprovePRPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row justify-end gap-4 pt-10 mt-2">
+              <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t border-slate-200">
                 <button
                   type="button"
                   onClick={() => setIsRejectModalOpen(true)}
                   disabled={isLoading}
-                  className="px-8 bg-white border border-rose-200 hover:bg-rose-50 text-rose-500 py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest transition-all active:scale-95 shadow-sm"
+                  className="px-6 w-full sm:w-auto bg-white border border-rose-200 hover:bg-rose-50 text-rose-500 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-sm"
                 >
                   ไม่อนุมัติ (REJECT)
                 </button>
@@ -644,9 +647,9 @@ export default function ApprovePRPage() {
                   type="button"
                   onClick={() => setIsApproveModalOpen(true)}
                   disabled={isLoading || !signatureImage}
-                  className="px-8 bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="px-8 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
-                  <CheckCircle2 className="w-5 h-5" /> ยืนยันการอนุมัติพัสดุ
+                  <CheckCircle2 className="w-4 h-4" /> ยืนยันการอนุมัติพัสดุ
                 </button>
               </div>
             </div>
@@ -660,29 +663,29 @@ export default function ApprovePRPage() {
       {/* 1. Modal ยืนยันก่อนกดอนุมัติ */}
       {isApproveModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 px-4">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 animate-in zoom-in-95 duration-200">
-            <div className="flex flex-col items-center text-center gap-4 mb-8">
-              <div className="p-4 bg-emerald-100 text-emerald-600 rounded-full shadow-inner border border-emerald-200">
-                <CheckCircle2 className="w-10 h-10" />
+          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center gap-4 mb-6">
+              <div className="p-3 bg-emerald-100 text-emerald-600 rounded-full shadow-inner border border-emerald-200">
+                <CheckCircle2 className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-wider">ยืนยันการอนุมัติ</h3>
-                <p className="text-sm font-bold text-slate-500">
+                <h3 className="text-base font-bold text-slate-900 mb-1 uppercase tracking-wider">ยืนยันการอนุมัติ</h3>
+                <p className="text-xs font-bold text-slate-500 leading-relaxed">
                   คุณต้องการอนุมัติคำขอจัดซื้อนี้และสร้างเอกสาร PDF ใช่หรือไม่?<br/>
                   การกระทำนี้ไม่สามารถย้อนกลับได้
                 </p>
               </div>
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <button
                 onClick={() => setIsApproveModalOpen(false)}
-                className="flex-1 px-4 py-3.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg font-bold text-sm uppercase tracking-widest transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest transition-colors shadow-sm"
               >
                 ยกเลิก
               </button>
               <button
                 onClick={handleApproveAndGeneratePDF}
-                className="flex-1 px-4 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-sm uppercase tracking-widest transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-colors shadow-sm"
               >
                 ยืนยันอนุมัติ
               </button>
@@ -694,12 +697,12 @@ export default function ApprovePRPage() {
       {/* 2. Modal อนุมัติสำเร็จ! */}
       {isApproveSuccessModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 px-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col items-center max-w-sm w-full border border-slate-200 animate-in zoom-in-95 duration-300">
-            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-200">
-              <CheckCircle2 className="w-10 h-10" />
+          <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center max-w-sm w-full border border-emerald-100 animate-in zoom-in-95 duration-300">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5 shadow-inner border border-emerald-200">
+              <CheckCircle2 className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-black text-slate-900 mb-4 uppercase tracking-wider">อนุมัติเสร็จสิ้น!</h3>
-            <div className="text-sm font-bold text-slate-500 text-center mb-8 space-y-1">
+            <h3 className="text-lg font-bold text-slate-900 mb-2 uppercase tracking-wider">อนุมัติเสร็จสิ้น!</h3>
+            <div className="text-xs font-bold text-slate-500 text-center mb-6 space-y-1">
               <p>ระบบได้ทำการบันทึกการอนุมัติเรียบร้อยแล้ว</p>
               <p>และสร้างเอกสาร PDF อ้างอิงเข้าระบบสำเร็จ</p>
             </div>
@@ -709,7 +712,7 @@ export default function ApprovePRPage() {
                 setViewMode("LIST");
                 setFilterTab("APPROVED");
               }}
-              className="w-full px-4 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-sm uppercase tracking-widest transition-colors shadow-sm active:scale-95"
+              className="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-colors shadow-sm active:scale-95"
             >
               ตกลง
             </button>
@@ -720,29 +723,29 @@ export default function ApprovePRPage() {
       {/* 3. Modal ปฏิเสธคำขอ */}
       {isRejectModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 px-4">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full border border-slate-200 animate-in zoom-in-95 duration-200">
-            <div className="flex flex-col items-center text-center gap-4 mb-8">
-              <div className="p-4 bg-rose-100 text-rose-600 rounded-full shadow-inner border border-rose-200">
-                <XCircle className="w-10 h-10" />
+          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center gap-4 mb-6">
+              <div className="p-3 bg-rose-100 text-rose-600 rounded-full shadow-inner border border-rose-200">
+                <XCircle className="w-8 h-8" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-wider">ปฏิเสธคำขอ</h3>
-                <p className="text-sm font-bold text-slate-500">
+                <h3 className="text-base font-bold text-slate-900 mb-1 uppercase tracking-wider">ปฏิเสธคำขอ</h3>
+                <p className="text-xs font-bold text-slate-500 leading-relaxed">
                   คุณแน่ใจหรือไม่ที่จะปฏิเสธใบคำขอนี้?<br/>
                   กรุณาตรวจสอบให้แน่ใจว่าคุณได้กรอกเหตุผลในช่องหมายเหตุแล้ว
                 </p>
               </div>
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <button
                 onClick={() => setIsRejectModalOpen(false)}
-                className="flex-1 px-4 py-3.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-lg font-bold text-sm uppercase tracking-widest transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 rounded-xl font-bold text-xs uppercase tracking-widest transition-colors shadow-sm"
               >
                 ยกเลิก
               </button>
               <button
                 onClick={handleReject}
-                className="flex-1 px-4 py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-sm uppercase tracking-widest transition-colors shadow-sm"
+                className="flex-1 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-colors shadow-sm"
               >
                 ยืนยันปฏิเสธ
               </button>

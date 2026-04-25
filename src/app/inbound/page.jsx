@@ -180,8 +180,6 @@ export default function CreateGoodsReceiptPage() {
             name: product.name || "",
             orderedQuantity: Number(pi.orderedQuantity) || 0,
             receivedQuantity: Number(pi.receivedQuantity) || 0,
-
-            // ✅ ให้รับเข้าทุกครั้งแบบมีล็อต เพื่อแยกราคาซื้อแต่ละรอบ
             isLotManaged: true,
             lotId: "",
             lotNumber: generateLotNumber(),
@@ -367,7 +365,6 @@ export default function CreateGoodsReceiptPage() {
         isInvalid = true;
       }
 
-      // ✅ บังคับเลขล็อตเท่านั้น ไม่บังคับ EXP
       if (it.isLotManaged && !String(it.lotNumber || "").trim()) {
         isLotInvalid = true;
       }
@@ -400,8 +397,6 @@ export default function CreateGoodsReceiptPage() {
           lotId: it.lotId || null,
           lotNumber: it.isLotManaged ? String(it.lotNumber || "").trim() : null,
           mfgDate: it.isLotManaged && it.mfgDate ? it.mfgDate : null,
-
-          // ✅ สำคัญ: ถ้าไม่กรอก EXP ให้ส่ง null ไม่ใช่ ""
           expDate: it.isLotManaged && it.expDate ? it.expDate : null,
         })),
       };
@@ -441,16 +436,16 @@ export default function CreateGoodsReceiptPage() {
 
     return createPortal(
       <div className="fixed inset-0 z-[99999] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col items-center max-w-sm w-full border border-slate-200 animate-in zoom-in-95 duration-300">
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-200">
-            <CheckCircle2 className="w-10 h-10" />
+        <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center max-w-sm w-full border border-emerald-100 animate-in zoom-in-95 duration-300">
+          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5 border border-emerald-200 shadow-inner">
+            <CheckCircle2 className="w-8 h-8" strokeWidth={2.5} />
           </div>
 
-          <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-wider">
+          <h3 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-wider">
             บันทึกรับสินค้าสำเร็จ!
           </h3>
 
-          <p className="text-sm font-bold text-slate-500 text-center mb-8">
+          <p className="text-sm font-bold text-slate-500 text-center mb-6 leading-relaxed">
             ระบบได้อัปเดตสต๊อกสินค้าเรียบร้อยแล้ว
             <br />
             คลิกตกลงเพื่อเปิดใบ GR และกลับสู่หน้าหลัก
@@ -470,7 +465,7 @@ export default function CreateGoodsReceiptPage() {
               setFilterTab("COMPLETED");
               setIsSubmitting(false);
             }}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95"
           >
             ตกลง
           </button>
@@ -485,36 +480,35 @@ export default function CreateGoodsReceiptPage() {
       <Toaster position="top-right" />
       <SuccessPortal />
 
-      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-500">
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-500">
         {/* HEADER SECTION */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6 print:hidden">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-6 gap-6 print:hidden">
           <div className="flex flex-col gap-4 w-full">
             {viewMode === "FORM" && (
               <button
                 onClick={handleCancel}
-                className="flex items-center gap-2 w-fit text-base font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
+                className="flex items-center gap-2 w-fit text-sm font-bold text-slate-500 hover:text-[#1F3B8B] transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" /> ย้อนกลับ
+                <ArrowLeft className="w-4 h-4" /> ย้อนกลับ
               </button>
             )}
 
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
-                  <PackagePlus className="w-7 h-7 text-[#1F3B8B]" />
+                <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
+                  <PackagePlus className="w-6 h-6 text-[#1F3B8B]" />
                 </div>
 
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
+                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight flex flex-wrap items-center gap-3">
                     {viewMode === "LIST"
                       ? "การตรวจรับสินค้าเข้าคลัง"
                       : "บันทึกใบรับสินค้า (GR)"}
                   </h1>
 
-                  <p className="text-base text-slate-500 mt-1.5 font-medium flex items-center gap-2">
+                  <p className="text-sm text-slate-500 mt-1 font-medium flex items-center gap-2">
                     <Database className="w-4 h-4" />
-                    Inbound Supply Chain Process •
-                    ระบบตรวจรับสินค้าเข้าคลังและอัปเดตสต๊อก
+                    Inbound Supply Chain Process • ระบบตรวจรับสินค้าเข้าคลังและอัปเดตสต๊อก
                   </p>
                 </div>
               </div>
@@ -523,7 +517,7 @@ export default function CreateGoodsReceiptPage() {
                 <div className="flex bg-slate-100 p-1.5 rounded-xl w-full xl:w-auto">
                   <button
                     onClick={() => setFilterTab("PENDING")}
-                    className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                       filterTab === "PENDING"
                         ? "bg-white text-amber-600 shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
@@ -535,7 +529,7 @@ export default function CreateGoodsReceiptPage() {
 
                   <button
                     onClick={() => setFilterTab("COMPLETED")}
-                    className={`flex-1 xl:flex-none px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
                       filterTab === "COMPLETED"
                         ? "bg-white text-[#1F3B8B] shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
@@ -556,7 +550,7 @@ export default function CreateGoodsReceiptPage() {
             <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center border shadow-sm ${
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm ${
                     filterTab === "PENDING"
                       ? "bg-amber-50 text-amber-600 border-amber-100"
                       : "bg-indigo-50 text-indigo-600 border-indigo-100"
@@ -569,7 +563,7 @@ export default function CreateGoodsReceiptPage() {
                   )}
                 </div>
 
-                <h2 className="text-lg font-bold text-slate-800 tracking-wide uppercase">
+                <h2 className="text-base font-bold text-slate-800 tracking-wider uppercase">
                   {filterTab === "PENDING"
                     ? "รายการใบสั่งซื้อที่รอการส่งมอบ"
                     : "รายการตรวจรับสินค้าที่ดำเนินการเสร็จสิ้น"}
@@ -579,97 +573,82 @@ export default function CreateGoodsReceiptPage() {
 
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-slate-100 border-b border-slate-200">
                   <tr>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       วันที่
                     </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       เอกสารอ้างอิง (PO/GR)
                     </th>
-                    <th className="py-4 px-6 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-left text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       {filterTab === "PENDING"
                         ? "ผู้จัดจำหน่าย (Vendor)"
                         : "ผู้รับสินค้า / หมายเหตุ"}
                     </th>
-                    <th className="py-4 px-6 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-center text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       สถานะ
                     </th>
-                    <th className="py-4 px-6 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-4 px-6 text-right text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                       ดำเนินการ
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-slate-100 bg-white/50">
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {filterTab === "PENDING" ? (
                     pendingPOs.length === 0 ? (
                       <tr>
-                        <td
-                          colSpan="5"
-                          className="py-20 text-center text-slate-400 font-medium italic"
-                        >
+                        <td colSpan="5" className="py-24 text-center text-slate-400 font-medium">
                           <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                          ไม่มีใบสั่งซื้อรอรับของ
+                          <span className="text-sm font-bold tracking-wide">ไม่มีใบสั่งซื้อรอรับของ</span>
                         </td>
                       </tr>
                     ) : (
                       pendingPOs.map((po) => (
-                        <tr
-                          key={po.id}
-                          className="hover:bg-slate-50/50 transition-colors"
-                        >
+                        <tr key={po.id} className="hover:bg-slate-50/80 transition-colors group">
                           <td className="py-4 px-6 text-sm font-bold text-slate-500 tabular-nums">
                             {new Date(po.createdAt).toLocaleDateString("th-TH")}
                           </td>
-
                           <td className="py-4 px-6">
-                            <span className="text-sm font-bold text-[#1e3b8a] uppercase tracking-tight">
+                            <span className="text-sm font-bold text-[#1F3B8B] uppercase tracking-tight group-hover:text-blue-700 transition-colors">
                               {po.poNumber}
                             </span>
                           </td>
-
                           <td className="py-4 px-6">
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold text-slate-800 uppercase">
+                              <span className="text-sm font-bold text-slate-900 uppercase">
                                 {po.vendorName}
                               </span>
-                              <span className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase mt-1">
                                 Logistic Inbound
                               </span>
                             </div>
                           </td>
-
                           <td className="py-4 px-6 text-center">
                             <span
-                              className={`px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm flex items-center justify-center gap-1.5 w-fit mx-auto ${
+                              className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm inline-flex items-center justify-center gap-1.5 ${
                                 po.status === "PARTIAL"
                                   ? "bg-orange-50 text-orange-600 border-orange-100"
                                   : "bg-emerald-50 text-emerald-600 border-emerald-100"
                               }`}
                             >
-                              {po.status === "PARTIAL"
-                                ? "รับแล้วบางส่วน"
-                                : "รอรับของ"}
+                              {po.status === "PARTIAL" ? "รับแล้วบางส่วน" : "รอรับของ"}
                             </span>
                           </td>
-
                           <td className="py-4 px-6 text-right">
                             <div className="flex items-center justify-end gap-3">
                               <button
                                 onClick={() => handleViewPDF(po.pdfPath, "PO")}
-                                className="bg-white border border-slate-200 text-[#1F3B8B] px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm"
+                                className="bg-white border border-slate-200 text-emerald-600 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-emerald-50 transition-all flex items-center gap-1.5 shadow-sm"
                               >
-                                <FileText className="w-4 h-4" />
-                                ดู PO
+                                <FileText className="w-3.5 h-3.5" /> ดู PO
                               </button>
-
                               <button
                                 onClick={() => handleSelectPO(po)}
-                                className="bg-emerald-600 text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase hover:bg-emerald-700 shadow-sm flex items-center gap-2 transition-all active:scale-95"
+                                className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider hover:bg-emerald-700 shadow-sm flex items-center gap-1.5 transition-all active:scale-95"
                               >
-                                <ClipboardCheck className="w-4 h-4" />
-                                เริ่มตรวจรับ
+                                <ClipboardCheck className="w-3.5 h-3.5" /> เริ่มตรวจรับ
                               </button>
                             </div>
                           </td>
@@ -678,64 +657,53 @@ export default function CreateGoodsReceiptPage() {
                     )
                   ) : completedGRs.length === 0 ? (
                     <tr>
-                      <td
-                        colSpan="5"
-                        className="py-20 text-center text-slate-400 font-medium italic"
-                      >
+                      <td colSpan="5" className="py-24 text-center text-slate-400 font-medium">
                         <AlertCircle className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                        ยังไม่มีประวัติการรับสินค้า
+                        <span className="text-sm font-bold tracking-wide">ยังไม่มีประวัติการรับสินค้า</span>
                       </td>
                     </tr>
                   ) : (
                     completedGRs.map((gr) => (
-                      <tr
-                        key={gr.id}
-                        className="hover:bg-slate-50/50 transition-colors"
-                      >
+                      <tr key={gr.id} className="hover:bg-slate-50/80 transition-colors group">
                         <td className="py-4 px-6 text-sm font-bold text-slate-500 tabular-nums">
                           {new Date(gr.createdAt).toLocaleDateString("th-TH")}
                         </td>
-
                         <td className="py-4 px-6">
                           <div className="flex flex-col">
-                            <span className="text-sm font-bold text-emerald-600 uppercase tracking-tight">
+                            <span className="text-sm font-bold text-emerald-600 uppercase tracking-tight group-hover:text-emerald-700 transition-colors mb-0.5">
                               {gr.receiptNo}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">
                               PO: {gr.purchaseOrder?.poNumber || "N/A"}
                             </span>
                           </div>
                         </td>
-
                         <td className="py-4 px-6">
                           <div className="flex flex-col">
-                            <span className="text-sm font-bold text-slate-800 uppercase">
+                            <span className="text-sm font-bold text-slate-900 uppercase">
                               {gr.user?.firstName} {gr.user?.lastName}
                             </span>
-                            <span className="text-[10px] font-semibold text-slate-500 truncate max-w-[250px] italic mt-0.5">
+                            <span className="text-[11px] font-semibold text-slate-500 truncate max-w-[250px] italic mt-0.5">
                               "{gr.remarks || "ตรวจรับครบถ้วน"}"
                             </span>
                           </div>
                         </td>
-
                         <td className="py-4 px-6 text-center">
-                          <span className="px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider border shadow-sm flex items-center justify-center gap-1.5 w-fit mx-auto bg-emerald-50 text-emerald-600 border-emerald-100">
+                          <span className="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm inline-flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-600 border-emerald-100">
                             สำเร็จ
                           </span>
                         </td>
-
                         <td className="py-4 px-6 text-right">
                           <button
                             onClick={() => handleViewPDF(gr.pdfPath, "GR")}
                             disabled={!gr.pdfPath}
-                            className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm ${
+                            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${
                               gr.pdfPath
                                 ? "bg-white text-[#1F3B8B] border border-slate-200 hover:border-[#1F3B8B] hover:bg-[#1F3B8B] hover:text-white active:scale-95"
                                 : "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed"
                             }`}
                           >
-                            <FileText className="w-4 h-4" />
-                            ดูใบ GR
+                            <FileText className="w-3.5 h-3.5" /> ดูใบ GR
                           </button>
                         </td>
                       </tr>
@@ -752,250 +720,186 @@ export default function CreateGoodsReceiptPage() {
           <form
             onSubmit={handleSubmit}
             noValidate
-            className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500"
+            className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500"
           >
-            <div className="p-8 md:p-10 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
-              <div className="space-y-2">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">
+            {/* Header Form */}
+            <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                   เลขที่ใบรับสินค้า (GR Number):
                 </span>
-                <h2 className="text-3xl md:text-4xl font-black text-[#1F3B8B] tabular-nums whitespace-nowrap">
+                <h2 className="text-2xl md:text-3xl font-bold text-[#1F3B8B] tabular-nums whitespace-nowrap tracking-tight">
                   {receiptNo}
                 </h2>
               </div>
 
-              <div className="flex flex-col items-start md:items-end justify-center">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+              <div className="text-left md:text-right">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">
                   อ้างอิงใบสั่งซื้อ (PO Number):
                 </span>
-                <p className="text-lg md:text-xl font-bold text-slate-900 tracking-tight tabular-nums">
+                <p className="text-base font-bold text-slate-900 tracking-tight tabular-nums">
                   {selectedPO?.poNumber}
                 </p>
-                <p className="text-sm font-bold text-emerald-600 uppercase mt-0.5">
+                <p className="text-[11px] font-bold text-emerald-600 uppercase mt-0.5 tracking-wider">
                   {selectedPO?.vendorName}
                 </p>
               </div>
             </div>
 
-            <div className="px-8 md:px-10 py-10 border-b border-slate-200">
-              <h2 className="text-lg font-bold text-slate-900 uppercase tracking-widest mb-6">
-                รายการพัสดุและตำแหน่งจัดเก็บ (Items & Storage)
-              </h2>
+            <div className="px-6 md:px-8 py-6 md:py-8 border-b border-slate-200">
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-base font-bold text-slate-900 uppercase tracking-wider">
+                  รายการพัสดุและตำแหน่งจัดเก็บ (Items & Storage)
+                </h2>
+              </div>
 
               <div className="border border-slate-200 rounded-xl overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1350px]">
+                <table className="w-full text-left border-collapse min-w-[1200px]">
                   <thead className="bg-slate-100 border-b border-slate-200">
-                    <tr className="text-sm font-bold text-slate-600 uppercase tracking-widest">
-                      <th className="p-5 text-left">พัสดุ / SKU</th>
-                      <th className="p-5 text-left w-[28%]">
-                        ล็อต / วันผลิต / วันหมดอายุ
-                      </th>
-                      <th className="p-5 text-left w-[22%]">
-                        คลัง / โซน <span className="text-rose-500">*</span>
-                      </th>
-                      <th className="p-5 text-left w-[22%]">
-                        ตำแหน่ง (Location){" "}
-                        <span className="text-rose-500">*</span>
-                      </th>
-                      <th className="p-5 text-center w-28">ค้างรับ</th>
-                      <th className="p-5 text-right w-36">ต้นทุน/หน่วย</th>
-                      <th className="p-5 text-center w-48 whitespace-nowrap">
-                        จำนวนที่รับจริง <span className="text-rose-500">*</span>
-                      </th>
+                    <tr className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                      <th className="p-4 text-left w-[25%]">พัสดุ / SKU</th>
+                      <th className="p-4 text-left w-[22%]">ล็อต / วันผลิต / หมดอายุ <span className="text-rose-500">*</span></th>
+                      <th className="p-4 text-left w-[18%]">คลัง / โซน <span className="text-rose-500">*</span></th>
+                      <th className="p-4 text-left w-[15%]">ตำแหน่ง (Location) <span className="text-rose-500">*</span></th>
+                      <th className="p-4 text-center w-20">ค้างรับ</th>
+                      <th className="p-4 text-center w-28 whitespace-nowrap">จำนวนรับจริง <span className="text-rose-500">*</span></th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {items.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="hover:bg-slate-50/50 transition-colors"
-                      >
-                        <td className="p-5 align-top">
-                          <p className="font-bold text-slate-900 text-lg">
+                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="p-4 align-top">
+                          <p className="font-bold text-slate-900 text-sm">
                             {item.name}
                           </p>
-                          <p className="text-sm text-blue-600 font-bold uppercase mt-1 tabular-nums">
+                          <p className="text-[10px] text-[#1F3B8B] font-bold uppercase mt-1 tracking-wider tabular-nums">
                             SKU: {item.sku}
                           </p>
-                          <span className="inline-flex mt-3 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border bg-blue-50 text-blue-700 border-blue-200">
+                          <span className="inline-flex mt-2.5 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest border bg-blue-50 text-blue-700 border-blue-200">
                             LOT MANAGED
                           </span>
                         </td>
 
-                        <td className="p-5 align-top">
-                          <div className="grid grid-cols-1 gap-3">
+                        <td className="p-4 align-top">
+                          <div className="space-y-2.5">
                             <div>
-                              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">
-                                เลขล็อต <span className="text-rose-500">*</span>
-                              </label>
                               <input
                                 type="text"
                                 value={item.lotNumber}
-                                onChange={(e) =>
-                                  updateItem(
-                                    item.id,
-                                    "lotNumber",
-                                    e.target.value
-                                  )
-                                }
-                                className={`w-full border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] ${
-                                  hasSubmittedForm &&
-                                  !String(item.lotNumber || "").trim()
-                                    ? "border-rose-400 bg-rose-50 text-rose-900"
-                                    : "border-slate-300 bg-white text-slate-800"
+                                onChange={(e) => updateItem(item.id, "lotNumber", e.target.value)}
+                                className={`w-full border rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all ${
+                                  hasSubmittedForm && !String(item.lotNumber || "").trim()
+                                    ? "border-rose-300 bg-rose-50 text-rose-900"
+                                    : "border-slate-200 bg-white text-slate-800"
                                 }`}
-                                placeholder="เช่น LOT-260424-1234"
+                                placeholder="เลขล็อต (เช่น LOT-2604...)"
                               />
                             </div>
 
                             <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">
-                                  MFG
-                                </label>
+                              <div className="relative">
+                                <span className="absolute -top-2 left-2 bg-white px-1 text-[9px] font-bold text-slate-400 uppercase tracking-wider">MFG</span>
                                 <input
                                   type="date"
                                   value={item.mfgDate || ""}
-                                  onChange={(e) =>
-                                    updateItem(item.id, "mfgDate", e.target.value)
-                                  }
-                                  className="w-full border border-slate-300 rounded-lg px-2 py-2 text-xs font-bold outline-none focus:border-[#1F3B8B]"
+                                  onChange={(e) => updateItem(item.id, "mfgDate", e.target.value)}
+                                  className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all bg-white text-slate-800 mt-1"
                                 />
                               </div>
-
-                              <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">
-                                  EXP
-                                </label>
+                              <div className="relative">
+                                <span className="absolute -top-2 left-2 bg-white px-1 text-[9px] font-bold text-slate-400 uppercase tracking-wider">EXP</span>
                                 <input
                                   type="date"
                                   value={item.expDate || ""}
-                                  onChange={(e) =>
-                                    updateItem(item.id, "expDate", e.target.value)
-                                  }
-                                  className="w-full border border-slate-300 bg-white text-slate-800 rounded-lg px-2 py-2 text-xs font-bold outline-none focus:border-[#1F3B8B]"
+                                  onChange={(e) => updateItem(item.id, "expDate", e.target.value)}
+                                  className="w-full border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all bg-white text-slate-800 mt-1"
                                 />
                               </div>
                             </div>
 
                             <button
                               type="button"
-                              onClick={() =>
-                                updateItem(
-                                  item.id,
-                                  "lotNumber",
-                                  generateLotNumber()
-                                )
-                              }
-                              className="text-[11px] font-black text-[#1F3B8B] hover:underline w-fit"
+                              onClick={() => updateItem(item.id, "lotNumber", generateLotNumber())}
+                              className="text-[10px] font-bold text-[#1F3B8B] hover:text-blue-700 hover:underline w-fit uppercase tracking-wider transition-colors"
                             >
-                              สร้างเลขล็อตใหม่อัตโนมัติ
+                              + สร้างเลขล็อตอัตโนมัติ
                             </button>
                           </div>
                         </td>
 
-                        <td className="p-5 align-top">
-                          <div className="flex flex-col gap-3">
+                        <td className="p-4 align-top">
+                          <div className="flex flex-col gap-2.5">
                             <select
                               value={item.warehouseId}
-                              onChange={(e) =>
-                                updateItem(
-                                  item.id,
-                                  "warehouseId",
-                                  e.target.value
-                                )
-                              }
-                              className={`border rounded-lg px-3.5 py-3 text-sm font-bold outline-none focus:border-[#1F3B8B] bg-white transition-all w-full cursor-pointer ${
+                              onChange={(e) => updateItem(item.id, "warehouseId", e.target.value)}
+                              className={`border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all w-full cursor-pointer ${
                                 hasSubmittedForm && !item.warehouseId
-                                  ? "border-rose-400 bg-rose-50"
-                                  : "border-slate-300"
+                                  ? "border-rose-300 bg-rose-50 text-rose-900"
+                                  : "border-slate-200 bg-white text-slate-900"
                               }`}
                             >
-                              <option value="">-- เลือกคลังสินค้า --</option>
+                              <option value="">-- เลือกคลัง --</option>
                               {warehouses.map((w) => (
-                                <option key={w.id} value={w.id}>
-                                  {w.name}
-                                </option>
+                                <option key={w.id} value={w.id}>{w.name}</option>
                               ))}
                             </select>
 
                             <select
                               value={item.zoneId}
-                              onChange={(e) =>
-                                updateItem(item.id, "zoneId", e.target.value)
-                              }
+                              onChange={(e) => updateItem(item.id, "zoneId", e.target.value)}
                               disabled={!item.warehouseId}
-                              className={`border rounded-lg px-3.5 py-3 text-sm font-bold outline-none transition-all w-full cursor-pointer disabled:bg-slate-50 disabled:border-slate-200 disabled:text-slate-400 ${
-                                item.zoneId
-                                  ? "border-slate-300"
-                                  : "border-slate-200 text-slate-500"
+                              className={`border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all w-full cursor-pointer disabled:bg-slate-50 disabled:border-slate-100 disabled:text-slate-400 ${
+                                item.zoneId ? "border-slate-200 bg-white text-slate-900" : "border-slate-200 bg-white text-slate-500"
                               }`}
                             >
                               <option value="">-- เลือกโซน (ถ้ามี) --</option>
                               {getAvailableZones(item.warehouseId).map((z) => (
-                                <option key={z.id} value={z.id}>
-                                  {z.name}
-                                </option>
+                                <option key={z.id} value={z.id}>{z.name}</option>
                               ))}
                             </select>
                           </div>
                         </td>
 
-                        <td className="p-5 align-top">
+                        <td className="p-4 align-top">
                           <select
                             value={item.locationId}
-                            onChange={(e) =>
-                              updateItem(item.id, "locationId", e.target.value)
-                            }
+                            onChange={(e) => updateItem(item.id, "locationId", e.target.value)}
                             disabled={!item.warehouseId}
-                            className={`w-full border rounded-lg px-3.5 py-3 text-sm font-bold outline-none focus:border-[#1F3B8B] transition-all cursor-pointer disabled:bg-slate-50 disabled:border-slate-200 disabled:text-slate-400 ${
+                            className={`w-full border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all cursor-pointer disabled:bg-slate-50 disabled:border-slate-100 disabled:text-slate-400 ${
                               hasSubmittedForm && !item.locationId
-                                ? "border-rose-400 bg-rose-50 text-slate-900"
+                                ? "border-rose-300 bg-rose-50 text-rose-900"
                                 : item.locationId
-                                  ? "border-slate-300 text-slate-900"
-                                  : "border-slate-200 text-slate-500"
+                                ? "border-slate-200 bg-white text-slate-900"
+                                : "border-slate-200 bg-white text-slate-500"
                             }`}
                           >
                             <option value="">-- ระบุจุดเก็บ --</option>
                             {getAvailableLocations(item).map((l) => (
-                              <option key={l.id} value={l.id}>
-                                {l.name || l.code}
-                              </option>
+                              <option key={l.id} value={l.id}>{l.name || l.code}</option>
                             ))}
                           </select>
-
                           {hasSubmittedForm && !item.locationId && (
-                            <span className="text-[11px] font-bold text-rose-500 mt-1 block">
-                              กรุณาเลือกระบุจุดเก็บ
+                            <span className="text-[10px] font-bold text-rose-500 mt-1.5 block">
+                              กรุณาระบุจุดเก็บ
                             </span>
                           )}
                         </td>
 
-                        <td className="p-5 text-center font-bold text-slate-400 text-lg tabular-nums align-top">
+                        <td className="p-4 text-center font-bold text-slate-400 text-sm tabular-nums align-top pt-6">
                           {item.remainingQuantity}
                         </td>
 
-                        <td className="p-5 text-right font-black text-slate-800 tabular-nums align-top whitespace-nowrap">
-                          ฿
-                          {Number(item.unitCost || 0).toLocaleString(
-                            undefined,
-                            { minimumFractionDigits: 2 }
-                          )}
-                        </td>
-
-                        <td className="p-5 align-top">
+                        <td className="p-4 align-top">
                           <input
                             type="number"
                             min="0"
                             value={item.quantity}
-                            onChange={(e) =>
-                              updateItem(item.id, "quantity", e.target.value)
-                            }
-                            className={`w-full border-2 rounded-lg py-3 text-center font-bold text-lg outline-none transition-all tabular-nums ${
+                            onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
+                            className={`w-full border rounded-lg py-2.5 text-center font-bold text-sm outline-none transition-all tabular-nums ${
                               hasSubmittedForm && Number(item.quantity) <= 0
-                                ? "border-rose-400 bg-rose-50 text-rose-900"
-                                : "border-emerald-500 bg-emerald-50 text-emerald-900 focus:ring-4 focus:ring-emerald-100"
+                                ? "border-rose-300 bg-rose-50 text-rose-900 focus:ring-2 focus:ring-rose-100"
+                                : "border-slate-200 bg-white text-[#1F3B8B] focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
                             }`}
                           />
                         </td>
@@ -1006,29 +910,28 @@ export default function CreateGoodsReceiptPage() {
               </div>
             </div>
 
-            <div className="p-8 md:p-10 bg-slate-50 flex flex-col gap-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            <div className="p-6 md:p-8 bg-slate-50 flex flex-col gap-6 border-t border-slate-200">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-500 uppercase tracking-widest ml-1 flex items-center gap-2">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1">
                     หมายเหตุการตรวจรับ (Remarks)
                   </label>
                   <textarea
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
-                    rows="3"
-                    className="w-full border rounded-lg bg-white p-4 text-base font-medium text-slate-700 outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all resize-none placeholder:text-slate-400 shadow-sm"
+                    className="w-full border border-slate-200 rounded-xl bg-white p-4 text-sm font-bold text-slate-700 outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all resize-none placeholder:text-slate-400 shadow-sm min-h-[80px]"
                     placeholder="ระบุสภาพสินค้าหรือปัญหาที่พบ..."
                   />
                 </div>
 
-                <div className="flex flex-col md:flex-row justify-between items-center gap-6 md:gap-12">
-                  <div className="flex flex-col items-center md:items-start w-full">
-                    <p className="text-xs font-bold uppercase text-slate-500 tracking-widest mb-1">
+                <div className="flex flex-col md:flex-row justify-between items-center lg:items-end gap-6 lg:ml-auto">
+                  <div className="flex flex-col items-center md:items-end w-full">
+                    <p className="text-[11px] font-bold uppercase text-slate-500 tracking-widest mb-1">
                       ยอดรับรวมทั้งสิ้น
                     </p>
-                    <p className="text-4xl font-black text-[#1F3B8B] tabular-nums flex items-baseline gap-1.5">
+                    <p className="text-3xl md:text-4xl font-bold text-[#1F3B8B] tabular-nums flex items-baseline gap-1.5 tracking-tight">
                       {totalQty}
-                      <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                         Units
                       </span>
                     </p>
@@ -1037,7 +940,7 @@ export default function CreateGoodsReceiptPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full md:w-auto min-w-[240px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full md:w-auto min-w-[200px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
