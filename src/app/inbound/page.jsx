@@ -289,7 +289,7 @@ export default function CreateGoodsReceiptPage() {
         try {
           const err = await response.json();
           msg = err?.message || msg;
-        } catch {}
+        } catch { }
         throw new Error(msg);
       }
 
@@ -436,16 +436,16 @@ export default function CreateGoodsReceiptPage() {
 
     return createPortal(
       <div className="fixed inset-0 z-[99999] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center max-w-sm w-full border border-emerald-100 animate-in zoom-in-95 duration-300">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5 border border-emerald-200 shadow-inner">
-            <CheckCircle2 className="w-8 h-8" strokeWidth={2.5} />
+        <div className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col items-center max-w-sm w-full border border-slate-200 animate-in zoom-in-95 duration-300">
+          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-200">
+            <CheckCircle2 className="w-10 h-10" />
           </div>
 
-          <h3 className="text-xl font-bold text-slate-900 mb-2 uppercase tracking-wider">
+          <h3 className="text-xl font-black text-slate-900 mb-2 uppercase tracking-wider">
             บันทึกรับสินค้าสำเร็จ!
           </h3>
 
-          <p className="text-sm font-bold text-slate-500 text-center mb-6 leading-relaxed">
+          <p className="text-sm font-bold text-slate-500 text-center mb-8">
             ระบบได้อัปเดตสต๊อกสินค้าเรียบร้อยแล้ว
             <br />
             คลิกตกลงเพื่อเปิดใบ GR และกลับสู่หน้าหลัก
@@ -465,7 +465,7 @@ export default function CreateGoodsReceiptPage() {
               setFilterTab("COMPLETED");
               setIsSubmitting(false);
             }}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-lg font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95"
           >
             ตกลง
           </button>
@@ -517,11 +517,10 @@ export default function CreateGoodsReceiptPage() {
                 <div className="flex bg-slate-100 p-1.5 rounded-xl w-full xl:w-auto">
                   <button
                     onClick={() => setFilterTab("PENDING")}
-                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
-                      filterTab === "PENDING"
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${filterTab === "PENDING"
                         ? "bg-white text-amber-600 shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
-                    }`}
+                      }`}
                   >
                     <Clock className="w-4 h-4" />
                     รอรับเข้าคลัง ({pendingPOs.length})
@@ -529,11 +528,10 @@ export default function CreateGoodsReceiptPage() {
 
                   <button
                     onClick={() => setFilterTab("COMPLETED")}
-                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
-                      filterTab === "COMPLETED"
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${filterTab === "COMPLETED"
                         ? "bg-white text-[#1F3B8B] shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
-                    }`}
+                      }`}
                   >
                     <ShieldCheck className="w-4 h-4" />
                     ประวัติรับของ (GR) ({completedGRs.length})
@@ -550,11 +548,10 @@ export default function CreateGoodsReceiptPage() {
             <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm ${
-                    filterTab === "PENDING"
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm ${filterTab === "PENDING"
                       ? "bg-amber-50 text-amber-600 border-amber-100"
                       : "bg-indigo-50 text-indigo-600 border-indigo-100"
-                  }`}
+                    }`}
                 >
                   {filterTab === "PENDING" ? (
                     <Package className="w-5 h-5" />
@@ -627,11 +624,10 @@ export default function CreateGoodsReceiptPage() {
                           </td>
                           <td className="py-4 px-6 text-center">
                             <span
-                              className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm inline-flex items-center justify-center gap-1.5 ${
-                                po.status === "PARTIAL"
+                              className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm inline-flex items-center justify-center gap-1.5 ${po.status === "PARTIAL"
                                   ? "bg-orange-50 text-orange-600 border-orange-100"
                                   : "bg-emerald-50 text-emerald-600 border-emerald-100"
-                              }`}
+                                }`}
                             >
                               {po.status === "PARTIAL" ? "รับแล้วบางส่วน" : "รอรับของ"}
                             </span>
@@ -697,11 +693,10 @@ export default function CreateGoodsReceiptPage() {
                           <button
                             onClick={() => handleViewPDF(gr.pdfPath, "GR")}
                             disabled={!gr.pdfPath}
-                            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${
-                              gr.pdfPath
+                            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ${gr.pdfPath
                                 ? "bg-white text-[#1F3B8B] border border-slate-200 hover:border-[#1F3B8B] hover:bg-[#1F3B8B] hover:text-white active:scale-95"
                                 : "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed"
-                            }`}
+                              }`}
                           >
                             <FileText className="w-3.5 h-3.5" /> ดูใบ GR
                           </button>
@@ -754,14 +749,16 @@ export default function CreateGoodsReceiptPage() {
               </div>
 
               <div className="border border-slate-200 rounded-xl overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[1200px]">
+                <table className="w-full text-left border-collapse min-w-[1250px]">
                   <thead className="bg-slate-100 border-b border-slate-200">
                     <tr className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                      <th className="p-4 text-left w-[25%]">พัสดุ / SKU</th>
-                      <th className="p-4 text-left w-[22%]">ล็อต / วันผลิต / หมดอายุ <span className="text-rose-500">*</span></th>
-                      <th className="p-4 text-left w-[18%]">คลัง / โซน <span className="text-rose-500">*</span></th>
+                      <th className="p-4 text-left w-[22%]">พัสดุ / SKU</th>
+                      <th className="p-4 text-left w-[20%]">ล็อต / วันผลิต / หมดอายุ <span className="text-rose-500">*</span></th>
+                      <th className="p-4 text-left w-[15%]">คลัง / โซน <span className="text-rose-500">*</span></th>
                       <th className="p-4 text-left w-[15%]">ตำแหน่ง (Location) <span className="text-rose-500">*</span></th>
-                      <th className="p-4 text-center w-20">ค้างรับ</th>
+                      <th className="p-4 text-center w-16">ค้างรับ</th>
+                      {/* นำกลับมาแสดง */}
+                      <th className="p-4 text-right w-24">ต้นทุน/หน่วย</th>
                       <th className="p-4 text-center w-28 whitespace-nowrap">จำนวนรับจริง <span className="text-rose-500">*</span></th>
                     </tr>
                   </thead>
@@ -788,11 +785,10 @@ export default function CreateGoodsReceiptPage() {
                                 type="text"
                                 value={item.lotNumber}
                                 onChange={(e) => updateItem(item.id, "lotNumber", e.target.value)}
-                                className={`w-full border rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all ${
-                                  hasSubmittedForm && !String(item.lotNumber || "").trim()
+                                className={`w-full border rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all ${hasSubmittedForm && !String(item.lotNumber || "").trim()
                                     ? "border-rose-300 bg-rose-50 text-rose-900"
                                     : "border-slate-200 bg-white text-slate-800"
-                                }`}
+                                  }`}
                                 placeholder="เลขล็อต (เช่น LOT-2604...)"
                               />
                             </div>
@@ -833,11 +829,10 @@ export default function CreateGoodsReceiptPage() {
                             <select
                               value={item.warehouseId}
                               onChange={(e) => updateItem(item.id, "warehouseId", e.target.value)}
-                              className={`border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all w-full cursor-pointer ${
-                                hasSubmittedForm && !item.warehouseId
+                              className={`border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all w-full cursor-pointer ${hasSubmittedForm && !item.warehouseId
                                   ? "border-rose-300 bg-rose-50 text-rose-900"
                                   : "border-slate-200 bg-white text-slate-900"
-                              }`}
+                                }`}
                             >
                               <option value="">-- เลือกคลัง --</option>
                               {warehouses.map((w) => (
@@ -849,9 +844,8 @@ export default function CreateGoodsReceiptPage() {
                               value={item.zoneId}
                               onChange={(e) => updateItem(item.id, "zoneId", e.target.value)}
                               disabled={!item.warehouseId}
-                              className={`border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all w-full cursor-pointer disabled:bg-slate-50 disabled:border-slate-100 disabled:text-slate-400 ${
-                                item.zoneId ? "border-slate-200 bg-white text-slate-900" : "border-slate-200 bg-white text-slate-500"
-                              }`}
+                              className={`border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all w-full cursor-pointer disabled:bg-slate-50 disabled:border-slate-100 disabled:text-slate-400 ${item.zoneId ? "border-slate-200 bg-white text-slate-900" : "border-slate-200 bg-white text-slate-500"
+                                }`}
                             >
                               <option value="">-- เลือกโซน (ถ้ามี) --</option>
                               {getAvailableZones(item.warehouseId).map((z) => (
@@ -866,13 +860,12 @@ export default function CreateGoodsReceiptPage() {
                             value={item.locationId}
                             onChange={(e) => updateItem(item.id, "locationId", e.target.value)}
                             disabled={!item.warehouseId}
-                            className={`w-full border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all cursor-pointer disabled:bg-slate-50 disabled:border-slate-100 disabled:text-slate-400 ${
-                              hasSubmittedForm && !item.locationId
+                            className={`w-full border rounded-lg px-3 py-2.5 text-xs font-bold outline-none focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10 transition-all cursor-pointer disabled:bg-slate-50 disabled:border-slate-100 disabled:text-slate-400 ${hasSubmittedForm && !item.locationId
                                 ? "border-rose-300 bg-rose-50 text-rose-900"
                                 : item.locationId
-                                ? "border-slate-200 bg-white text-slate-900"
-                                : "border-slate-200 bg-white text-slate-500"
-                            }`}
+                                  ? "border-slate-200 bg-white text-slate-900"
+                                  : "border-slate-200 bg-white text-slate-500"
+                              }`}
                           >
                             <option value="">-- ระบุจุดเก็บ --</option>
                             {getAvailableLocations(item).map((l) => (
@@ -890,17 +883,21 @@ export default function CreateGoodsReceiptPage() {
                           {item.remainingQuantity}
                         </td>
 
+                        {/* นำกลับมาแสดง */}
+                        <td className="p-4 text-right font-bold text-slate-700 text-sm tabular-nums align-top pt-6 whitespace-nowrap">
+                          ฿{Number(item.unitCost || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </td>
+
                         <td className="p-4 align-top">
                           <input
                             type="number"
                             min="0"
                             value={item.quantity}
                             onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
-                            className={`w-full border rounded-lg py-2.5 text-center font-bold text-sm outline-none transition-all tabular-nums ${
-                              hasSubmittedForm && Number(item.quantity) <= 0
+                            className={`w-full border rounded-lg py-2.5 text-center font-bold text-sm outline-none transition-all tabular-nums ${hasSubmittedForm && Number(item.quantity) <= 0
                                 ? "border-rose-300 bg-rose-50 text-rose-900 focus:ring-2 focus:ring-rose-100"
                                 : "border-slate-200 bg-white text-[#1F3B8B] focus:border-[#1F3B8B] focus:ring-2 focus:ring-[#1F3B8B]/10"
-                            }`}
+                              }`}
                           />
                         </td>
                       </tr>
@@ -940,13 +937,13 @@ export default function CreateGoodsReceiptPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full md:w-auto min-w-[200px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full md:w-auto min-w-[200px] bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3.5 rounded-xl font-bold text-sm uppercase tracking-widest shadow-sm transition-colors active:scale-95 disabled:opacity-50 flex flex-row items-center justify-center gap-2 whitespace-nowrap"
                   >
                     {isSubmitting ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin shrink-0" />
                     ) : (
                       <>
-                        <CheckCircle2 className="w-5 h-5" />
+                        <CheckCircle2 className="w-5 h-5 shrink-0" />
                         <span>ยืนยันการรับสินค้า</span>
                       </>
                     )}

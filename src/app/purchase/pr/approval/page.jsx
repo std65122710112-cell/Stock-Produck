@@ -120,57 +120,57 @@ export default function ApprovePRPage() {
     setIsApproveModalOpen(false);
 
     if (!signatureImage) {
-        return toast.error("กรุณาลงนามกำกับเอกสารก่อนทำการอนุมัติ");
+      return toast.error("กรุณาลงนามกำกับเอกสารก่อนทำการอนุมัติ");
     }
 
     if (!selectedPRData?.id) {
-        return toast.error("ไม่พบข้อมูล PR ที่เลือก");
+      return toast.error("ไม่พบข้อมูล PR ที่เลือก");
     }
 
     setIsLoading(true);
     try {
-        toast.loading("กำลังประมวลผล สร้างเอกสารอนุมัติ PR (PDF)...", { id: "pr-approve" });
+      toast.loading("กำลังประมวลผล สร้างเอกสารอนุมัติ PR (PDF)...", { id: "pr-approve" });
 
-        const token = typeof getAccessToken === "function" ? getAccessToken() : null;
-        if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+      const token = typeof getAccessToken === "function" ? getAccessToken() : null;
+      if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
 
-        const backendUrl =
-            process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
+      const backendUrl =
+        process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
 
-        const response = await fetch(
-            `${backendUrl}/api/purchase/pr/${selectedPRData.id}/approve-pdf`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    status: "APPROVED",
-                    comments: approvalComment || "",
-                    signatureBase64: signatureImage,
-                }),
-            }
-        );
-
-        const result = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            throw new Error(result?.message || `เกิดข้อผิดพลาด (${response.status})`);
+      const response = await fetch(
+        `${backendUrl}/api/purchase/pr/${selectedPRData.id}/approve-pdf`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: "APPROVED",
+            comments: approvalComment || "",
+            signatureBase64: signatureImage,
+          }),
         }
+      );
 
-        toast.success("อนุมัติและสร้างเอกสาร PDF สำเร็จ!", { id: "pr-approve" });
+      const result = await response.json().catch(() => ({}));
 
-        if (result?.pdfUrl) {
-            await handleViewPDF(result.pdfUrl);
-        }
+      if (!response.ok) {
+        throw new Error(result?.message || `เกิดข้อผิดพลาด (${response.status})`);
+      }
 
-        setIsApproveSuccessModalOpen(true);
+      toast.success("อนุมัติและสร้างเอกสาร PDF สำเร็จ!", { id: "pr-approve" });
+
+      if (result?.pdfUrl) {
+        await handleViewPDF(result.pdfUrl);
+      }
+
+      setIsApproveSuccessModalOpen(true);
 
     } catch (error) {
-        toast.error(error.message || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์", { id: "pr-approve" });
+      toast.error(error.message || "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์", { id: "pr-approve" });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -179,110 +179,110 @@ export default function ApprovePRPage() {
     setIsRejectModalOpen(false);
 
     if (!approvalComment.trim()) {
-        return toast.error("กรุณาระบุเหตุผลในการไม่อนุมัติในช่องหมายเหตุ");
+      return toast.error("กรุณาระบุเหตุผลในการไม่อนุมัติในช่องหมายเหตุ");
     }
 
     if (!selectedPRData?.id) {
-        return toast.error("ไม่พบข้อมูล PR ที่เลือก");
+      return toast.error("ไม่พบข้อมูล PR ที่เลือก");
     }
 
     setIsLoading(true);
     try {
-        const token = typeof getAccessToken === "function" ? getAccessToken() : null;
-        if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+      const token = typeof getAccessToken === "function" ? getAccessToken() : null;
+      if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
 
-        const backendUrl =
-            process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
+      const backendUrl =
+        process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
 
-        const response = await fetch(
-            `${backendUrl}/api/purchase/pr/${selectedPRData.id}/approve`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    status: "REJECTED",
-                    comments: approvalComment.trim(),
-                }),
-            }
-        );
-
-        const result = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            throw new Error(result?.message || `เกิดข้อผิดพลาด (${response.status})`);
+      const response = await fetch(
+        `${backendUrl}/api/purchase/pr/${selectedPRData.id}/approve`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: "REJECTED",
+            comments: approvalComment.trim(),
+          }),
         }
+      );
 
-        toast.success("ปฏิเสธคำขอเรียบร้อยแล้ว");
-        setViewMode("LIST");
-        setFilterTab("PENDING");
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result?.message || `เกิดข้อผิดพลาด (${response.status})`);
+      }
+
+      toast.success("ปฏิเสธคำขอเรียบร้อยแล้ว");
+      setViewMode("LIST");
+      setFilterTab("PENDING");
     } catch (error) {
-        toast.error(error.message || "ไม่สามารถปฏิเสธคำขอได้");
+      toast.error(error.message || "ไม่สามารถปฏิเสธคำขอได้");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleViewPDF = async (pdfPath) => {
     if (!pdfPath) {
-        return toast.error("ไม่พบไฟล์เอกสาร PDF สำหรับรายการนี้");
+      return toast.error("ไม่พบไฟล์เอกสาร PDF สำหรับรายการนี้");
     }
 
     setIsLoading(true);
     toast.loading("กำลังเปิดเอกสาร...", { id: "pdf-load" });
 
     try {
-        const backendUrl =
-            process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
+      const backendUrl =
+        process.env.NEXT_PUBLIC_API_URL?.replace("/api", "") || "http://localhost:4000";
 
-        const token = typeof getAccessToken === "function" ? getAccessToken() : null;
-        if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+      const token = typeof getAccessToken === "function" ? getAccessToken() : null;
+      if (!token) throw new Error("ไม่พบ Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
 
-        const rawPath = String(pdfPath).trim();
-        let url = "";
+      const rawPath = String(pdfPath).trim();
+      let url = "";
 
-        if (rawPath.includes("/api/purchase/pr/document/")) {
-            url = rawPath.startsWith("http") ? rawPath : `${backendUrl}${rawPath}`;
-        } else {
-            const filename = rawPath.split(/[/\\\\]/).pop();
+      if (rawPath.includes("/api/purchase/pr/document/")) {
+        url = rawPath.startsWith("http") ? rawPath : `${backendUrl}${rawPath}`;
+      } else {
+        const filename = rawPath.split(/[/\\\\]/).pop();
 
-            if (!filename) {
-                throw new Error("ไม่สามารถระบุชื่อไฟล์เอกสารได้");
-            }
-
-            url = `${backendUrl}/api/purchase/pr/document/${encodeURIComponent(filename)}`;
+        if (!filename) {
+          throw new Error("ไม่สามารถระบุชื่อไฟล์เอกสารได้");
         }
 
-        const response = await fetch(url, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        url = `${backendUrl}/api/purchase/pr/document/${encodeURIComponent(filename)}`;
+      }
 
-        if (!response.ok) {
-            let msg = "คุณไม่มีสิทธิ์เข้าถึง หรือเอกสารสูญหาย";
-            try {
-                const err = await response.json();
-                msg = err?.message || msg;
-            } catch {}
-            throw new Error(msg);
-        }
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        const blob = await response.blob();
-        const fileURL = window.URL.createObjectURL(blob);
-        window.open(fileURL, "_blank");
-        toast.success("เปิดเอกสารสำเร็จ", { id: "pdf-load" });
+      if (!response.ok) {
+        let msg = "คุณไม่มีสิทธิ์เข้าถึง หรือเอกสารสูญหาย";
+        try {
+          const err = await response.json();
+          msg = err?.message || msg;
+        } catch { }
+        throw new Error(msg);
+      }
 
-        setTimeout(() => {
-            window.URL.revokeObjectURL(fileURL);
-        }, 60000);
+      const blob = await response.blob();
+      const fileURL = window.URL.createObjectURL(blob);
+      window.open(fileURL, "_blank");
+      toast.success("เปิดเอกสารสำเร็จ", { id: "pdf-load" });
+
+      setTimeout(() => {
+        window.URL.revokeObjectURL(fileURL);
+      }, 60000);
     } catch (error) {
-        toast.error(error.message || "เปิดเอกสารไม่สำเร็จ", { id: "pdf-load" });
+      toast.error(error.message || "เปิดเอกสารไม่สำเร็จ", { id: "pdf-load" });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -294,9 +294,9 @@ export default function ApprovePRPage() {
 
   useEffect(() => {
     if (isApproveModalOpen || isRejectModalOpen || isApproveSuccessModalOpen) {
-        document.body.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
     } else {
-        document.body.style.overflow = "unset";
+      document.body.style.overflow = "unset";
     }
     return () => { document.body.style.overflow = "unset"; };
   }, [isApproveModalOpen, isRejectModalOpen, isApproveSuccessModalOpen]);
@@ -305,7 +305,7 @@ export default function ApprovePRPage() {
     <AuthGate>
       <Toaster position="top-right" />
       <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-500">
-        
+
         {/* --- HEADER --- */}
         <div className="flex flex-col md:flex-row justify-between items-start border-b border-slate-200 pb-6 gap-6 print:hidden">
           <div className="flex flex-col gap-4 w-full">
@@ -337,21 +337,19 @@ export default function ApprovePRPage() {
                 <div className="flex bg-slate-100 p-1.5 rounded-xl w-full xl:w-auto">
                   <button
                     onClick={() => setFilterTab("PENDING")}
-                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
-                      filterTab === "PENDING"
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${filterTab === "PENDING"
                         ? "bg-white text-amber-600 shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
-                    }`}
+                      }`}
                   >
                     <Clock className="w-4 h-4" /> รอพิจารณาอนุมัติ
                   </button>
                   <button
                     onClick={() => setFilterTab("APPROVED")}
-                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
-                      filterTab === "APPROVED"
+                    className={`flex-1 xl:flex-none px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap ${filterTab === "APPROVED"
                         ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50"
                         : "text-slate-500 hover:text-slate-700"
-                    }`}
+                      }`}
                   >
                     <CheckCircle2 className="w-4 h-4" /> ประวัติการอนุมัติแล้ว
                   </button>
@@ -431,19 +429,18 @@ export default function ApprovePRPage() {
                         </td>
                         <td className="p-5 text-center">
                           <span
-                            className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm ${
-                              pr.status === "APPROVED"
+                            className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm ${pr.status === "APPROVED"
                                 ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                                 : pr.status === "REJECTED"
-                                ? "bg-rose-50 text-rose-600 border-rose-100"
-                                : "bg-amber-50 text-amber-600 border-amber-100"
-                            }`}
+                                  ? "bg-rose-50 text-rose-600 border-rose-100"
+                                  : "bg-amber-50 text-amber-600 border-amber-100"
+                              }`}
                           >
                             {pr.status?.startsWith("PENDING")
                               ? "รออนุมัติ"
                               : pr.status === "APPROVED"
-                              ? "อนุมัติแล้ว"
-                              : "ปฏิเสธ"}
+                                ? "อนุมัติแล้ว"
+                                : "ปฏิเสธ"}
                           </span>
                         </td>
                         <td className="p-5 text-right">
@@ -458,11 +455,10 @@ export default function ApprovePRPage() {
                             <button
                               onClick={() => handleViewPDF(pr.pdfPath)}
                               disabled={!pr.pdfPath}
-                              className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ml-auto ${
-                                pr.pdfPath
+                              className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm ml-auto ${pr.pdfPath
                                   ? "bg-white text-[#1F3B8B] border border-slate-200 hover:border-[#1F3B8B] hover:bg-[#1F3B8B] hover:text-white active:scale-95"
                                   : "bg-slate-50 text-slate-300 border border-slate-100 cursor-not-allowed"
-                              }`}
+                                }`}
                             >
                               <FileText className="w-3.5 h-3.5" /> {pr.pdfPath ? "ดูเอกสาร PDF" : "ไม่มีเอกสาร"}
                             </button>
@@ -480,7 +476,7 @@ export default function ApprovePRPage() {
         {/* --- FORM VIEW --- */}
         {viewMode === "FORM" && selectedPRData && (
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-500">
-            
+
             {/* Header Form */}
             <div className="p-6 md:p-8 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row justify-between gap-6">
               <div className="space-y-1.5">
@@ -498,43 +494,58 @@ export default function ApprovePRPage() {
             </div>
 
             {/* ข้อมูลพื้นฐาน */}
-            <div className="p-6 md:p-8 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="flex flex-col justify-center space-y-1.5">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">ผู้ขอซื้อ (Requester)</span>
-                <span className="text-sm font-bold text-slate-900">{selectedPRData.user?.firstName} {selectedPRData.user?.lastName}</span>
-              </div>
-              
-              <div className="flex flex-col justify-center space-y-1.5">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">แผนก (Cost Center)</span>
-                <span className="text-sm font-bold text-slate-900">{selectedPRData.department?.name || "ไม่ระบุแผนก"}</span>
-              </div>
-
-              <div className="flex flex-col justify-center space-y-1.5">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">แนะนำคู่ค้า (Suggested Vendor)</span>
-                {selectedPRData.supplier ? (
-                  <span className="text-sm font-bold text-slate-900 truncate" title={selectedPRData.supplier.name}>{selectedPRData.supplier.name}</span>
-                ) : (
-                  <span className="text-sm font-bold text-slate-400 italic">ไม่ได้ระบุ (ให้จัดซื้อดำเนินการหาคู่ค้าเอง)</span>
-                )}
-              </div>
-            </div>
-
             <div className="p-6 md:p-8 border-b border-slate-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block">วัตถุประสงค์โครงการ (Purpose)</span>
-                  <p className="text-sm text-slate-900 font-bold leading-relaxed p-4 bg-slate-50 rounded-xl border border-slate-200 italic">
-                    "{selectedPRData.purpose || "-"}"
-                  </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                <div className="flex flex-col justify-start">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    ผู้ขอซื้อ (Requester)
+                  </span>
+                  <span className="text-base font-bold text-slate-900">
+                    {selectedPRData.user?.firstName} {selectedPRData.user?.lastName}
+                  </span>
                 </div>
-                {/* 💡 เผื่อในอนาคตมีช่องหมายเหตุเพิ่ม สามารถใส่ตรงนี้ได้ เพื่อให้ balance grid */}
+
+                <div className="flex flex-col justify-start">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    แผนก (Cost Center)
+                  </span>
+                  <span className="text-base font-bold text-slate-900">
+                    {selectedPRData.department?.name || "ไม่ระบุแผนก"}
+                  </span>
+                </div>
+
+                <div className="flex flex-col justify-start">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    แนะนำคู่ค้า (Suggested Vendor)
+                  </span>
+                  {selectedPRData.supplier ? (
+                    <span className="text-base font-bold text-slate-900 truncate" title={selectedPRData.supplier.name}>
+                      {selectedPRData.supplier.name}
+                    </span>
+                  ) : (
+                    <span className="text-base font-bold text-slate-400 italic">
+                      ไม่ได้ระบุ (ให้จัดซื้อดำเนินการหาคู่ค้าเอง)
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col justify-start">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">
+                    วัตถุประสงค์โครงการ (Purpose)
+                  </span>
+                  <span className="text-base font-bold text-slate-900 line-clamp-3" title={selectedPRData.purpose}>
+                    {selectedPRData.purpose || "-"}
+                  </span>
+                </div>
+
               </div>
             </div>
 
             {/* รายการพัสดุ */}
             <div className="px-6 md:px-8 py-6 md:py-8 border-b border-slate-200">
               <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider mb-4">
-                  รายการพัสดุ
+                รายการพัสดุ
               </h3>
               <div className="border border-slate-200 rounded-xl overflow-hidden">
                 <table className="min-w-full border-collapse">
@@ -671,7 +682,7 @@ export default function ApprovePRPage() {
               <div>
                 <h3 className="text-base font-bold text-slate-900 mb-1 uppercase tracking-wider">ยืนยันการอนุมัติ</h3>
                 <p className="text-xs font-bold text-slate-500 leading-relaxed">
-                  คุณต้องการอนุมัติคำขอจัดซื้อนี้และสร้างเอกสาร PDF ใช่หรือไม่?<br/>
+                  คุณต้องการอนุมัติคำขอจัดซื้อนี้และสร้างเอกสาร PDF ใช่หรือไม่?<br />
                   การกระทำนี้ไม่สามารถย้อนกลับได้
                 </p>
               </div>
@@ -731,7 +742,7 @@ export default function ApprovePRPage() {
               <div>
                 <h3 className="text-base font-bold text-slate-900 mb-1 uppercase tracking-wider">ปฏิเสธคำขอ</h3>
                 <p className="text-xs font-bold text-slate-500 leading-relaxed">
-                  คุณแน่ใจหรือไม่ที่จะปฏิเสธใบคำขอนี้?<br/>
+                  คุณแน่ใจหรือไม่ที่จะปฏิเสธใบคำขอนี้?<br />
                   กรุณาตรวจสอบให้แน่ใจว่าคุณได้กรอกเหตุผลในช่องหมายเหตุแล้ว
                 </p>
               </div>
