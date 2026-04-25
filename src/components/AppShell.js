@@ -204,6 +204,12 @@ const menuGroups = [
                 icon: BarChart3,
                 permissions: ["REPORT_EXPORT"],
             },
+            {
+                href: "/documents",
+                label: "เอกสารรายงาน",
+                icon: BarChart3,
+                permissions: ["REPORT_EXPORT"],
+            },
         ],
     },
     {

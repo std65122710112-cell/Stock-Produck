@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Building2,
   RefreshCw,
-  Wallet,
   ReceiptText,
   ListChecks,
   CreditCard,
@@ -40,7 +39,11 @@ const formatMoney = (value) =>
 
 const formatDateTH = (value) => {
   if (!value) return "-";
-  return new Date(value).toLocaleDateString("th-TH", {
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return date.toLocaleDateString("th-TH", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -113,7 +116,6 @@ export default function SupplierStatementDetailPage() {
   const [loading, setLoading] = useState(false);
   const [printingPaymentId, setPrintingPaymentId] = useState(null);
   const [activeTab, setActiveTab] = useState("invoices");
-
   const [statement, setStatement] = useState(null);
 
   const [filters, setFilters] = useState({
@@ -252,36 +254,71 @@ export default function SupplierStatementDetailPage() {
       <Toaster position="top-right" />
 
       <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 min-h-screen animate-in fade-in duration-500">
-        
-        {/* --- HEADER --- */}
+        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-200 pb-8 gap-6 print:hidden">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 min-w-0 w-full md:w-auto">
             <button
               type="button"
               onClick={() => router.push("/accounting/supplier-statement")}
               className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-[#1F3B8B] uppercase tracking-widest transition-colors w-fit outline-none"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> ย้อนกลับ
+              <ArrowLeft className="w-3.5 h-3.5" />
+              ย้อนกลับ
             </button>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-start gap-4 min-w-0">
               <div className="w-12 h-12 rounded-xl bg-[#1F3B8B]/10 flex items-center justify-center border border-[#1F3B8B]/20 shadow-sm shrink-0">
                 <Building2 className="w-6 h-6 text-[#1F3B8B]" />
               </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+
+              <div className="min-w-0">
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight break-words">
                   {supplier.name || "Supplier Statement"}
                 </h1>
+
                 <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs text-slate-500 font-bold mt-1.5">
-                  <span>รหัส: <span className="text-slate-700">{supplier.code || "-"}</span></span>
+                  <span>
+                    รหัส:{" "}
+                    <span className="text-slate-700">
+                      {supplier.code || "-"}
+                    </span>
+                  </span>
+
                   <span className="text-slate-300">|</span>
-                  <span>เลขภาษี: <span className="text-slate-700">{supplier.taxId || "-"}</span></span>
+
+                  <span>
+                    เลขภาษี:{" "}
+                    <span className="text-slate-700">
+                      {supplier.taxId || "-"}
+                    </span>
+                  </span>
+
                   <span className="text-slate-300">|</span>
-                  <span>เครดิต: <span className="text-slate-700">{supplier.creditDays ?? 0} วัน</span></span>
+
+                  <span>
+                    เครดิต:{" "}
+                    <span className="text-slate-700">
+                      {supplier.creditDays ?? 0} วัน
+                    </span>
+                  </span>
+
                   <span className="text-slate-300 hidden sm:inline">|</span>
-                  <span className="w-full sm:w-auto">โทร: <span className="text-slate-700">{supplier.phone || "-"}</span></span>
+
+                  <span className="w-full sm:w-auto">
+                    โทร:{" "}
+                    <span className="text-slate-700">
+                      {supplier.phone || "-"}
+                    </span>
+                  </span>
+
                   <span className="text-slate-300 hidden sm:inline">|</span>
-                  <span className="w-full sm:w-auto">อีเมล: <span className="text-slate-700">{supplier.email || "-"}</span></span>
+
+                  <span className="w-full sm:w-auto">
+                    อีเมล:{" "}
+                    <span className="text-slate-700">
+                      {supplier.email || "-"}
+                    </span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -298,26 +335,29 @@ export default function SupplierStatementDetailPage() {
           </button>
         </div>
 
-        {/* --- SUMMARY CARDS --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* SUMMARY CARDS */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <SummaryCard
             label="จำนวนใบแจ้งหนี้"
             value={`${summary.invoiceCount || 0}`}
             sub={`รอจ่าย ${summary.pendingInvoiceCount || 0} ใบ`}
             tone="slate"
           />
+
           <SummaryCard
             label="ยอดตั้งหนี้"
             value={`฿${formatMoney(summary.totalInvoiceAmount)}`}
             sub="รวมทุกใบแจ้งหนี้"
             tone="blue"
           />
+
           <SummaryCard
             label="ยอดจ่ายแล้ว"
             value={`฿${formatMoney(summary.totalPaidAmount)}`}
             sub="รวมรายการชำระเงิน"
             tone="emerald"
           />
+
           <SummaryCard
             label="ยอดคงค้าง"
             value={`฿${formatMoney(summary.totalOutstandingAmount)}`}
@@ -326,33 +366,43 @@ export default function SupplierStatementDetailPage() {
           />
         </div>
 
-        {/* --- MAIN CONTENT AREA --- */}
+        {/* MAIN CONTENT */}
         <div className="bg-white rounded-xl border-2 border-slate-300 shadow-md overflow-hidden flex flex-col">
-          
-          {/* Filters & Tabs */}
+          {/* FILTERS & TABS */}
           <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
               <FilterInput
                 label="จากวันที่เอกสาร"
                 type="date"
                 value={filters.from}
-                onChange={(value) => setFilters((prev) => ({ ...prev, from: value }))}
+                onChange={(value) =>
+                  setFilters((prev) => ({ ...prev, from: value }))
+                }
               />
+
               <FilterInput
                 label="ถึงวันที่เอกสาร"
                 type="date"
                 value={filters.to}
-                onChange={(value) => setFilters((prev) => ({ ...prev, to: value }))}
+                onChange={(value) =>
+                  setFilters((prev) => ({ ...prev, to: value }))
+                }
               />
-              <div className="lg:col-span-2 flex items-end">
-                <label className="inline-flex items-center gap-2 text-[13px] font-bold text-slate-700 cursor-pointer h-[42px] select-none hover:text-[#1F3B8B] transition-colors">
+
+              <div className="xl:col-span-2 flex items-end">
+                <label className="inline-flex items-center gap-2 text-[13px] font-bold text-slate-700 cursor-pointer min-h-[42px] select-none hover:text-[#1F3B8B] transition-colors">
                   <input
                     type="checkbox"
                     checked={filters.onlyOutstanding}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, onlyOutstanding: e.target.checked }))}
-                    className="w-4 h-4 rounded border-slate-300 text-[#1F3B8B] focus:ring-[#1F3B8B]/20"
+                    onChange={(e) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        onlyOutstanding: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4 rounded border-slate-300 text-[#1F3B8B] focus:ring-[#1F3B8B]/20 shrink-0"
                   />
-                  แสดงเฉพาะใบแจ้งหนี้ที่ยังมียอดคงค้าง
+                  <span>แสดงเฉพาะใบแจ้งหนี้ที่ยังมียอดคงค้าง</span>
                 </label>
               </div>
             </div>
@@ -364,6 +414,7 @@ export default function SupplierStatementDetailPage() {
                 icon={ReceiptText}
                 label="ใบแจ้งหนี้"
               />
+
               <TabButton
                 active={activeTab === "ledger"}
                 onClick={() => setActiveTab("ledger")}
@@ -373,12 +424,18 @@ export default function SupplierStatementDetailPage() {
             </div>
           </div>
 
-          {/* List Content */}
+          {/* LIST CONTENT */}
           <div className="bg-white p-6 md:p-8">
             {loading ? (
               <div className="py-24 text-center flex flex-col items-center justify-center w-full">
-                <RefreshCw className="animate-spin mb-4 text-[#1F3B8B]" size={32} />
-                <span className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">กำลังโหลดรายละเอียด Statement</span>
+                <RefreshCw
+                  className="animate-spin mb-4 text-[#1F3B8B]"
+                  size={32}
+                />
+
+                <span className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">
+                  กำลังโหลดรายละเอียด Statement
+                </span>
               </div>
             ) : activeTab === "invoices" ? (
               <InvoiceList
@@ -391,7 +448,6 @@ export default function SupplierStatementDetailPage() {
               <LedgerList rows={ledgerRows} />
             )}
           </div>
-
         </div>
 
         {previewModal.isOpen && previewModal.url && (
@@ -405,14 +461,20 @@ export default function SupplierStatementDetailPage() {
   );
 }
 
-// --- SUB-COMPONENTS ---
-
-function InvoiceList({ invoices, openAttachmentPreview, openPaymentVoucherPdf, printingPaymentId }) {
+function InvoiceList({
+  invoices,
+  openAttachmentPreview,
+  openPaymentVoucherPdf,
+  printingPaymentId,
+}) {
   if (!invoices.length) {
     return (
       <div className="py-24 text-center flex flex-col items-center justify-center w-full">
         <ReceiptText className="mb-4 text-slate-300" size={32} />
-        <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">ไม่พบใบแจ้งหนี้ของซัพพลายเออร์นี้</span>
+
+        <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">
+          ไม่พบใบแจ้งหนี้ของซัพพลายเออร์นี้
+        </span>
       </div>
     );
   }
@@ -420,23 +482,35 @@ function InvoiceList({ invoices, openAttachmentPreview, openPaymentVoucherPdf, p
   return (
     <div className="space-y-6 w-full">
       {invoices.map((invoice) => (
-        <div key={invoice.id} className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group w-full">
-          
-          {/* 1. Header Bar: แยกเลขที่ใบแจ้งหนี้และสถานะมาไว้แถบด้านบนให้ดูเป็นทางการ */}
+        <div
+          key={invoice.id}
+          className="bg-white border border-slate-300 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group w-full"
+        >
+          {/* INVOICE HEADER */}
           <div className="px-5 md:px-6 py-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <h3 className="font-black text-[#1F3B8B] text-[14px] uppercase tracking-wide">
+            <div className="flex items-center gap-3 min-w-0">
+              <h3 className="font-black text-[#1F3B8B] text-[15px] uppercase tracking-wide break-all">
                 {invoice.invoiceNo || "-"}
               </h3>
-              <span className={`inline-flex items-center px-3 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider shadow-sm ${getInvoiceStatusClass(invoice.status)}`}>
+
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-md text-[10px] font-bold border uppercase tracking-wider shadow-sm shrink-0 ${getInvoiceStatusClass(
+                  invoice.status
+                )}`}
+              >
                 {invoice.statusLabel || "-"}
               </span>
             </div>
-            
+
             {invoice.attachmentUrl && (
               <button
                 type="button"
-                onClick={() => openAttachmentPreview(invoice.attachmentUrl, `ไฟล์แนบใบแจ้งหนี้: ${invoice.invoiceNo || ""}`)}
+                onClick={() =>
+                  openAttachmentPreview(
+                    invoice.attachmentUrl,
+                    `ไฟล์แนบใบแจ้งหนี้: ${invoice.invoiceNo || ""}`
+                  )
+                }
                 className="inline-flex items-center gap-1.5 bg-white text-[#1F3B8B] px-4 py-2 rounded-lg text-[11px] font-bold border border-slate-300 hover:bg-[#1F3B8B] hover:text-white hover:border-[#1F3B8B] transition-all shadow-sm outline-none focus:ring-2 focus:ring-blue-500/20"
               >
                 <Paperclip size={14} />
@@ -445,69 +519,64 @@ function InvoiceList({ invoices, openAttachmentPreview, openPaymentVoucherPdf, p
             )}
           </div>
 
-          {/* 2. Body Content: รายละเอียด และ ยอดเงิน */}
-          <div className="p-5 md:p-6 flex flex-col lg:flex-row gap-6 xl:gap-8 w-full">
-            
-            {/* ข้อมูลฝั่งซ้าย - จัดเป็น 3 คอลัมน์เพื่อความโปร่งสบาย */}
-            <div className="flex-1 min-w-0">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
-  {/* ใบกำกับภาษี */}
-  <div className="flex flex-col">
-    <span className="text-[12px] font-bold text-slate-700 mb-1">ใบกำกับภาษี</span> 
-    <span className="text-[13px] font-bold text-slate-900 truncate" title={invoice.taxInvoiceNo || "N/A"}>
-      {invoice.taxInvoiceNo || "N/A"}
-    </span>
-  </div>
+          {/* INVOICE BODY */}
+          <div className="p-5 md:p-6 w-full space-y-6">
+            {/* รายละเอียดใบแจ้งหนี้ */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 w-full">
+              <InvoiceInfoBox
+                label="ใบกำกับภาษี"
+                value={invoice.taxInvoiceNo || "N/A"}
+              />
 
-  {/* วันที่เอกสาร */}
-  <div className="flex flex-col">
-    <span className="text-[12px] font-bold text-slate-700 mb-1">วันที่เอกสาร</span> 
-    <span className="text-[13px] font-bold text-slate-900">
-      {formatDateTH(invoice.issueDate)}
-    </span>
-  </div>
+              <InvoiceInfoBox
+                label="วันที่เอกสาร"
+                value={formatDateTH(invoice.issueDate)}
+              />
 
-  {/* ครบกำหนด */}
-  <div className="flex flex-col">
-    <span className="text-[12px] font-bold text-slate-700 mb-1">ครบกำหนด</span> 
-    <span className="text-[13px] font-bold text-rose-600">
-      {formatDateTH(invoice.dueDate)}
-    </span>
-  </div>
+              <InvoiceInfoBox
+                label="ครบกำหนด"
+                value={formatDateTH(invoice.dueDate)}
+                danger
+              />
 
-  {/* PO Number */}
-  <div className="flex flex-col">
-    <span className="text-[12px] font-bold text-slate-700 mb-1">PO Number</span> 
-    <span className="text-[13px] font-bold text-slate-900 truncate" title={invoice.purchaseOrder?.poNumber || "-"}>
-      {invoice.purchaseOrder?.poNumber || "-"}
-    </span>
-  </div>
+              <InvoiceInfoBox
+                label="PO Number"
+                value={invoice.purchaseOrder?.poNumber || "-"}
+              />
 
-  {/* GR Receipt */}
-  <div className="flex flex-col">
-    <span className="text-[12px] font-bold text-slate-700 mb-1">GR Receipt</span> 
-    <span className="text-[13px] font-bold text-slate-900 truncate" title={invoice.goodsReceipt?.receiptNo || "-"}>
-      {invoice.goodsReceipt?.receiptNo || "-"}
-    </span>
-  </div>
-</div>
+              <InvoiceInfoBox
+                label="GR Receipt"
+                value={invoice.goodsReceipt?.receiptNo || "-"}
+              />
             </div>
 
-            {/* การ์ดสรุปยอดฝั่งขวา - บังคับขนาดสูงสุดไว้ */}
-            <div className="w-full lg:w-[340px] xl:w-[400px] shrink-0 border-t lg:border-t-0 lg:border-l border-slate-100 pt-5 lg:pt-0 lg:pl-6 xl:pl-8">
-              <div className="grid grid-cols-3 gap-3 h-full items-start">
-                <MiniStat label="ยอดสุทธิ" value={`฿${formatMoney(invoice.grandTotal)}`} tone="blue" />
-                <MiniStat label="จ่ายแล้ว" value={`฿${formatMoney(invoice.paidAmount)}`} tone="emerald" />
-                <MiniStat label="คงค้าง" value={`฿${formatMoney(invoice.outstandingAmount)}`} tone="rose" />
-              </div>
-            </div>
+            {/* สรุปยอดเงิน */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+              <MiniStat
+                label="ยอดสุทธิ"
+                value={`฿${formatMoney(invoice.grandTotal)}`}
+                tone="blue"
+              />
 
+              <MiniStat
+                label="จ่ายแล้ว"
+                value={`฿${formatMoney(invoice.paidAmount)}`}
+                tone="emerald"
+              />
+
+              <MiniStat
+                label="คงค้าง"
+                value={`฿${formatMoney(invoice.outstandingAmount)}`}
+                tone="rose"
+              />
+            </div>
           </div>
 
-          {/* 3. Footer: ประวัติการจ่ายเงิน */}
+          {/* PAYMENTS */}
           <div className="border-t border-slate-200 bg-slate-50/50 p-5 md:p-6">
             <div className="flex items-center gap-2 mb-4">
               <CreditCard size={16} className="text-slate-500" />
+
               <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
                 ประวัติการจ่ายเงิน
               </div>
@@ -537,27 +606,56 @@ function InvoiceList({ invoices, openAttachmentPreview, openPaymentVoucherPdf, p
   );
 }
 
-function PaymentCard({ payment, openAttachmentPreview, openPaymentVoucherPdf, printingPaymentId }) {
+function InvoiceInfoBox({ label, value, danger = false }) {
+  return (
+    <div className="bg-white border border-slate-200 rounded-xl p-4 min-w-0 shadow-sm">
+      <div className="text-[11px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+        {label}
+      </div>
+
+      <div
+        className={`text-[13px] font-bold leading-5 break-words ${
+          danger ? "text-rose-600" : "text-slate-900"
+        }`}
+        title={String(value || "-")}
+      >
+        {value || "-"}
+      </div>
+    </div>
+  );
+}
+
+function PaymentCard({
+  payment,
+  openAttachmentPreview,
+  openPaymentVoucherPdf,
+  printingPaymentId,
+}) {
   const isVoided = payment.status === "VOIDED";
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-[#1F3B8B]/30 transition-colors group">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="font-black text-[13px] text-slate-900 group-hover:text-[#1F3B8B] transition-colors">{payment.pvNo || "-"}</div>
-          <div className="flex items-baseline gap-1.5 mt-1">
+          <div className="font-black text-[13px] text-slate-900 group-hover:text-[#1F3B8B] transition-colors break-all">
+            {payment.pvNo || "-"}
+          </div>
+
+          <div className="flex items-baseline gap-1.5 mt-1 flex-wrap">
             <span className="text-[12px] font-bold text-slate-800">
               {formatDateTH(payment.paymentDate)}
             </span>
+
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-normal">
               | {getPaymentMethodLabel(payment.paymentMethod)}
             </span>
           </div>
 
-          <div className="flex items-baseline gap-1 mt-0.5 truncate">
+          <div className="flex items-baseline gap-1 mt-0.5 min-w-0">
             <span className="text-[12px] font-bold text-slate-800 shrink-0">
               เลขที่อ้างอิง:
             </span>
+
             <span className="text-[10px] font-bold text-slate-600 truncate">
               {payment.referenceNo || "-"}
             </span>
@@ -565,7 +663,11 @@ function PaymentCard({ payment, openAttachmentPreview, openPaymentVoucherPdf, pr
         </div>
 
         <div className="text-right shrink-0">
-          <div className={`font-black text-[13px] tabular-nums ${isVoided ? "text-rose-500 line-through" : "text-emerald-600"}`}>
+          <div
+            className={`font-black text-[13px] tabular-nums ${
+              isVoided ? "text-rose-500 line-through" : "text-emerald-600"
+            }`}
+          >
             ฿{formatMoney(payment.amountPaid)}
           </div>
         </div>
@@ -573,28 +675,39 @@ function PaymentCard({ payment, openAttachmentPreview, openPaymentVoucherPdf, pr
 
       <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-slate-100">
         {!isVoided && (
-            <button
-              type="button"
-              onClick={() => openPaymentVoucherPdf(payment)}
-              disabled={printingPaymentId === payment.id || Boolean(printingPaymentId)}
-              className="inline-flex items-center justify-center flex-1 gap-2 bg-[#dbeafe] text-blue-900 px-4 py-2.5 rounded-lg text-[13px] font-bold transition-colors duration-300 ease-in-out hover:bg-[#1e40af] hover:text-white disabled:opacity-50 outline-none focus:ring-2 focus:ring-blue-500/40"
-            >
-              {printingPaymentId === payment.id ? (
-                <RefreshCw size={14} className="animate-spin text-inherit" />
-              ) : (
-                <Printer size={14} className="text-inherit" />
-              )}
-              <span className="text-inherit">
-                {printingPaymentId === payment.id ? "กำลังสร้าง..." : "พิมพ์ PV"}
-              </span>
-            </button>
-         )}
+          <button
+            type="button"
+            onClick={() => openPaymentVoucherPdf(payment)}
+            disabled={
+              printingPaymentId === payment.id || Boolean(printingPaymentId)
+            }
+            className="inline-flex items-center justify-center flex-1 gap-2 bg-[#dbeafe] text-blue-900 px-4 py-2.5 rounded-lg text-[13px] font-bold transition-colors duration-300 ease-in-out hover:bg-[#1e40af] hover:text-white disabled:opacity-50 outline-none focus:ring-2 focus:ring-blue-500/40 min-w-[120px]"
+          >
+            {printingPaymentId === payment.id ? (
+              <RefreshCw size={14} className="animate-spin text-inherit" />
+            ) : (
+              <Printer size={14} className="text-inherit" />
+            )}
+
+            <span className="text-inherit">
+              {printingPaymentId === payment.id
+                ? "กำลังสร้าง..."
+                : "พิมพ์ PV"}
+            </span>
+          </button>
+        )}
 
         {payment.attachmentUrl && (
           <button
             type="button"
-            onClick={() => openAttachmentPreview(payment.attachmentUrl, payment.attachmentName || `หลักฐานการจ่ายเงิน: ${payment.pvNo || ""}`)}
-            className="inline-flex items-center justify-center flex-1 gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-600 hover:text-white transition-all outline-none focus:ring-2 focus:ring-emerald-500/20"
+            onClick={() =>
+              openAttachmentPreview(
+                payment.attachmentUrl,
+                payment.attachmentName ||
+                  `หลักฐานการจ่ายเงิน: ${payment.pvNo || ""}`
+              )
+            }
+            className="inline-flex items-center justify-center flex-1 gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-600 hover:text-white transition-all outline-none focus:ring-2 focus:ring-emerald-500/20 min-w-[120px]"
           >
             <Paperclip size={12} />
             หลักฐาน
@@ -610,7 +723,10 @@ function LedgerList({ rows }) {
     return (
       <div className="py-24 text-center flex flex-col items-center justify-center">
         <ListChecks className="mb-4 text-slate-300" size={32} />
-        <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">ไม่พบรายการเคลื่อนไหว</span>
+
+        <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">
+          ไม่พบรายการเคลื่อนไหว
+        </span>
       </div>
     );
   }
@@ -622,7 +738,9 @@ function LedgerList({ rows }) {
           <tr className="text-[11px] font-bold uppercase text-slate-500 tracking-wider whitespace-nowrap">
             <th className="px-6 py-4 text-left">วันที่</th>
             <th className="px-6 py-4 text-center w-24">ประเภท</th>
-            <th className="px-6 py-4 text-left min-w-[180px]">เลขที่เอกสาร</th>
+            <th className="px-6 py-4 text-left min-w-[180px]">
+              เลขที่เอกสาร
+            </th>
             <th className="px-6 py-4 text-left min-w-[200px]">คำอธิบาย</th>
             <th className="px-6 py-4 text-right">เดบิต / ตั้งหนี้</th>
             <th className="px-6 py-4 text-right">เครดิต / ชำระ</th>
@@ -633,42 +751,64 @@ function LedgerList({ rows }) {
         <tbody className="divide-y divide-slate-100 bg-white">
           {rows.map((row, index) => {
             const isInvoice = row.type === "INVOICE";
+
             return (
-              <tr key={`${row.type}-${row.documentNo}-${index}`} className="hover:bg-slate-50 transition-colors">
+              <tr
+                key={`${row.type}-${row.documentNo}-${index}`}
+                className="hover:bg-slate-50 transition-colors"
+              >
                 <td className="px-6 py-5 align-top">
                   <span className="font-bold text-slate-700 text-[13px] tabular-nums whitespace-nowrap">
                     {formatDateTH(row.date)}
                   </span>
                 </td>
+
                 <td className="px-6 py-5 align-top text-center">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm whitespace-nowrap ${isInvoice ? "bg-blue-50 text-blue-700 border-blue-100" : "bg-emerald-50 text-emerald-700 border-emerald-100"}`}>
-                    {isInvoice ? <FileSpreadsheet size={12} /> : <CreditCard size={12} />}
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border shadow-sm whitespace-nowrap ${
+                      isInvoice
+                        ? "bg-blue-50 text-blue-700 border-blue-100"
+                        : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                    }`}
+                  >
+                    {isInvoice ? (
+                      <FileSpreadsheet size={12} />
+                    ) : (
+                      <CreditCard size={12} />
+                    )}
+
                     {isInvoice ? "ตั้งหนี้" : "ชำระเงิน"}
                   </span>
                 </td>
+
                 <td className="px-6 py-5 align-top">
                   <div className="font-black text-slate-900 text-[13px] whitespace-nowrap">
                     {row.documentNo || "-"}
                   </div>
+
                   <div className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter truncate max-w-[150px]">
                     เลขที่อ้างอิง: {row.referenceNo || "-"}
                   </div>
                 </td>
+
                 <td className="px-6 py-5 align-top">
                   <span className="font-bold text-slate-600 text-[13px]">
                     {row.description || "-"}
                   </span>
                 </td>
+
                 <td className="px-6 py-5 align-top text-right">
                   <span className="font-black text-[#1F3B8B] text-[13px] tabular-nums whitespace-nowrap">
                     {row.debit ? `฿${formatMoney(row.debit)}` : "-"}
                   </span>
                 </td>
+
                 <td className="px-6 py-5 align-top text-right">
                   <span className="font-black text-emerald-600 text-[13px] tabular-nums whitespace-nowrap">
                     {row.credit ? `฿${formatMoney(row.credit)}` : "-"}
                   </span>
                 </td>
+
                 <td className="px-6 py-5 align-top text-right">
                   <span className="font-black text-slate-900 text-[13px] tabular-nums whitespace-nowrap">
                     ฿{formatMoney(row.runningBalance)}
@@ -696,17 +836,22 @@ function AttachmentPreviewModal({ previewModal, onClose }) {
                 <FileText className="text-[#1F3B8B]" size={20} />
               )}
             </div>
+
             <div className="min-w-0">
-              <h3 className="text-[13px] font-black uppercase tracking-wider text-slate-900">ไฟล์แนบเอกสาร</h3>
+              <h3 className="text-[13px] font-black uppercase tracking-wider text-slate-900">
+                ไฟล์แนบเอกสาร
+              </h3>
+
               <p className="text-[10px] font-bold text-slate-500 truncate uppercase tracking-widest mt-0.5">
                 {previewModal.name}
               </p>
             </div>
           </div>
+
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200 transition-all flex items-center justify-center shadow-sm outline-none focus:ring-2 focus:ring-rose-500/20"
+            className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200 transition-all flex items-center justify-center shadow-sm outline-none focus:ring-2 focus:ring-rose-500/20 shrink-0"
           >
             <X size={18} />
           </button>
@@ -731,9 +876,11 @@ function AttachmentPreviewModal({ previewModal, onClose }) {
               <div className="w-16 h-16 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FileText size={32} className="text-slate-400" />
               </div>
+
               <div className="text-[13px] font-black text-slate-700">
                 ไม่สามารถแสดงตัวอย่างไฟล์ชนิดนี้ได้
               </div>
+
               <a
                 href={getPublicFileHref(previewModal.url)}
                 target="_blank"
@@ -751,8 +898,6 @@ function AttachmentPreviewModal({ previewModal, onClose }) {
   );
 }
 
-// --- REFACTORED CARD & STAT COMPONENTS WITH AUTO-RESIZE ---
-
 function SummaryCard({ label, value, sub, tone = "slate" }) {
   const themes = {
     slate: "border-l-slate-400 bg-slate-50/50",
@@ -763,13 +908,22 @@ function SummaryCard({ label, value, sub, tone = "slate" }) {
   };
 
   return (
-    <div style={{ containerType: "inline-size" }} className={`bg-white border border-slate-200 border-l-4 ${themes[tone] || themes.slate} p-5 rounded-xl shadow-sm transition-all hover:shadow-md flex flex-col justify-center min-w-0`}>
+    <div
+      className={`bg-white border border-slate-200 border-l-4 ${
+        themes[tone] || themes.slate
+      } p-5 rounded-xl shadow-sm transition-all hover:shadow-md flex flex-col justify-center min-w-0 overflow-hidden`}
+    >
       <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 truncate">
         {label}
       </p>
-      <div style={{ fontSize: "clamp(1.25rem, 10cqw, 1.875rem)" }} className="font-black text-slate-900 tabular-nums tracking-tighter whitespace-nowrap">
+
+      <div
+        className="font-black text-slate-900 tabular-nums tracking-tight text-xl sm:text-2xl xl:text-[28px] leading-tight whitespace-nowrap overflow-hidden text-ellipsis max-w-full"
+        title={String(value || "")}
+      >
         {value}
       </div>
+
       <p className="text-xs font-bold text-slate-400 mt-1.5 truncate">
         {sub}
       </p>
@@ -786,11 +940,19 @@ function MiniStat({ label, value, tone = "slate" }) {
   };
 
   return (
-    <div style={{ containerType: "inline-size" }} className={`p-3.5 rounded-xl border flex flex-col justify-center min-w-0 shadow-sm ${tones[tone] || tones.slate}`}>
-      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 truncate">
+    <div
+      className={`p-4 rounded-xl border shadow-sm min-w-0 overflow-hidden ${
+        tones[tone] || tones.slate
+      }`}
+    >
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1 leading-none truncate">
         {label}
       </p>
-      <div style={{ fontSize: "clamp(12px, 12cqw, 15px)" }} className="font-black tabular-nums tracking-tighter whitespace-nowrap">
+
+      <div
+        className="font-black tabular-nums tracking-tight leading-6 text-[14px] xl:text-[15px] whitespace-nowrap overflow-hidden text-ellipsis"
+        title={String(value || "")}
+      >
         {value}
       </div>
     </div>
@@ -820,6 +982,7 @@ function FilterInput({ label, type = "text", value, onChange }) {
       <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1 block">
         {label}
       </label>
+
       <input
         type={type}
         value={value}
